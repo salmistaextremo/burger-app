@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Admin — Burguer Express</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#F0F1F4;
+  --line:#E5E7EB; --line-2:#D1D5DB;
+  --ink:#111827; --ink-2:#374151; --muted:#6B7280; --muted-2:#9CA3AF;
+  --brand:#FF6B2C; --brand-2:#FF8A4C; --brand-d:#E85A1F; --brand-soft:#FFF2EC;
+  --ok:#10B981; --ok-soft:#ECFDF5;
+  --danger:#EF4444; --danger-soft:#FEF2F2;
+  --r:12px; --r-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.15);
+}
+*{margin:0;padding:0}
+html,body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--ink);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:14px;width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);outline:none;transition:.15s}
+input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(255,107,44,.12)}
+textarea{resize:vertical;min-height:80px}
+
+.hidden{display:none !important}
+
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;flex:none;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:8px 10px 20px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.sb-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;overflow:hidden;position:relative}
+.sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sb-brand-text h1{font-size:14px;font-weight:800;letter-spacing:-.3px}
+.sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
+.sb-nav{display:flex;flex-direction:column;gap:3px;flex:1}
+.sb-nav button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s}
+.sb-nav button .ico{font-size:17px;width:20px;text-align:center}
+.sb-nav button:hover{background:var(--surface-2);color:var(--ink)}
+.sb-nav button.active{background:var(--brand-soft);color:var(--brand-d);font-weight:600}
+.sb-nav button .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--surface-2);color:var(--muted);padding:2px 7px;border-radius:99px}
+.sb-nav button.active .count{background:var(--brand);color:#fff}
+.sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.sb-footer a,.sb-footer button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;transition:.15s}
+.sb-footer a:hover,.sb-footer button:hover{background:var(--surface-2);color:var(--ink)}
+
+.main{flex:1;padding:32px 40px;max-width:1200px}
+.page-title{margin-bottom:4px;font-size:26px;font-weight:900;letter-spacing:-.8px}
+.page-sub{color:var(--muted);font-size:13.5px;margin-bottom:24px;line-height:1.5}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.page-head .btn-primary{flex:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;transition:.15s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;box-shadow:0 4px 12px rgba(255,107,44,.28)}
+.btn-primary:active{box-shadow:0 2px 6px rgba(255,107,44,.28)}
+.btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink-2)}
+.btn-ghost:hover{background:var(--surface-2);border-color:var(--line-2)}
+.btn-danger{background:var(--danger-soft);color:var(--danger);border:1px solid #FECACA}
+.btn-danger:hover{background:#FEE2E2}
+.btn-sm{padding:7px 12px;font-size:12.5px;border-radius:9px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:9px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.card-body{padding:20px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55}
+
+.p-toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.p-toolbar input{flex:1;min-width:200px}
+.p-toolbar select{width:auto;min-width:150px}
+.cat-section{margin-bottom:28px}
+.cat-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.cat-section-head h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.cat-section-head .count{font-size:11px;font-weight:700;color:var(--muted);background:var(--surface-2);padding:3px 9px;border-radius:99px}
+.p-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.p-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;gap:12px;padding:12px;transition:.15s;box-shadow:var(--shadow)}
+.p-card:hover{border-color:var(--line-2);box-shadow:var(--shadow-md)}
+.p-thumb{width:70px;height:70px;border-radius:10px;background:var(--surface-2);flex:none;display:grid;place-items:center;font-size:30px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.p-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.p-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.p-info h4{font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.p-info p{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.p-meta{display:flex;align-items:center;gap:8px;margin-top:auto}
+.p-price{font-size:14px;font-weight:800;color:var(--brand)}
+.p-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--brand-soft);color:var(--brand);text-transform:uppercase;letter-spacing:.3px}
+.p-actions{margin-left:auto;display:flex;gap:4px;flex:none;align-self:flex-start}
+.p-actions button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--surface-2);color:var(--muted);transition:.15s}
+.p-actions button:hover{background:var(--line);color:var(--ink)}
+.p-actions button.danger:hover{background:var(--danger-soft);color:var(--danger)}
+
+.modal{position:fixed;inset:0;z-index:100;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:up .25s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(20px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line);flex:none}
+.modal-head h2{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.modal-close{width:34px;height:34px;border-radius:9px;font-size:16px;color:var(--muted);display:grid;place-items:center;transition:.15s}
+.modal-close:hover{background:var(--surface-2);color:var(--ink)}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex:none}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid .full{grid-column:1/-1}
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+.field .row{display:flex;gap:10px}
+.field .row input{flex:1}
+
+.emoji-field{position:relative}
+.emoji-field input{padding-right:52px;font-size:16px;text-align:center}
+.emoji-field::after{
+  content:attr(data-emoji);
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:38px;height:38px;border-radius:9px;
+  display:grid;place-items:center;font-size:22px;
+  background:var(--surface-2);border:1px solid var(--line);
+  pointer-events:none;
+}
+
+.img-picker{position:relative;width:100%;height:200px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:var(--r);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:.2s}
+.img-picker:hover{border-color:var(--brand);background:var(--brand-soft)}
+.img-picker.has-image{border-style:solid;border-color:var(--line)}
+.img-picker input{display:none}
+.img-picker .placeholder{text-align:center;color:var(--muted);padding:20px}
+.img-picker .placeholder .emoji{font-size:36px;display:block;margin-bottom:8px;opacity:.5}
+.img-picker .placeholder p{font-size:13px;font-weight:600;color:var(--ink-2)}
+.img-picker .placeholder small{font-size:11px;margin-top:4px;display:block}
+.img-picker img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.img-picker .overlay{position:absolute;inset:0;background:rgba(17,24,39,.6);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:600;opacity:0;transition:.2s}
+.img-picker:hover .overlay{opacity:1}
+.img-actions{display:flex;gap:8px;margin-top:10px}
+.img-actions .btn{flex:1}
+
+.logo-block{display:flex;gap:16px;align-items:center}
+.logo-picker{position:relative;width:110px;height:110px;border-radius:16px;background:var(--surface-2);border:2px dashed var(--line-2);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:.2s;flex:none}
+.logo-picker:hover{border-color:var(--brand);background:var(--brand-soft)}
+.logo-picker.has-image{border-style:solid;border-color:var(--line)}
+.logo-picker input{display:none}
+.logo-picker .placeholder{text-align:center;color:var(--muted)}
+.logo-picker .placeholder .emoji{font-size:28px;display:block;margin-bottom:4px;opacity:.5}
+.logo-picker .placeholder p{font-size:10.5px;font-weight:600;color:var(--ink-2);line-height:1.2}
+.logo-picker img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.logo-picker .overlay{position:absolute;inset:0;background:rgba(17,24,39,.6);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:600;opacity:0;transition:.2s}
+.logo-picker:hover .overlay{opacity:1}
+.logo-info{flex:1;min-width:0}
+.logo-info h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.logo-info p{font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.logo-btns{display:flex;gap:8px;flex-wrap:wrap}
+.logo-btns .btn{flex:none}
+
+.extras-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.extra-row{display:flex;gap:8px;align-items:center}
+.extra-row input:first-child{flex:2}
+.extra-row input:nth-child(2){flex:1;max-width:110px}
+.extra-row button{width:36px;height:36px;border-radius:9px;background:var(--danger-soft);color:var(--danger);flex:none;display:grid;place-items:center;font-size:15px}
+.extra-row button:hover{background:#FEE2E2}
+
+.pay-list{display:flex;flex-direction:column;gap:10px}
+.pay-item{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);transition:.15s}
+.pay-item:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.pay-icon{width:46px;height:46px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;font-size:22px;flex:none;border:1px solid var(--line)}
+.pay-body{flex:1;min-width:0}
+.pay-body h4{font-size:14px;font-weight:700;margin-bottom:3px}
+.pay-body p{font-size:11.5px;color:var(--muted);line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay-body p.empty{color:var(--muted-2);font-style:italic}
+.pay-actions{display:flex;gap:4px;flex:none}
+.pay-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;font-size:14px;transition:.15s}
+.pay-actions button:hover{background:var(--line);color:var(--ink)}
+.pay-actions button.danger:hover{background:var(--danger-soft);color:var(--danger)}
+
+.pay-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:20px}
+.pay-type-btn{padding:14px 10px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.pay-type-btn:hover{border-color:var(--line-2);background:var(--surface-2)}
+.pay-type-btn.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-d)}
+.pay-type-btn .icon{font-size:22px;display:block;margin-bottom:6px}
+
+.pay-detail-section{margin-top:20px;padding-top:20px;border-top:1px dashed var(--line)}
+.pay-detail-section h4{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.pay-detail-section .hint{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+
+.cat-list{display:flex;flex-direction:column;gap:8px}
+.cat-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);transition:.15s}
+.cat-row:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.cat-icon{width:44px;height:44px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;font-size:22px;flex:none}
+.cat-info{flex:1;min-width:0}
+.cat-info h4{font-size:14px;font-weight:700;margin-bottom:2px}
+.cat-info p{font-size:11.5px;color:var(--muted);font-family:'SF Mono',Monaco,monospace}
+.cat-count{font-size:11.5px;color:var(--muted);background:var(--surface-2);padding:4px 10px;border-radius:99px;font-weight:600;flex:none}
+.cat-actions{display:flex;gap:4px;flex:none}
+.cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;font-size:14px;transition:.15s}
+.cat-actions button:hover{background:var(--line);color:var(--ink)}
+.cat-actions button.danger:hover{background:var(--danger-soft);color:var(--danger)}
+
+.order-list{display:flex;flex-direction:column;gap:10px}
+.order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.order-code{font-size:18px;font-weight:900;color:var(--brand);letter-spacing:-.5px}
+.order-status{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.4px;background:var(--brand-soft);color:var(--brand)}
+.order-date{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.order-customer{font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:10px}
+.order-customer b{color:var(--ink);font-weight:600}
+.order-items{background:var(--surface-2);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+.order-items .item{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.order-total{display:flex;justify-content:space-between;font-weight:800;font-size:15px;color:var(--ink);border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.order-total span:last-child{color:var(--brand)}
+.order-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.order-empty .big{font-size:52px;opacity:.4;margin-bottom:12px}
+.order-empty p{font-size:14px;line-height:1.6}
+
+.storage-bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:8px}
+.storage-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand-2),var(--brand));transition:width .4s}
+.data-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:20px}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);max-width:88%}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .big{font-size:52px;opacity:.35;margin-bottom:14px}
+.empty h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.empty p{font-size:13.5px;line-height:1.6;max-width:380px;margin:0 auto 20px}
+
+@media(max-width:860px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;padding:12px;overflow-x:auto;gap:4px;border-right:none;border-bottom:1px solid var(--line)}
+  .sb-brand{padding:0 12px 0 0;border:none;margin:0;flex:none}
+  .sb-brand-text{display:none}
+  .sb-nav{flex-direction:row;gap:4px;flex:none}
+  .sb-nav button{padding:9px 14px;white-space:nowrap;font-size:13px}
+  .sb-nav button .ico{font-size:15px}
+  .sb-nav button .count{display:none}
+  .sb-footer{flex-direction:row;border:none;padding:0;margin-left:auto;gap:4px}
+  .sb-footer a,.sb-footer button{padding:9px 12px;font-size:12.5px}
+  .main{padding:20px 16px}
+  .form-grid{grid-template-columns:1fr}
+  .logo-block{flex-direction:column;text-align:center;align-items:center}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo" id="sbLogo">⚙️</div>
+      <div class="sb-brand-text">
+        <h1>Admin Panel</h1>
+        <p id="sbBrandName">Burguer Express</p>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <button data-tab="products" class="active"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
+      <button data-tab="categories"><span class="ico">📁</span>Categorías<span class="count" id="cnt-categories">0</span></button>
+      <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
+      <button data-tab="orders"><span class="ico">🧾</span>Pedidos<span class="count" id="cnt-orders">0</span></button>
+      <button data-tab="data"><span class="ico">💾</span>Datos</button>
+    </nav>
+    <div class="sb-footer">
+      <a href="BurgerApp.html" target="_blank" id="btnViewApp"><span>👁️</span>Ver app cliente</a>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div id="modal" class="modal hidden"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   1. TIPOS DE PAGO DISPONIBLES
+   ========================================================= */
+var PAYMENT_TYPES = {
+  efectivo: {
+    label: "Efectivo",
+    icon: "💵",
+    details: []
+  },
+  pagomovil: {
+    label: "Pago Móvil",
+    icon: "📱",
+    details: [
+      { key: "banco", label: "Banco", placeholder: "Ej: Banesco, Mercantil, BDV…", type: "text" },
+      { key: "telefono", label: "Teléfono", placeholder: "Ej: 0414 123 4567", type: "tel" },
+      { key: "cedula", label: "Cédula / RIF", placeholder: "Ej: V-12345678", type: "text" }
+    ]
+  },
+  transferencia: {
+    label: "Transferencia bancaria",
+    icon: "🏦",
+    details: [
+      { key: "banco", label: "Banco", placeholder: "Ej: Banesco", type: "text" },
+      { key: "cuenta", label: "Número de cuenta", placeholder: "Ej: 0134-1234-56-7890123456", type: "text" },
+      { key: "titular", label: "Titular de la cuenta", placeholder: "Ej: Juan Pérez", type: "text" },
+      { key: "rif", label: "RIF / Cédula", placeholder: "Ej: J-12345678-9", type: "text" }
+    ]
+  },
+  tarjeta: {
+    label: "Punto de venta",
+    icon: "💳",
+    details: [
+      { key: "nota", label: "Nota (opcional)", placeholder: "Ej: Se cobra al recibir", type: "text" }
+    ]
+  },
+  zelle: {
+    label: "Zelle",
+    icon: "🌐",
+    details: [
+      { key: "email", label: "Correo Zelle", placeholder: "Ej: pagos@ejemplo.com", type: "email" },
+      { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" }
+    ]
+  },
+  binance: {
+    label: "Binance (USDT)",
+    icon: "🪙",
+    details: [
+      { key: "wallet", label: "Wallet / Pay ID", placeholder: "Ej: 123456789", type: "text" },
+      { key: "red", label: "Red", placeholder: "Ej: BEP20, TRC20, ERC20", type: "text" },
+      { key: "titular", label: "Titular / Alias", placeholder: "Ej: JuanP", type: "text" }
+    ]
+  },
+  paypal: {
+    label: "PayPal",
+    icon: "💠",
+    details: [
+      { key: "email", label: "Correo PayPal", placeholder: "Ej: pagos@ejemplo.com", type: "email" },
+      { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" }
+    ]
+  },
+  otro: {
+    label: "Otro (coordinar)",
+    icon: "🤝",
+    details: [
+      { key: "info", label: "Instrucciones", placeholder: "Ej: Coordinar por WhatsApp con el asesor", type: "textarea" }
+    ]
+  }
+};
+
+/* =========================================================
+   2. DEFAULT DATA
+   ========================================================= */
+var DEFAULT_CONFIG = {
+  brand: "Burguer Express",
+  logo: "",
+  whatsapp: "584121234567",
+  phoneCall: "+584121234567",
+  mapsUrl: "https://maps.google.com/?q=Av.+Principal+123",
+  currency: "$",
+  deliveryFee: 2.00,
+  freeDeliveryFrom: 25.00,
+  hours: { open: 11, close: 23 },
+  helpHoursText: "11:00 a 23:00",
+  payments: [
+    { id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} },
+    { id:"pagomovil", type:"pagomovil", label:"Pago Móvil", icon:"📱", details:{} },
+    { id:"transferencia", type:"transferencia", label:"Transferencia bancaria", icon:"🏦", details:{} },
+    { id:"zelle", type:"zelle", label:"Zelle", icon:"🌐", details:{} }
+  ]
+};
+
+var DEFAULT_CATS = [
+  { id:"diario", name:"Menú del día", icon:"🌟" },
+  { id:"especial", name:"Especiales", icon:"⭐" },
+  { id:"combos", name:"Combos", icon:"🍱" },
+  { id:"burgers", name:"Hamburguesas", icon:"🍔" },
+  { id:"pollo", name:"Pollo", icon:"🍗" },
+  { id:"perros", name:"Perros", icon:"🌭" },
+  { id:"acomp", name:"Acompañantes", icon:"🍟" },
+  { id:"bebidas", name:"Bebidas", icon:"🥤" },
+  { id:"postres", name:"Postres", icon:"🍩" }
+];
+
+var DEFAULT_MENU = [
+  { id:"h1", cat:"burgers", name:"Hamburguesa Clásica", price:6.50, emoji:"🍔", badge:"Top",
+    img:"", desc:"Carne de res 150g, queso cheddar, lechuga, tomate y salsa de la casa.",
+    extras:[{name:"Queso extra",price:1.00},{name:"Tocineta",price:1.50},{name:"Doble carne",price:2.50}] },
+  { id:"h2", cat:"burgers", name:"Hamburguesa Doble", price:8.90, emoji:"🍔",
+    img:"", desc:"Doble carne 300g, doble queso cheddar, pepinillos y salsa especial.",
+    extras:[{name:"Tocineta",price:1.50},{name:"Huevo frito",price:1.00}] },
+  { id:"c1", cat:"combos", name:"Combo Clásico", price:9.90, emoji:"🍱", badge:"Más vendido",
+    img:"", desc:"Hamburguesa clásica + papas fritas medianas + refresco 400ml.",
+    extras:[{name:"Agrandar papas",price:1.20},{name:"Queso extra",price:1.00}] },
+  { id:"p1", cat:"pollo", name:"Alitas BBQ (8u)", price:7.50, emoji:"🍗",
+    img:"", desc:"8 alitas glaseadas en BBQ ahumado con dip de ranch.",
+    extras:[{name:"Salsa de ajo",price:0.50},{name:"Salsa picante",price:0.50}] },
+  { id:"d1", cat:"perros", name:"Perro Clásico", price:3.50, emoji:"🌭",
+    img:"", desc:"Salchicha de res, papas ralladas, queso, salsa de tomate y mostaza.",
+    extras:[{name:"Queso cheddar",price:0.80},{name:"Tocineta",price:1.20}] },
+  { id:"a1", cat:"acomp", name:"Papas Fritas", price:2.80, emoji:"🍟",
+    img:"", desc:"Papas doradas y crujientes con sal de mar.",
+    extras:[{name:"Grandes",price:1.20},{name:"Con queso fundido",price:1.50}] },
+  { id:"b1", cat:"bebidas", name:"Refresco 400ml", price:1.80, emoji:"🥤",
+    img:"", desc:"Coca-Cola, Pepsi, Sprite o Fanta bien fría.",
+    extras:[{name:"Sin hielo",price:0}] },
+  { id:"po1", cat:"postres", name:"Sundae de Helado", price:2.90, emoji:"🍦",
+    img:"", desc:"Helado de vainilla con salsa de chocolate o fresa y maní.",
+    extras:[{name:"Doble helado",price:1.30}] }
+];
+
+/* =========================================================
+   3. STORAGE LAYER
+   ========================================================= */
+var KEYS = { config:"ff_config", menu:"ff_menu", cats:"ff_cats", orders:"ff_orders" };
+
+var DB = { config: null, cats: [], menu: [], orders: [] };
+
+function migratePayments(payments){
+  if (!Array.isArray(payments)) return JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
+  return payments.map(function(p){
+    if (p.type && p.details !== undefined) return p;
+    var lbl = (p.label || "").toLowerCase();
+    var pid = (p.id || "").toLowerCase();
+    var type = "otro";
+    if (lbl.indexOf("efectivo") !== -1 || pid === "efectivo") type = "efectivo";
+    else if (lbl.indexOf("pago móvil") !== -1 || lbl.indexOf("pago movil") !== -1 || pid === "pagomovil") type = "pagomovil";
+    else if (lbl.indexOf("transfer") !== -1 || pid === "transferencia") type = "transferencia";
+    else if (lbl.indexOf("punto") !== -1 || lbl.indexOf("tarjeta") !== -1 || pid === "tarjeta") type = "tarjeta";
+    else if (lbl.indexOf("zelle") !== -1 || pid === "zelle") type = "zelle";
+    else if (lbl.indexOf("binance") !== -1 || pid === "binance") type = "binance";
+    else if (lbl.indexOf("paypal") !== -1 || pid === "paypal") type = "paypal";
+    return {
+      id: p.id || uid("pay"),
+      type: type,
+      label: p.label || PAYMENT_TYPES[type].label,
+      icon: p.icon || PAYMENT_TYPES[type].icon,
+      details: {}
+    };
+  });
+}
+
+function dbLoad() {
+  try {
+    var c = localStorage.getItem(KEYS.config);
+    DB.config = c ? JSON.parse(c) : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    if (!DB.config.payments) DB.config.payments = JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
+    DB.config.payments = migratePayments(DB.config.payments);
+    if (DB.config.logo === undefined) DB.config.logo = "";
+    localStorage.setItem(KEYS.config, JSON.stringify(DB.config));
+
+    var cc = localStorage.getItem(KEYS.cats);
+    DB.cats = cc ? JSON.parse(cc) : JSON.parse(JSON.stringify(DEFAULT_CATS));
+    if (!cc) localStorage.setItem(KEYS.cats, JSON.stringify(DB.cats));
+
+    var m = localStorage.getItem(KEYS.menu);
+    DB.menu = m ? JSON.parse(m) : JSON.parse(JSON.stringify(DEFAULT_MENU));
+    if (!m) localStorage.setItem(KEYS.menu, JSON.stringify(DB.menu));
+
+    var o = localStorage.getItem(KEYS.orders);
+    DB.orders = o ? JSON.parse(o) : [];
+  } catch(e) {
+    console.error("Error cargando datos:", e);
+    DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    DB.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+    DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+    DB.orders = [];
+  }
+}
+function dbSaveConfig() { localStorage.setItem(KEYS.config, JSON.stringify(DB.config)); }
+function dbSaveCats()   { localStorage.setItem(KEYS.cats, JSON.stringify(DB.cats)); }
+function dbSaveMenu()   { localStorage.setItem(KEYS.menu, JSON.stringify(DB.menu)); }
+function dbSaveOrders() { localStorage.setItem(KEYS.orders, JSON.stringify(DB.orders)); }
+
+/* =========================================================
+   4. HELPERS
+   ========================================================= */
+function $(s, r){ r = r || document; return r.querySelector(s); }
+function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function uid(prefix){ return (prefix || "id") + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
+function slug(str){ return String(str).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,20) || uid("cat"); }
+function getCatIcon(catId){
+  var c = DB.cats.find(function(x){ return x.id === catId; });
+  return c ? (c.icon || "🍽️") : "🍽️";
+}
+function paymentSummary(p){
+  var t = PAYMENT_TYPES[p.type] || PAYMENT_TYPES.otro;
+  var d = p.details || {};
+  var parts = [];
+  t.details.forEach(function(f){
+    if (d[f.key]) parts.push(d[f.key]);
+  });
+  return parts.length ? parts.join(" · ") : "";
+}
+
+var toastTimer;
+function toast(msg, type) {
+  var t = $("#toast");
+  t.textContent = msg;
+  t.style.background = type === "error" ? "#EF4444" : (type === "success" ? "#10B981" : "#111827");
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2500);
+}
+
+function openModal(html, opts) {
+  opts = opts || {};
+  var m = $("#modal");
+  m.innerHTML = '<div class="modal-box">' + html + '</div>';
+  m.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  m.onclick = function(e){ if (e.target === m && opts.dismissable !== false) closeModal(); };
+  var closeBtn = m.querySelector(".modal-close");
+  if (closeBtn) closeBtn.onclick = closeModal;
+}
+function closeModal() {
+  $("#modal").classList.add("hidden");
+  $("#modal").innerHTML = "";
+  document.body.style.overflow = "";
+}
+
+/* =========================================================
+   5. IMAGE HANDLING
+   ========================================================= */
+function handleImageFile(file, callback) {
+  if (!file) return;
+  if (!/^image\//.test(file.type)){ toast("El archivo no es una imagen", "error"); return; }
+  if (file.size > 15 * 1024 * 1024){ toast("La imagen es muy grande (máx 15MB)", "error"); return; }
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var maxDim = 900;
+      var w = img.width, h = img.height;
+      if (w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else if (h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      callback(dataUrl);
+    };
+    img.onerror = function(){ toast("No se pudo leer la imagen", "error"); };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* =========================================================
+   6. NAVIGATION
+   ========================================================= */
+var state = { tab: "products" };
+
+function switchTab(tab) {
+  state.tab = tab;
+  $$(".sb-nav button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === tab); });
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  var m = $("#main");
+  if (state.tab === "products") renderProducts(m);
+  else if (state.tab === "categories") renderCategories(m);
+  else if (state.tab === "business") renderBusiness(m);
+  else if (state.tab === "orders") renderOrders(m);
+  else if (state.tab === "data") renderData(m);
+  updateCounts();
+}
+
+function updateCounts() {
+  $("#cnt-products").textContent = DB.menu.length;
+  $("#cnt-categories").textContent = DB.cats.length;
+  $("#cnt-orders").textContent = DB.orders.length;
+  $("#btnViewApp").href = "BurgerApp.html";
+
+  var sbLogo = $("#sbLogo");
+  var sbName = $("#sbBrandName");
+  if (sbName) sbName.textContent = DB.config.brand || "Mi Tienda";
+  if (sbLogo) {
+    if (DB.config.logo) {
+      sbLogo.innerHTML = '<img src="' + esc(DB.config.logo) + '" alt="logo">';
+    } else {
+      sbLogo.textContent = "⚙️";
+    }
+  }
+}
+
+/* =========================================================
+   7. TAB: PRODUCTOS
+   ========================================================= */
+var pFilters = { q: "", cat: "" };
+
+function renderProducts(m) {
+  var html =
+    '<div class="page-head">' +
+      '<div>' +
+        '<h1 class="page-title">Productos</h1>' +
+        '<p class="page-sub">Administra los platos, precios, imágenes y extras del menú.</p>' +
+      '</div>' +
+      '<button class="btn btn-primary" id="btnNewProduct">＋ Nuevo producto</button>' +
+    '</div>' +
+    '<div class="p-toolbar">' +
+      '<input type="text" id="pSearch" placeholder="Buscar por nombre o descripción…" value="' + esc(pFilters.q) + '">' +
+      '<select id="pCatFilter">' +
+        '<option value="">Todas las categorías</option>' +
+        DB.cats.map(function(c){
+          return '<option value="' + esc(c.id) + '"' + (pFilters.cat === c.id ? ' selected' : '') + '>' + esc(c.icon + " " + c.name) + '</option>';
+        }).join("") +
+      '</select>' +
+    '</div>' +
+    '<div id="pContainer"></div>';
+  m.innerHTML = html;
+
+  $("#btnNewProduct").onclick = function(){ openProductEditor(null); };
+  $("#pSearch").oninput = function(e){ pFilters.q = e.target.value; renderProductList(); };
+  $("#pCatFilter").onchange = function(e){ pFilters.cat = e.target.value; renderProductList(); };
+  renderProductList();
+}
+
+function renderProductList() {
+  var cont = $("#pContainer");
+  var q = pFilters.q.trim().toLowerCase();
+  var items = DB.menu.filter(function(p){
+    if (pFilters.cat && p.cat !== pFilters.cat) return false;
+    if (q && (p.name + " " + p.desc).toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  });
+
+  if (!items.length) {
+    cont.innerHTML =
+      '<div class="empty">' +
+        '<div class="big">🍔</div>' +
+        '<h3>No hay productos</h3>' +
+        '<p>' + (q || pFilters.cat ? "Prueba con otro filtro o agrega un producto nuevo." : "Empieza agregando tu primer plato al menú.") + '</p>' +
+        '<button class="btn btn-primary" onclick="openProductEditor(null)">＋ Crear producto</button>' +
+      '</div>';
+    return;
+  }
+
+  var groups = {};
+  items.forEach(function(p){
+    if (!groups[p.cat]) groups[p.cat] = [];
+    groups[p.cat].push(p);
+  });
+
+  var html = "";
+  DB.cats.forEach(function(cat){
+    var group = groups[cat.id];
+    if (!group || !group.length) return;
+    html +=
+      '<div class="cat-section">' +
+        '<div class="cat-section-head">' +
+          '<h3>' + esc(cat.icon + " " + cat.name) + '</h3>' +
+          '<span class="count">' + group.length + '</span>' +
+        '</div>' +
+        '<div class="p-list">' +
+          group.map(productCard).join("") +
+        '</div>' +
+      '</div>';
+  });
+  cont.innerHTML = html;
+
+  cont.querySelectorAll("[data-edit]").forEach(function(b){
+    b.onclick = function(){ openProductEditor(b.dataset.edit); };
+  });
+  cont.querySelectorAll("[data-dup]").forEach(function(b){
+    b.onclick = function(){ duplicateProduct(b.dataset.dup); };
+  });
+  cont.querySelectorAll("[data-del]").forEach(function(b){
+    b.onclick = function(){ deleteProduct(b.dataset.del); };
+  });
+}
+
+function productCard(p) {
+  var img = p.img ? '<img src="' + esc(p.img) + '" alt="">' : p.emoji;
+  return '<div class="p-card">' +
+    '<div class="p-thumb">' + img + '</div>' +
+    '<div class="p-info">' +
+      '<h4>' + esc(p.name) + '</h4>' +
+      '<p>' + esc(p.desc) + '</p>' +
+      '<div class="p-meta">' +
+        '<span class="p-price">' + money(p.price) + '</span>' +
+        (p.badge ? '<span class="p-badge">' + esc(p.badge) + '</span>' : "") +
+        (p.extras && p.extras.length ? '<span style="font-size:11px;color:var(--muted)">+ ' + p.extras.length + ' extras</span>' : "") +
+      '</div>' +
+    '</div>' +
+    '<div class="p-actions">' +
+      '<button data-edit="' + esc(p.id) + '" title="Editar">✎</button>' +
+      '<button data-dup="' + esc(p.id) + '" title="Duplicar">⎘</button>' +
+      '<button data-del="' + esc(p.id) + '" class="danger" title="Eliminar">✕</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function openProductEditor(id) {
+  var p = id ? DB.menu.find(function(x){ return x.id === id; }) : null;
+  var isNew = !p;
+  if (isNew) {
+    var firstCat = DB.cats[0] ? DB.cats[0].id : "";
+    p = {
+      id: uid("p"),
+      cat: firstCat,
+      name: "",
+      price: 0,
+      emoji: getCatIcon(firstCat),
+      badge: "",
+      img: "",
+      desc: "",
+      extras: []
+    };
+  }
+  var temp = JSON.parse(JSON.stringify(p));
+  var emojiTouched = false;
+
+  var catOptions = DB.cats.map(function(c){
+    return '<option value="' + esc(c.id) + '" data-icon="' + esc(c.icon) + '"' + (temp.cat === c.id ? ' selected' : '') + '>' + esc(c.icon + " " + c.name) + '</option>';
+  }).join("");
+
+  var html =
+    '<div class="modal-head">' +
+      '<h2>' + (isNew ? "Nuevo producto" : "Editar producto") + '</h2>' +
+      '<button class="modal-close">✕</button>' +
+    '</div>' +
+    '<div class="modal-body">' +
+      '<div class="field">' +
+        '<label>Imagen del plato</label>' +
+        '<div class="img-picker' + (temp.img ? ' has-image' : '') + '" id="imgPicker">' +
+          '<input type="file" accept="image/*" id="imgFile">' +
+          (temp.img
+            ? '<img src="' + esc(temp.img) + '" id="imgPreview"><div class="overlay">Cambiar imagen</div>'
+            : '<div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>') +
+        '</div>' +
+        '<div class="img-actions">' +
+          '<button class="btn btn-ghost btn-sm" id="btnImgUpload">📁 Subir desde dispositivo</button>' +
+          '<button class="btn btn-ghost btn-sm" id="btnImgUrl">🔗 Usar URL</button>' +
+          (temp.img ? '<button class="btn btn-danger btn-sm" id="btnImgClear">🗑️</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<div class="field"><label>Categoría</label><select id="fCat">' + catOptions + '</select></div>' +
+        '<div class="field">' +
+          '<label>Emoji (fallback)</label>' +
+          '<div class="emoji-field" id="emojiField" data-emoji="' + esc(temp.emoji) + '">' +
+            '<input type="text" id="fEmoji" value="' + esc(temp.emoji) + '" maxlength="4" placeholder="🍔">' +
+          '</div>' +
+          '<div class="hint" id="emojiHint">Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.</div>' +
+        '</div>' +
+        '<div class="field full"><label>Nombre *</label><input type="text" id="fName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesa Clásica"></div>' +
+        '<div class="field full"><label>Descripción</label><textarea id="fDesc" placeholder="Ingredientes, tamaño, etc.">' + esc(temp.desc) + '</textarea></div>' +
+        '<div class="field"><label>Precio *</label><input type="number" id="fPrice" value="' + Number(temp.price) + '" step="0.01" min="0" placeholder="0.00"></div>' +
+        '<div class="field"><label>Badge (opcional)</label><input type="text" id="fBadge" value="' + esc(temp.badge || "") + '" placeholder="Ej: Nuevo, Top, Chef" maxlength="15"></div>' +
+        '<div class="field full">' +
+          '<label>Extras / Opciones personalizables</label>' +
+          '<div class="extras-list" id="extrasList"></div>' +
+          '<button class="btn btn-ghost btn-sm" id="btnAddExtra">＋ Agregar extra</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-ghost" id="btnCancelProduct">Cancelar</button>' +
+      '<button class="btn btn-primary" id="btnSaveProduct">' + (isNew ? "Crear producto" : "Guardar cambios") + '</button>' +
+    '</div>';
+
+  openModal(html);
+
+  var emojiInput = $("#fEmoji");
+  var emojiField = $("#emojiField");
+  var emojiHint = $("#emojiHint");
+  var catSelect = $("#fCat");
+
+  function syncEmojiPreview(){
+    emojiField.dataset.emoji = emojiInput.value.trim() || "🍔";
+  }
+  function updateEmojiFromCategory(animate){
+    var opt = catSelect.options[catSelect.selectedIndex];
+    if (!opt) return;
+    var icon = opt.dataset.icon || "🍽️";
+    emojiInput.value = icon;
+    syncEmojiPreview();
+    if (animate) {
+      emojiField.style.transition = "transform .25s cubic-bezier(.2,.9,.3,1)";
+      emojiField.style.transform = "scale(1.08)";
+      setTimeout(function(){ emojiField.style.transform = "scale(1)"; }, 220);
+    }
+  }
+  emojiInput.addEventListener("input", function(){
+    emojiTouched = true;
+    emojiHint.textContent = "Emoji personalizado. No se sincronizará con la categoría.";
+    emojiHint.style.color = "var(--brand-d)";
+    syncEmojiPreview();
+  });
+  catSelect.addEventListener("change", function(){
+    if (!emojiTouched) {
+      updateEmojiFromCategory(true);
+      emojiHint.textContent = "Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.";
+      emojiHint.style.color = "var(--muted)";
+    } else {
+      emojiHint.textContent = "Emoji personalizado. No se sincronizará con la categoría.";
+      emojiHint.style.color = "var(--brand-d)";
+    }
+  });
+  syncEmojiPreview();
+
+  var picker = $("#imgPicker");
+  var fileInput = $("#imgFile");
+  function bindFileInput() {
+    fileInput.onchange = function(e){
+      var f = e.target.files[0];
+      if (!f) return;
+      handleImageFile(f, function(dataUrl){
+        temp.img = dataUrl;
+        picker.classList.add("has-image");
+        picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><img src="' + dataUrl + '"><div class="overlay">Cambiar imagen</div>';
+        fileInput = $("#imgFile");
+        bindFileInput();
+        ensureClearButton();
+        toast("✅ Imagen cargada");
+      });
+    };
+  }
+  function ensureClearButton() {
+    if ($("#btnImgClear")) return;
+    var btn = document.createElement("button");
+    btn.className = "btn btn-danger btn-sm";
+    btn.id = "btnImgClear";
+    btn.textContent = "🗑️";
+    btn.onclick = function(){
+      temp.img = "";
+      picker.classList.remove("has-image");
+      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>';
+      fileInput = $("#imgFile");
+      bindFileInput();
+      btn.remove();
+    };
+    $(".img-actions").appendChild(btn);
+  }
+  picker.onclick = function(){ fileInput.click(); };
+  $("#btnImgUpload").onclick = function(e){ e.stopPropagation(); fileInput.click(); };
+  bindFileInput();
+
+  $("#btnImgUrl").onclick = function(){
+    var url = prompt("Pega la URL de la imagen:");
+    if (!url) return;
+    temp.img = url;
+    picker.classList.add("has-image");
+    picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><img src="' + esc(url) + '"><div class="overlay">Cambiar imagen</div>';
+    fileInput = $("#imgFile");
+    bindFileInput();
+    ensureClearButton();
+  };
+  var clearBtnInit = $("#btnImgClear");
+  if (clearBtnInit) {
+    clearBtnInit.onclick = function(){
+      temp.img = "";
+      picker.classList.remove("has-image");
+      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>';
+      fileInput = $("#imgFile");
+      bindFileInput();
+      clearBtnInit.remove();
+    };
+  }
+
+  function renderExtras() {
+    var list = $("#extrasList");
+    if (!temp.extras.length) {
+      list.innerHTML = '<div style="padding:12px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);text-align:center">Sin extras. Agrega queso, tocineta, etc.</div>';
+      return;
+    }
+    list.innerHTML = temp.extras.map(function(e, i){
+      return '<div class="extra-row">' +
+        '<input type="text" value="' + esc(e.name) + '" placeholder="Nombre del extra" data-ext-name="' + i + '">' +
+        '<input type="number" value="' + Number(e.price) + '" step="0.01" min="-10" placeholder="0.00" data-ext-price="' + i + '">' +
+        '<button data-ext-del="' + i + '" title="Eliminar">✕</button>' +
+      '</div>';
+    }).join("");
+    list.querySelectorAll("[data-ext-name]").forEach(function(inp){
+      inp.oninput = function(){ temp.extras[Number(inp.dataset.extName)].name = inp.value; };
+    });
+    list.querySelectorAll("[data-ext-price]").forEach(function(inp){
+      inp.oninput = function(){ temp.extras[Number(inp.dataset.extPrice)].price = parseFloat(inp.value) || 0; };
+    });
+    list.querySelectorAll("[data-ext-del]").forEach(function(b){
+      b.onclick = function(){ temp.extras.splice(Number(b.dataset.extDel), 1); renderExtras(); };
+    });
+  }
+  renderExtras();
+  $("#btnAddExtra").onclick = function(){
+    temp.extras.push({ name: "", price: 0 });
+    renderExtras();
+    var rows = $("#extrasList").querySelectorAll(".extra-row");
+    if (rows.length) rows[rows.length - 1].querySelector("input").focus();
+  };
+
+  $("#btnCancelProduct").onclick = closeModal;
+  $("#btnSaveProduct").onclick = function(){
+    temp.name = $("#fName").value.trim();
+    temp.desc = $("#fDesc").value.trim();
+    temp.emoji = $("#fEmoji").value.trim() || "🍔";
+    temp.price = parseFloat($("#fPrice").value) || 0;
+    temp.cat = $("#fCat").value;
+    temp.badge = $("#fBadge").value.trim();
+
+    if (!temp.name){ toast("El nombre es obligatorio", "error"); return; }
+    if (!temp.cat){ toast("Selecciona una categoría", "error"); return; }
+
+    temp.extras = temp.extras.filter(function(e){ return e.name.trim(); });
+
+    if (isNew) {
+      DB.menu.push(temp);
+    } else {
+      var idx = DB.menu.findIndex(function(x){ return x.id === temp.id; });
+      if (idx !== -1) DB.menu[idx] = temp;
+    }
+    dbSaveMenu();
+    closeModal();
+    toast(isNew ? "✅ Producto creado" : "✅ Cambios guardados");
+    render();
+  };
+}
+
+function duplicateProduct(id) {
+  var p = DB.menu.find(function(x){ return x.id === id; });
+  if (!p) return;
+  var copy = JSON.parse(JSON.stringify(p));
+  copy.id = uid("p");
+  copy.name = p.name + " (copia)";
+  DB.menu.push(copy);
+  dbSaveMenu();
+  toast("⎘ Producto duplicado");
+  render();
+}
+
+function deleteProduct(id) {
+  var p = DB.menu.find(function(x){ return x.id === id; });
+  if (!p) return;
+  if (!confirm('¿Eliminar "' + p.name + '"?\n\nEsta acción no se puede deshacer.')) return;
+  DB.menu = DB.menu.filter(function(x){ return x.id !== id; });
+  dbSaveMenu();
+  toast("Producto eliminado");
+  render();
+}
+
+/* =========================================================
+   8. TAB: CATEGORÍAS
+   ========================================================= */
+function renderCategories(m) {
+  var html =
+    '<div class="page-head">' +
+      '<div>' +
+        '<h1 class="page-title">Categorías</h1>' +
+        '<p class="page-sub">Organiza los productos en grupos que se muestran en la app del cliente.</p>' +
+      '</div>' +
+      '<button class="btn btn-primary" id="btnNewCat">＋ Nueva categoría</button>' +
+    '</div>' +
+    '<div class="cat-list">' +
+      DB.cats.map(function(c){
+        var count = DB.menu.filter(function(p){ return p.cat === c.id; }).length;
+        return '<div class="cat-row">' +
+          '<div class="cat-icon">' + esc(c.icon) + '</div>' +
+          '<div class="cat-info">' +
+            '<h4>' + esc(c.name) + '</h4>' +
+            '<p>' + esc(c.id) + '</p>' +
+          '</div>' +
+          '<span class="cat-count">' + count + ' prod.</span>' +
+          '<div class="cat-actions">' +
+            '<button data-edit="' + esc(c.id) + '" title="Editar">✎</button>' +
+            '<button data-del="' + esc(c.id) + '" class="danger" title="Eliminar">✕</button>' +
+          '</div>' +
+        '</div>';
+      }).join("") +
+    '</div>';
+  m.innerHTML = html;
+
+  $("#btnNewCat").onclick = function(){ openCatEditor(null); };
+  m.querySelectorAll("[data-edit]").forEach(function(b){
+    b.onclick = function(){ openCatEditor(b.dataset.edit); };
+  });
+  m.querySelectorAll("[data-del]").forEach(function(b){
+    b.onclick = function(){ deleteCategory(b.dataset.del); };
+  });
+}
+
+function openCatEditor(id) {
+  var c = id ? DB.cats.find(function(x){ return x.id === id; }) : null;
+  var isNew = !c;
+  if (isNew) c = { id: "", name: "", icon: "🍽️" };
+  var temp = { id: c.id, name: c.name, icon: c.icon };
+
+  var html =
+    '<div class="modal-head">' +
+      '<h2>' + (isNew ? "Nueva categoría" : "Editar categoría") + '</h2>' +
+      '<button class="modal-close">✕</button>' +
+    '</div>' +
+    '<div class="modal-body">' +
+      '<div class="form-grid">' +
+        '<div class="field"><label>Emoji / Ícono</label><input type="text" id="cIcon" value="' + esc(temp.icon) + '" maxlength="4" placeholder="🍔"></div>' +
+        '<div class="field"><label>Nombre *</label><input type="text" id="cName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesas"></div>' +
+        '<div class="field full"><label>ID (identificador interno)</label><input type="text" id="cId" value="' + esc(temp.id) + '" placeholder="burgers" ' + (!isNew ? 'disabled style="background:var(--surface-2);color:var(--muted)"' : '') + '><div class="hint">Solo minúsculas, números y guiones. No se puede cambiar después.</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-ghost" id="btnCancelCat">Cancelar</button>' +
+      '<button class="btn btn-primary" id="btnSaveCat">' + (isNew ? "Crear categoría" : "Guardar cambios") + '</button>' +
+    '</div>';
+
+  openModal(html);
+
+  $("#btnCancelCat").onclick = closeModal;
+  $("#btnSaveCat").onclick = function(){
+    temp.name = $("#cName").value.trim();
+    temp.icon = $("#cIcon").value.trim() || "🍽️";
+    if (isNew) temp.id = slug($("#cId").value.trim() || temp.name);
+
+    if (!temp.name){ toast("El nombre es obligatorio", "error"); return; }
+    if (!temp.id){ toast("El ID es obligatorio", "error"); return; }
+
+    if (isNew) {
+      if (DB.cats.some(function(x){ return x.id === temp.id; })){
+        toast("Ya existe una categoría con ese ID", "error"); return;
+      }
+      DB.cats.push(temp);
+    } else {
+      var idx = DB.cats.findIndex(function(x){ return x.id === temp.id; });
+      if (idx !== -1) DB.cats[idx] = temp;
+      DB.menu.forEach(function(p){
+        if (p.cat === temp.id){
+          if (!p.emoji || p.emoji === c.icon){
+            p.emoji = temp.icon;
+          }
+        }
+      });
+      dbSaveMenu();
+    }
+    dbSaveCats();
+    closeModal();
+    toast(isNew ? "✅ Categoría creada" : "✅ Cambios guardados");
+    render();
+  };
+}
+
+function deleteCategory(id) {
+  var c = DB.cats.find(function(x){ return x.id === id; });
+  if (!c) return;
+  var count = DB.menu.filter(function(p){ return p.cat === id; }).length;
+  var msg = '¿Eliminar la categoría "' + c.name + '"?';
+  if (count > 0) msg += '\n\n⚠️ Hay ' + count + ' producto(s) en esta categoría. También se eliminarán.';
+  if (!confirm(msg)) return;
+
+  DB.cats = DB.cats.filter(function(x){ return x.id !== id; });
+  DB.menu = DB.menu.filter(function(p){ return p.cat !== id; });
+  dbSaveCats(); dbSaveMenu();
+  toast("Categoría eliminada");
+  render();
+}
+
+/* =========================================================
+   9. TAB: NEGOCIO (LOGO + INFO + PAYMENTS)
+   ========================================================= */
+function renderBusiness(m) {
+  var c = DB.config;
+  var html =
+    '<div class="page-head">' +
+      '<div>' +
+        '<h1 class="page-title">Negocio</h1>' +
+        '<p class="page-sub">Configura los datos generales que verá el cliente en la app.</p>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card" style="margin-bottom:20px"><div class="card-body">' +
+      '<div class="card-title">Logo de la empresa</div>' +
+      '<div class="card-desc">Aparece en el header de la app del cliente. Si no subes uno, se usa el ícono por defecto 🍔.</div>' +
+      '<div class="logo-block">' +
+        '<div class="logo-picker' + (c.logo ? ' has-image' : '') + '" id="logoPicker">' +
+          '<input type="file" accept="image/*" id="logoFile">' +
+          (c.logo
+            ? '<img src="' + esc(c.logo) + '" id="logoPreview"><div class="overlay">Cambiar</div>'
+            : '<div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>') +
+        '</div>' +
+        '<div class="logo-info">' +
+          '<h4>Tu marca, tu identidad</h4>' +
+          '<p>Recomendado: imagen cuadrada, mínimo 200×200px, PNG con fondo transparente o color plano. Se optimizará automáticamente.</p>' +
+          '<div class="logo-btns">' +
+            '<button class="btn btn-ghost btn-sm" id="btnLogoUpload">📁 Subir imagen</button>' +
+            '<button class="btn btn-ghost btn-sm" id="btnLogoUrl">🔗 Usar URL</button>' +
+            (c.logo ? '<button class="btn btn-danger btn-sm" id="btnLogoClear">🗑️ Quitar</button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div></div>' +
+
+    '<div class="card"><div class="card-body">' +
+      '<div class="card-title">Información de la tienda</div>' +
+      '<div class="card-desc">Estos datos aparecen en el header, WhatsApp y página de ayuda.</div>' +
+      '<div class="form-grid">' +
+        '<div class="field full"><label>Nombre del negocio *</label><input type="text" id="bBrand" value="' + esc(c.brand) + '"></div>' +
+        '<div class="field"><label>WhatsApp (sin +, con código país) *</label><input type="text" id="bWhatsapp" value="' + esc(c.whatsapp) + '" placeholder="584121234567"><div class="hint">Ej: 58 (Venezuela) + 4121234567</div></div>' +
+        '<div class="field"><label>Teléfono para llamar</label><input type="text" id="bPhone" value="' + esc(c.phoneCall) + '" placeholder="+584121234567"></div>' +
+        '<div class="field full"><label>URL de Google Maps</label><input type="text" id="bMaps" value="' + esc(c.mapsUrl) + '"></div>' +
+        '<div class="field"><label>Símbolo de moneda</label><input type="text" id="bCurrency" value="' + esc(c.currency) + '" maxlength="3" placeholder="$"></div>' +
+        '<div class="field"><label>Texto de horario (ayuda)</label><input type="text" id="bHoursText" value="' + esc(c.helpHoursText) + '"></div>' +
+      '</div>' +
+    '</div></div>' +
+
+    '<div class="card" style="margin-top:20px"><div class="card-body">' +
+      '<div class="card-title">Delivery y horarios</div>' +
+      '<div class="card-desc">Define el costo de envío y las horas de apertura.</div>' +
+      '<div class="form-grid">' +
+        '<div class="field"><label>Costo de delivery</label><input type="number" id="bFee" value="' + Number(c.deliveryFee) + '" step="0.01" min="0"></div>' +
+        '<div class="field"><label>Envío gratis desde</label><input type="number" id="bFreeFrom" value="' + Number(c.freeDeliveryFrom) + '" step="0.01" min="0"><div class="hint">Pon 0 para desactivar</div></div>' +
+        '<div class="field"><label>Hora de apertura (0-23)</label><input type="number" id="bOpen" value="' + Number(c.hours.open) + '" min="0" max="23"></div>' +
+        '<div class="field"><label>Hora de cierre (0-23)</label><input type="number" id="bClose" value="' + Number(c.hours.close) + '" min="0" max="23"></div>' +
+      '</div>' +
+    '</div></div>' +
+
+    '<div class="card" style="margin-top:20px"><div class="card-body">' +
+      '<div class="card-title">Métodos de pago</div>' +
+      '<div class="card-desc">Los clientes verán estos métodos al finalizar el pedido, con los datos que configures aquí.</div>' +
+      '<div class="pay-list" id="payList"></div>' +
+      '<button class="btn btn-ghost btn-sm" id="btnAddPay" style="margin-top:14px">＋ Agregar método de pago</button>' +
+    '</div></div>' +
+
+    '<div style="margin-top:24px;display:flex;gap:10px;justify-content:flex-end">' +
+      '<button class="btn btn-ghost" id="btnResetBusiness">Restaurar valores</button>' +
+      '<button class="btn btn-primary" id="btnSaveBusiness">💾 Guardar cambios</button>' +
+    '</div>';
+  m.innerHTML = html;
+
+  var logoPicker = $("#logoPicker");
+  var logoFile = $("#logoFile");
+  function bindLogoFile(){
+    logoFile.onchange = function(e){
+      var f = e.target.files[0];
+      if (!f) return;
+      handleImageFile(f, function(dataUrl){
+        DB.config.logo = dataUrl;
+        dbSaveConfig();
+        logoPicker.classList.add("has-image");
+        logoPicker.innerHTML = '<input type="file" accept="image/*" id="logoFile"><img src="' + dataUrl + '"><div class="overlay">Cambiar</div>';
+        logoFile = $("#logoFile");
+        bindLogoFile();
+        ensureLogoClear();
+        updateCounts();
+        toast("✅ Logo cargado");
+      });
+    };
+  }
+  function ensureLogoClear(){
+    if ($("#btnLogoClear")) return;
+    var btn = document.createElement("button");
+    btn.className = "btn btn-danger btn-sm";
+    btn.id = "btnLogoClear";
+    btn.textContent = "🗑️ Quitar";
+    btn.onclick = function(){
+      DB.config.logo = "";
+      dbSaveConfig();
+      logoPicker.classList.remove("has-image");
+      logoPicker.innerHTML = '<input type="file" accept="image/*" id="logoFile"><div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>';
+      logoFile = $("#logoFile");
+      bindLogoFile();
+      btn.remove();
+      updateCounts();
+      toast("Logo eliminado");
+    };
+    $(".logo-btns").appendChild(btn);
+  }
+  logoPicker.onclick = function(){ logoFile.click(); };
+  $("#btnLogoUpload").onclick = function(e){ e.stopPropagation(); logoFile.click(); };
+  bindLogoFile();
+
+  $("#btnLogoUrl").onclick = function(){
+    var url = prompt("Pega la URL de tu logo:");
+    if (!url) return;
+    DB.config.logo = url;
+    dbSaveConfig();
+    logoPicker.classList.add("has-image");
+    logoPicker.innerHTML = '<input type="file" accept="image/*" id="logoFile"><img src="' + esc(url) + '"><div class="overlay">Cambiar</div>';
+    logoFile = $("#logoFile");
+    bindLogoFile();
+    ensureLogoClear();
+    updateCounts();
+  };
+  var existingClear = $("#btnLogoClear");
+  if (existingClear) {
+    existingClear.onclick = function(){
+      DB.config.logo = "";
+      dbSaveConfig();
+      logoPicker.classList.remove("has-image");
+      logoPicker.innerHTML = '<input type="file" accept="image/*" id="logoFile"><div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>';
+      logoFile = $("#logoFile");
+      bindLogoFile();
+      existingClear.remove();
+      updateCounts();
+      toast("Logo eliminado");
+    };
+  }
+
+  renderPaymentsList();
+  $("#btnAddPay").onclick = function(){ openPaymentEditor(null); };
+
+  function renderPaymentsList() {
+    var list = $("#payList");
+    if (!DB.config.payments.length) {
+      list.innerHTML = '<div style="padding:16px;background:var(--surface-2);border-radius:12px;font-size:13px;color:var(--muted);text-align:center">Sin métodos de pago configurados. Agrega uno para que tus clientes puedan pagar.</div>';
+      return;
+    }
+    list.innerHTML = DB.config.payments.map(function(p){
+      var summary = paymentSummary(p);
+      return '<div class="pay-item">' +
+        '<div class="pay-icon">' + esc(p.icon || "💳") + '</div>' +
+        '<div class="pay-body">' +
+          '<h4>' + esc(p.label || "Método de pago") + '</h4>' +
+          (summary ? '<p>' + esc(summary) + '</p>' : '<p class="empty">Sin información adicional</p>') +
+        '</div>' +
+        '<div class="pay-actions">' +
+          '<button data-pay-edit="' + esc(p.id) + '" title="Editar">✎</button>' +
+          '<button data-pay-del="' + esc(p.id) + '" class="danger" title="Eliminar">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+    list.querySelectorAll("[data-pay-edit]").forEach(function(b){
+      b.onclick = function(){ openPaymentEditor(b.dataset.payEdit); };
+    });
+    list.querySelectorAll("[data-pay-del]").forEach(function(b){
+      b.onclick = function(){ deletePayment(b.dataset.payDel); };
+    });
+  }
+
+  function openPaymentEditor(payId) {
+    var p = payId ? DB.config.payments.find(function(x){ return x.id === payId; }) : null;
+    var isNew = !p;
+    if (isNew) {
+      p = { id: uid("pay"), type: "efectivo", label: "Efectivo", icon: "💵", details: {} };
+    }
+    var temp = JSON.parse(JSON.stringify(p));
+    var selectedType = temp.type || "efectivo";
+
+    function typeButtonsHTML(active){
+      return Object.keys(PAYMENT_TYPES).map(function(k){
+        var t = PAYMENT_TYPES[k];
+        return '<button class="pay-type-btn' + (k === active ? ' active' : '') + '" data-pay-type="' + esc(k) + '">' +
+          '<span class="icon">' + t.icon + '</span>' + esc(t.label) +
+        '</button>';
+      }).join("");
+    }
+
+    function detailsHTML(type, details){
+      var t = PAYMENT_TYPES[type];
+      if (!t || !t.details.length){
+        return '<div class="pay-detail-section">' +
+          '<h4>Sin información adicional</h4>' +
+          '<div class="hint">Este método de pago no requiere datos extra. El cliente coordinará directamente contigo.</div>' +
+        '</div>';
+      }
+      return '<div class="pay-detail-section">' +
+        '<h4>Datos para el cliente</h4>' +
+        '<div class="hint">Esta información se mostrará al cliente cuando seleccione este método de pago.</div>' +
+        '<div class="form-grid">' +
+          t.details.map(function(f){
+            var val = (details && details[f.key]) || "";
+            if (f.type === "textarea"){
+              return '<div class="field full"><label>' + esc(f.label) + '</label><textarea data-detail-key="' + esc(f.key) + '" placeholder="' + esc(f.placeholder) + '">' + esc(val) + '</textarea></div>';
+            }
+            return '<div class="field"><label>' + esc(f.label) + '</label><input type="' + esc(f.type || "text") + '" data-detail-key="' + esc(f.key) + '" value="' + esc(val) + '" placeholder="' + esc(f.placeholder) + '"></div>';
+          }).join("") +
+        '</div>' +
+      '</div>';
+    }
+
+    var html =
+      '<div class="modal-head">' +
+        '<h2>' + (isNew ? "Nuevo método de pago" : "Editar método de pago") + '</h2>' +
+        '<button class="modal-close">✕</button>' +
+      '</div>' +
+      '<div class="modal-body">' +
+        '<div class="field">' +
+          '<label>Tipo de pago</label>' +
+          '<div class="pay-type-grid" id="payTypeGrid">' + typeButtonsHTML(selectedType) + '</div>' +
+        '</div>' +
+        '<div class="form-grid">' +
+          '<div class="field"><label>Nombre visible</label><input type="text" id="payLabel" value="' + esc(temp.label) + '" placeholder="Ej: Pago Móvil"></div>' +
+          '<div class="field"><label>Ícono (emoji)</label><input type="text" id="payIcon" value="' + esc(temp.icon) + '" maxlength="4" placeholder="💳"></div>' +
+        '</div>' +
+        '<div id="payDetailsContainer">' + detailsHTML(selectedType, temp.details) + '</div>' +
+      '</div>' +
+      '<div class="modal-foot">' +
+        '<button class="btn btn-ghost" id="btnPayCancel">Cancelar</button>' +
+        '<button class="btn btn-primary" id="btnPaySave">' + (isNew ? "Agregar método" : "Guardar cambios") + '</button>' +
+      '</div>';
+
+    openModal(html);
+
+    $("#payTypeGrid").addEventListener("click", function(e){
+      var btn = e.target.closest("[data-pay-type]");
+      if (!btn) return;
+      var type = btn.dataset.payType;
+      var t = PAYMENT_TYPES[type];
+      if (!t) return;
+      selectedType = type;
+      $$("#payTypeGrid .pay-type-btn").forEach(function(b){
+        b.classList.toggle("active", b.dataset.payType === type);
+      });
+      $("#payLabel").value = t.label;
+      $("#payIcon").value = t.icon;
+      $("#payDetailsContainer").innerHTML = detailsHTML(type, {});
+    });
+
+    $("#btnPayCancel").onclick = closeModal;
+    $("#btnPaySave").onclick = function(){
+      var label = $("#payLabel").value.trim();
+      var icon = $("#payIcon").value.trim() || "💳";
+      if (!label){ toast("El nombre visible es obligatorio", "error"); return; }
+
+      var details = {};
+      $$("#payDetailsContainer [data-detail-key]").forEach(function(inp){
+        var v = inp.value.trim();
+        if (v) details[inp.dataset.detailKey] = v;
+      });
+
+      var newPay = {
+        id: temp.id,
+        type: selectedType,
+        label: label,
+        icon: icon,
+        details: details
+      };
+
+      if (isNew) {
+        DB.config.payments.push(newPay);
+      } else {
+        var idx = DB.config.payments.findIndex(function(x){ return x.id === temp.id; });
+        if (idx !== -1) DB.config.payments[idx] = newPay;
+      }
+      dbSaveConfig();
+      closeModal();
+      toast(isNew ? "✅ Método agregado" : "✅ Cambios guardados");
+      renderPaymentsList();
+    };
+  }
+
+  function deletePayment(payId) {
+    var p = DB.config.payments.find(function(x){ return x.id === payId; });
+    if (!p) return;
+    if (!confirm('¿Eliminar el método "' + (p.label || "sin nombre") + '"?')) return;
+    DB.config.payments = DB.config.payments.filter(function(x){ return x.id !== payId; });
+    dbSaveConfig();
+    toast("Método eliminado");
+    renderPaymentsList();
+  }
+
+  $("#btnResetBusiness").onclick = function(){
+    if (!confirm("¿Restaurar los valores de configuración a los predeterminados? (El logo también se eliminará)")) return;
+    DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    dbSaveConfig();
+    toast("Configuración restaurada");
+    render();
+  };
+
+  $("#btnSaveBusiness").onclick = function(){
+    DB.config.brand = $("#bBrand").value.trim() || "Mi Tienda";
+    DB.config.whatsapp = $("#bWhatsapp").value.replace(/\D/g,"");
+    DB.config.phoneCall = $("#bPhone").value.trim();
+    DB.config.mapsUrl = $("#bMaps").value.trim();
+    DB.config.currency = $("#bCurrency").value.trim() || "$";
+    DB.config.helpHoursText = $("#bHoursText").value.trim();
+    DB.config.deliveryFee = parseFloat($("#bFee").value) || 0;
+    DB.config.freeDeliveryFrom = parseFloat($("#bFreeFrom").value) || 0;
+    DB.config.hours.open = parseInt($("#bOpen").value, 10) || 0;
+    DB.config.hours.close = parseInt($("#bClose").value, 10) || 23;
+
+    if (!DB.config.whatsapp){ toast("El WhatsApp es obligatorio", "error"); return; }
+
+    dbSaveConfig();
+    toast("✅ Cambios guardados");
+    updateCounts();
+  };
+}
+
+/* =========================================================
+   10. TAB: PEDIDOS
+   ========================================================= */
+function renderOrders(m) {
+  var html =
+    '<div class="page-head">' +
+      '<div>' +
+        '<h1 class="page-title">Pedidos</h1>' +
+        '<p class="page-sub">Todos los pedidos que han llegado por la app del cliente.</p>' +
+      '</div>' +
+      (DB.orders.length ? '<button class="btn btn-danger" id="btnClearOrders">🗑️ Borrar historial</button>' : '') +
+    '</div>';
+
+  if (!DB.orders.length) {
+    html +=
+      '<div class="empty">' +
+        '<div class="big">🧾</div>' +
+        '<h3>Sin pedidos todavía</h3>' +
+        '<p>Cuando un cliente confirme un pedido desde la app, aparecerá aquí automáticamente.</p>' +
+      '</div>';
+    m.innerHTML = html;
+    return;
+  }
+
+  html += '<div class="order-list">' + DB.orders.map(orderCard).join("") + '</div>';
+  m.innerHTML = html;
+
+  $("#btnClearOrders").onclick = function(){
+    if (!confirm("¿Borrar todo el historial de pedidos? Esta acción no se puede deshacer.")) return;
+    DB.orders = [];
+    dbSaveOrders();
+    toast("Historial borrado");
+    render();
+  };
+}
+
+function orderCard(o) {
+  var d = new Date(o.createdAt);
+  var fecha = d.toLocaleString("es-VE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  return '<div class="order-card">' +
+    '<div class="order-head">' +
+      '<span class="order-code">' + esc(o.code) + '</span>' +
+      '<span class="order-status">' + esc(o.status || "recibido") + '</span>' +
+      '<span class="order-date">' + esc(fecha) + '</span>' +
+    '</div>' +
+    '<div class="order-customer">' +
+      '<b>' + esc(o.customer.name) + '</b> · ' + esc(o.customer.phone) + '<br>' +
+      (o.type === "delivery" ? "🛵 Delivery · " + esc(o.customer.address || "") : "🏪 Retiro en tienda") +
+      (o.customer.notes ? '<br>📝 ' + esc(o.customer.notes) : "") +
+      '<br>💳 ' + esc(o.payment) +
+    '</div>' +
+    '<div class="order-items">' +
+      o.items.map(function(it){
+        return '<div class="item"><span>' + it.qty + '× ' + esc(it.name) + (it.extras && it.extras.length ? ' <span style="color:var(--muted)">(+' + it.extras.map(function(e){ return esc(e.name); }).join(", ") + ')</span>' : "") + '</span><span>' + money(it.unit * it.qty) + '</span></div>';
+      }).join("") +
+      (o.type === "delivery" && o.delivery > 0 ? '<div class="item" style="color:var(--muted)"><span>Delivery</span><span>' + money(o.delivery) + '</span></div>' : "") +
+      '<div class="order-total"><span>Total</span><span>' + money(o.total) + '</span></div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* =========================================================
+   11. TAB: DATOS
+   ========================================================= */
+function renderData(m) {
+  var totalBytes = 0;
+  [KEYS.config, KEYS.cats, KEYS.menu, KEYS.orders].forEach(function(k){
+    var v = localStorage.getItem(k);
+    if (v) totalBytes += v.length * 2;
+  });
+  var usedKB = (totalBytes / 1024).toFixed(1);
+  var maxKB = 5120;
+  var pct = Math.min(100, (totalBytes / 1024 / maxKB) * 100);
+
+  var html =
+    '<div class="page-head">' +
+      '<div>' +
+        '<h1 class="page-title">Datos</h1>' +
+        '<p class="page-sub">Exporta, importa o restaura la configuración completa de la app.</p>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card"><div class="card-body">' +
+      '<div class="card-title">Uso de almacenamiento</div>' +
+      '<div class="card-desc">Las imágenes se guardan comprimidas en el navegador. Si llegas al límite, exporta un respaldo y limpia imágenes.</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">' +
+        '<span style="color:var(--muted)">' + usedKB + ' KB usados</span>' +
+        '<span style="color:var(--muted)">de ~' + maxKB + ' KB</span>' +
+      '</div>' +
+      '<div class="storage-bar"><i style="width:' + pct + '%"></i></div>' +
+    '</div></div>' +
+
+    '<div class="data-actions">' +
+      '<button class="btn btn-primary" id="btnExport">⬇️ Exportar respaldo (.json)</button>' +
+      '<button class="btn btn-ghost" id="btnImport">⬆️ Importar desde archivo</button>' +
+      '<button class="btn btn-ghost" id="btnSeed">🌱 Cargar datos de ejemplo</button>' +
+      '<button class="btn btn-danger" id="btnResetAll">⚠️ Restaurar todo</button>' +
+    '</div>' +
+
+    '<input type="file" id="importFile" accept=".json,application/json" style="display:none">';
+
+  m.innerHTML = html;
+
+  $("#btnExport").onclick = function(){
+    var data = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      config: DB.config,
+      cats: DB.cats,
+      menu: DB.menu,
+      orders: DB.orders
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "burguer-backup-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("✅ Respaldo descargado");
+  };
+
+  $("#btnImport").onclick = function(){ $("#importFile").click(); };
+  $("#importFile").onchange = function(e){
+    var f = e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        var data = JSON.parse(ev.target.result);
+        if (!data.config || !data.menu || !data.cats){
+          toast("Archivo inválido: faltan campos", "error"); return;
+        }
+        if (!confirm("Esto reemplazará TODOS los datos actuales.\n\n¿Continuar?")) return;
+        DB.config = data.config;
+        if (!DB.config.payments) DB.config.payments = JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
+        DB.config.payments = migratePayments(DB.config.payments);
+        if (DB.config.logo === undefined) DB.config.logo = "";
+        DB.cats = data.cats;
+        DB.menu = data.menu;
+        DB.orders = data.orders || [];
+        dbSaveConfig(); dbSaveCats(); dbSaveMenu(); dbSaveOrders();
+        toast("✅ Datos importados");
+        render();
+      } catch(err) {
+        toast("Error leyendo el archivo: " + err.message, "error");
+      }
+    };
+    reader.readAsText(f);
+  };
+
+  $("#btnSeed").onclick = function(){
+    if (!confirm("Esto reemplazará los datos actuales con los de ejemplo.\n\n¿Continuar?")) return;
+    DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    DB.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+    DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+    dbSaveConfig(); dbSaveCats(); dbSaveMenu();
+    toast("🌱 Datos de ejemplo cargados");
+    render();
+  };
+
+  $("#btnResetAll").onclick = function(){
+    if (!confirm("⚠️ Esto eliminará TODOS los datos: productos, categorías, configuración y pedidos.\n\n¿Estás seguro?")) return;
+    if (!confirm("Última confirmación: ¿borrar todo definitivamente?")) return;
+    localStorage.removeItem(KEYS.config);
+    localStorage.removeItem(KEYS.cats);
+    localStorage.removeItem(KEYS.menu);
+    localStorage.removeItem(KEYS.orders);
+    dbLoad();
+    toast("Todo restaurado a los valores por defecto");
+    render();
+  };
+}
+
+/* =========================================================
+   12. INIT
+   ========================================================= */
+function init() {
+  dbLoad();
+  $$(".sb-nav button").forEach(function(b){
+    b.onclick = function(){ switchTab(b.dataset.tab); };
+  });
+  render();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+window.addEventListener("storage", function(e){
+  if (!e.key) return;
+  if (e.key === KEYS.orders){
+    try { DB.orders = JSON.parse(e.newValue || "[]"); } catch(err){}
+    if (state.tab === "orders") render();
+    updateCounts();
+  }
+  if (e.key === KEYS.config || e.key === KEYS.menu || e.key === KEYS.cats){
+    dbLoad();
+    if (state.tab !== "products" && state.tab !== "categories") render();
+    else updateCounts();
+  }
+});
+</script>
+</body>
+</html>
