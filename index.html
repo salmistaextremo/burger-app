@@ -130,13 +130,23 @@ main{padding:18px}
 .pay-select-wrap select:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
 .pay-select-wrap::after{content:'';position:absolute;right:16px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--muted);pointer-events:none}
 
+/* --- ESTILOS DEL CUADRO DE DATOS DE PAGO Y BOTON COPIAR --- */
 .pay-details{display:none;margin-top:14px;padding:16px;border-radius:14px;background:linear-gradient(160deg, #FFF7F3, #FFF2EC);border:1px solid #FFE0D0}
 .pay-details.show{display:block;animation:fade .25s}
 .pay-details-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--brand-d);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.pay-details-row{display:flex;justify-content:space-between;gap:14px;padding:7px 0;font-size:13px;line-height:1.5;border-bottom:1px dashed rgba(255,107,44,0.2)}
+
+.pay-details-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;font-size:13px;line-height:1.5;border-bottom:1px dashed rgba(255,107,44,0.2)}
 .pay-details-row:last-child{border-bottom:none;padding-bottom:0}
 .pay-details-row .lbl{color:var(--muted);flex:none;font-weight:500}
+.pay-details-row .val-wrap{display:flex;align-items:center;gap:8px;min-width:0}
 .pay-details-row .val{color:var(--ink);font-weight:600;text-align:right;word-break:break-all}
+
+.copy-btn{
+  background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+  cursor:pointer;transition:.15s;flex:none;font-size:14px;
+}
+.copy-btn:active{background:var(--brand);color:#FFFFFF;border-color:var(--brand);transform:scale(.92)}
 
 /* PROOF PICKER */
 .proof-field{display:none;margin-top:16px}
@@ -769,6 +779,40 @@ function compressImage(file, maxDim, quality, callback){
   };
   reader.readAsDataURL(file);
 }
+
+/* =========================================================
+   3.5. COPIAR AL PORTAPAPELES
+   ========================================================= */
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(function() {
+      toast("✅ Copiado: " + text);
+    }).catch(function(err) {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
+    toast("✅ Copiado: " + text);
+  } catch (err) {
+    toast("❌ No se pudo copiar");
+  }
+  textArea.remove();
+}
+
 
 /* =========================================================
    4. ESTADO
@@ -1474,14 +1518,27 @@ function updatePayDetails(){
   if (!keys.length){ box.classList.remove("show"); box.innerHTML = ""; return; }
 
   var rows = keys.map(function(k){
+    var rawValue = details[k];
     return '<div class="pay-details-row">' +
       '<span class="lbl">' + esc(DETAIL_LABELS[k] || k) + '</span>' +
-      '<span class="val">' + esc(details[k]) + '</span>' +
+      '<div class="val-wrap">' +
+        '<span class="val">' + esc(rawValue) + '</span>' +
+        '<button class="copy-btn" data-copy="' + esc(rawValue) + '" title="Copiar">📋</button>' +
+      '</div>' +
     '</div>';
   }).join("");
 
   box.innerHTML = '<div class="pay-details-title">📋 Datos para realizar el pago</div>' + rows;
   box.classList.add("show");
+
+  // Agregar eventos de copiar
+  box.querySelectorAll(".copy-btn").forEach(function(btn){
+    btn.onclick = function(e) {
+      e.preventDefault();
+      var textToCopy = btn.getAttribute("data-copy");
+      copyToClipboard(textToCopy);
+    };
+  });
 }
 
 function updateProofField(){
