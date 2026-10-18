@@ -644,10 +644,16 @@ async function dbSaveCats() {
 }
 
 async function dbSaveMenu() { 
-  // Mapeamos ignorando el ID local para que Supabase cree uno nuevo si no existe
+  // 1. Borramos los productos anteriores (usando un ID que nunca existirá para borrar todo)
+  const { error: delError } = await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  
+  if (delError) {
+    alert("Error al limpiar productos: " + delError.message);
+    return;
+  }
+
+  // 2. Preparamos los productos SIN el campo ID para que Supabase lo genere automáticamente
   const dbProducts = DB.menu.map(p => ({
-    // Si el ID parece un UUID de Supabase (tiene guiones), lo mantenemos. Si no, lo dejamos null para que se genere.
-    id: p.id.includes('-') ? p.id : undefined, 
     category_id: p.cat,
     name: p.name,
     price: p.price,
@@ -658,16 +664,23 @@ async function dbSaveMenu() {
     extras: p.extras
   }));
 
-  const { data, error } = await supabaseClient.from('products').upsert(dbProducts).select();
+  // 3. Insertamos los nuevos productos y pedimos que nos devuelvan los datos con el ID nuevo
+  const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
   
   if (error) {
     alert("Error al guardar productos: " + error.message);
     console.error(error);
   } else if (data) {
-    // Sincronizamos los IDs reales generados por Supabase con la memoria local
-    DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
+    // 4. Actualizamos los productos en la memoria de la app con los IDs reales que nos dio Supabase
+    DB.menu = data.map(p => ({ 
+      ...p, 
+      cat: p.category_id, 
+      desc: p.description, 
+      extras: p.extras || [] 
+    }));
   }
 }
+  
   async function dbSaveOrders() { 
   const lastOrder = DB.orders[0];
   if(lastOrder) {
