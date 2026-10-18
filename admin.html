@@ -372,16 +372,14 @@ textarea{resize:vertical;min-height:80px}
 <!-- Cargar Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Configura tus credenciales aquí (las sacas de Supabase -> Settings -> API)
-  const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUI';
-  
-  // Inicializar el cliente global
+  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co/rest/v1/'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 </script>
 <script>
-/* =========================================================
+// ... aquí empieza tu código original ...
+
+  /* =========================================================
    1. AUTENTICACIÓN (Local)
    ========================================================= */
 var LS_USERS = "ff_admin_users";
@@ -596,58 +594,64 @@ function migratePayments(payments){
 
 async function dbLoad() {
   try {
-    // 1. Cargar Config
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
     if (config) {
       DB.config = { ...DEFAULT_CONFIG, ...config };
+      // Convertimos los nombres de columnas de la BD a los que usa tu app
+      DB.config.phoneCall = config.phonecall;
+      DB.config.mapsUrl = config.mapsurl;
+      DB.config.deliveryFee = config.deliveryfee;
+      DB.config.freeDeliveryFrom = config.freedeliveryfrom;
+      DB.config.helpHoursText = config.helphourstext;
     } else {
-      // Si la base de datos está vacía, insertar los valores por defecto
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      await supabaseClient.from('config').insert([{ id: 1, ...DB.config }]);
+      // Insertar por primera vez
+      await supabaseClient.from('config').insert([{ 
+        id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
+        phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, currency: DB.config.currency, 
+        deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, 
+        hours: DB.config.hours, helphourstext: DB.config.helpHoursText, payments: DB.config.payments 
+      }]);
     }
 
-    // 2. Cargar Categorías
     const { data: cats } = await supabaseClient.from('categories').select('*');
-    DB.cats = cats && cats.length ? cats : JSON.parse(JSON.stringify(DEFAULT_CATS));
-    
-    // 3. Cargar Productos
+    DB.cats = (cats && cats.length) ? cats : JSON.parse(JSON.stringify(DEFAULT_CATS));
+    if (!cats || !cats.length) await supabaseClient.from('categories').insert(DB.cats);
+
     const { data: products } = await supabaseClient.from('products').select('*');
     if (products && products.length) {
-      // Adaptamos los nombres de columna de SQL a los que usa tu app
       DB.menu = products.map(p => ({
-        ...p, 
-        cat: p.category_id, 
-        desc: p.description
+        ...p, cat: p.category_id, desc: p.description, extras: p.extras || []
       }));
     } else {
       DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
     }
 
-    // 4. Cargar Pedidos
     const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
     DB.orders = orders || [];
 
   } catch(e) {
-    console.error("Error cargando datos de Supabase:", e);
-    // Si falla internet, usamos los valores por defecto para no romper la app
-    DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    DB.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
-    DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
-    DB.orders = [];
+    console.error("Error cargando de Supabase:", e);
   }
 }
+  
 async function dbSaveConfig() { 
-  await supabaseClient.from('config').upsert({ id: 1, ...DB.config }); 
+  await supabaseClient.from('config').upsert({ 
+    id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
+    phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, currency: DB.config.currency, 
+    deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, 
+    hours: DB.config.hours, helphourstext: DB.config.helpHoursText, payments: DB.config.payments 
+  }); 
 }
+
 async function dbSaveCats() { 
-  // Para simplificar, borramos y volvemos a insertar todas las categorías
-  await supabaseClient.from('categories').delete().neq('id', '0'); 
-  await supabaseClient.from('categories').insert(DB.cats); 
+  await supabaseClient.from('categories').upsert(DB.cats); 
 }
+
 async function dbSaveMenu() { 
-  await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
-  const dbMenu = DB.menu.map(p => ({
-    id: p.id.length === 36 ? p.id : undefined, // Si no es UUID, que SQL lo genere
+  // Mapeamos a los nombres de la base de datos
+  const dbProducts = DB.menu.map(p => ({
+    id: p.id.length === 36 ? p.id : undefined, // Usa el UUID si ya existe
     category_id: p.cat,
     name: p.name,
     price: p.price,
@@ -657,26 +661,29 @@ async function dbSaveMenu() {
     description: p.desc,
     extras: p.extras
   }));
-  await supabaseClient.from('products').insert(dbMenu); 
+  await supabaseClient.from('products').upsert(dbProducts); 
 }
+
 async function dbSaveOrders() { 
-  // Normalmente solo insertamos el nuevo pedido, no todos
+  // Buscamos el pedido más reciente y lo insertamos en la nube
   const lastOrder = DB.orders[0];
-  await supabaseClient.from('orders').insert([{
-    code: lastOrder.code,
-    type: lastOrder.type,
-    status: lastOrder.status,
-    customer: lastOrder.customer,
-    payment: lastOrder.payment,
-    payment_details: lastOrder.paymentDetails,
-    payment_proof: lastOrder.paymentProof,
-    items: lastOrder.items,
-    subtotal: lastOrder.subtotal,
-    delivery: lastOrder.delivery,
-    total: lastOrder.total,
-    exchangerate: lastOrder.exchangeRate,
-    totalves: lastOrder.totalVES
-  }]); 
+  if(lastOrder) {
+    await supabaseClient.from('orders').upsert([{
+      code: lastOrder.code,
+      type: lastOrder.type,
+      status: lastOrder.status,
+      customer: lastOrder.customer,
+      payment: lastOrder.payment,
+      payment_details: lastOrder.paymentDetails,
+      payment_proof: lastOrder.paymentProof,
+      items: lastOrder.items,
+      subtotal: lastOrder.subtotal,
+      delivery: lastOrder.delivery,
+      total: lastOrder.total,
+      exchangerate: lastOrder.exchangeRate,
+      totalves: lastOrder.totalVES
+    }]);
+  }
 }
 /* =========================================================
    4. HELPERS
