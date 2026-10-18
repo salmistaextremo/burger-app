@@ -372,14 +372,15 @@ textarea{resize:vertical;min-height:80px}
 <!-- Cargar Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co/rest/v1/'; 
+  // Corrección 1: URL limpia (sin /rest/v1/)
+  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 <script>
 // ... aquí empieza tu código original ...
 
-  /* =========================================================
+/* =========================================================
    1. AUTENTICACIÓN (Local)
    ========================================================= */
 var LS_USERS = "ff_admin_users";
@@ -392,6 +393,7 @@ function saveUsers(users) {
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 }
 
+// Corrección 2: Envolver el dbLoad en un try/catch para que no quede en blanco si falla
 async function checkAuth() {
   var session = localStorage.getItem(LS_SESSION);
   if (session) {
@@ -399,12 +401,16 @@ async function checkAuth() {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
     
-    // 🔥 AQUÍ ESTÁ LA MAGIA: Esperamos a que Supabase traiga los datos
-    await dbLoad(); 
+    try {
+      await dbLoad(); 
+      render();
+      setupNav();
+      window.currentAdminUser = data.user;
+    } catch(error) {
+      console.error("Error cargando los datos de Supabase:", error);
+      toast("Error de conexión con la base de datos", "error");
+    }
     
-    render();
-    setupNav();
-    window.currentAdminUser = data.user;
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
@@ -476,11 +482,8 @@ function doRegister() {
     return;
   }
 
-  // Guardar nuevo usuario
   users.push({ username: user, password: pass });
   saveUsers(users);
-
-  // Iniciar sesión automáticamente
   localStorage.setItem(LS_SESSION, JSON.stringify({ user: user }));
   checkAuth();
   toast("✅ Cuenta creada y sesión iniciada");
@@ -560,7 +563,6 @@ var DEFAULT_MENU = [
   { id:"po1", cat:"postres", name:"Sundae de Helado", price:2.90, emoji:"🍦", img:"", desc:"Helado de vainilla con salsa de chocolate o fresa y maní.", extras:[{name:"Doble helado",price:1.30}] }
 ];
 
-/* ICONOS DISPONIBLES PARA LAS CATEGORÍAS */
 var CATEGORY_ICONS = [
   "🍔","🍕","🌭","🍟","🍗","🍱","🥤","🥗","🌮","🌯","🍣","🍩","🍦","🍪","🍫",
   "☕","🍺","🍷","🥪","🥙","🧆","🥘","🍝","🍜","🥟","🍤","🍙","🍚","🍛","🍲",
@@ -568,9 +570,6 @@ var CATEGORY_ICONS = [
   "🍴","🥄","🔥","⭐","✨","🌟","💥","💫","🎉","🎁","🏆","👑"
 ];
 
-/* =========================================================
-   3. STORAGE LAYER
-   ========================================================= */
 var KEYS = { config:"ff_config", menu:"ff_menu", cats:"ff_cats", orders:"ff_orders" };
 var DB = { config: null, cats: [], menu: [], orders: [] };
 
@@ -597,7 +596,6 @@ async function dbLoad() {
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
     if (config) {
       DB.config = { ...DEFAULT_CONFIG, ...config };
-      // Convertimos los nombres de columnas de la BD a los que usa tu app
       DB.config.phoneCall = config.phonecall;
       DB.config.mapsUrl = config.mapsurl;
       DB.config.deliveryFee = config.deliveryfee;
@@ -605,7 +603,6 @@ async function dbLoad() {
       DB.config.helpHoursText = config.helphourstext;
     } else {
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      // Insertar por primera vez
       await supabaseClient.from('config').insert([{ 
         id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
         phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, currency: DB.config.currency, 
@@ -632,6 +629,7 @@ async function dbLoad() {
 
   } catch(e) {
     console.error("Error cargando de Supabase:", e);
+    throw e; // Relanzamos el error para que checkAuth lo atrape
   }
 }
   
@@ -649,9 +647,8 @@ async function dbSaveCats() {
 }
 
 async function dbSaveMenu() { 
-  // Mapeamos a los nombres de la base de datos
   const dbProducts = DB.menu.map(p => ({
-    id: p.id.length === 36 ? p.id : undefined, // Usa el UUID si ya existe
+    id: p.id.length === 36 ? p.id : undefined, 
     category_id: p.cat,
     name: p.name,
     price: p.price,
@@ -665,7 +662,6 @@ async function dbSaveMenu() {
 }
 
 async function dbSaveOrders() { 
-  // Buscamos el pedido más reciente y lo insertamos en la nube
   const lastOrder = DB.orders[0];
   if(lastOrder) {
     await supabaseClient.from('orders').upsert([{
@@ -685,9 +681,7 @@ async function dbSaveOrders() {
     }]);
   }
 }
-/* =========================================================
-   4. HELPERS
-   ========================================================= */
+
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -732,9 +726,6 @@ function closeModal() {
   document.body.style.overflow = "";
 }
 
-/* =========================================================
-   5. IMAGE HANDLING
-   ========================================================= */
 function handleImageFile(file, callback) {
   if (!file) return;
   if (!/^image\//.test(file.type)){ toast("El archivo no es una imagen", "error"); return; }
@@ -761,16 +752,12 @@ function handleImageFile(file, callback) {
   reader.readAsDataURL(file);
 }
 
-/* =========================================================
-   6. NAVIGATION
-   ========================================================= */
 var state = { tab: "home" };
 
 function setupNav() {
   $$(".sb-nav button").forEach(function(b){
     b.onclick = function(){ switchTab(b.dataset.tab); };
   });
-  // Ajustar el estado activo
   $$(".sb-nav button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === state.tab); });
 }
 
@@ -807,9 +794,6 @@ function updateCounts() {
   }
 }
 
-/* =========================================================
-   7. TAB: HOME (DASHBOARD)
-   ========================================================= */
 function renderHome(m) {
   var adminName = window.currentAdminUser || "Admin";
   var html =
@@ -856,9 +840,6 @@ function renderHome(m) {
   m.innerHTML = html;
 }
 
-/* =========================================================
-   8. TAB: PRODUCTOS
-   ========================================================= */
 var pFilters = { q: "", cat: "" };
 
 function renderProducts(m) {
@@ -1168,9 +1149,6 @@ function deleteProduct(id) {
   render();
 }
 
-/* =========================================================
-   9. TAB: CATEGORÍAS
-   ========================================================= */
 function renderCategories(m) {
   var html =
     '<div class="page-head">' +
@@ -1233,7 +1211,6 @@ function openCatEditor(id) {
 
   openModal(html);
 
-  // Manejar selección de ícono
   $$("#iconGrid .icon-opt").forEach(function(btn){
     btn.onclick = function(){
       temp.icon = btn.dataset.icon;
@@ -1287,9 +1264,6 @@ function deleteCategory(id) {
   render();
 }
 
-/* =========================================================
-   10. TAB: NEGOCIO
-   ========================================================= */
 function renderBusiness(m) {
   var c = DB.config;
   var html =
@@ -1571,9 +1545,6 @@ function renderBusiness(m) {
   };
 }
 
-/* =========================================================
-   11. TAB: PEDIDOS
-   ========================================================= */
 function renderOrders(m) {
   var html =
     '<div class="page-head">' +
@@ -1600,7 +1571,7 @@ function renderOrders(m) {
 }
 
 function orderCard(o) {
-  var d = new Date(o.createdAt);
+  var d = new Date(o.created_at || o.createdAt);
   var fecha = d.toLocaleString("es-VE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
   return '<div class="order-card">' +
     '<div class="order-head">' +
@@ -1624,9 +1595,6 @@ function orderCard(o) {
   '</div>';
 }
 
-/* =========================================================
-   12. TAB: DATOS
-   ========================================================= */
 function renderData(m) {
   var totalBytes = 0;
   [KEYS.config, KEYS.cats, KEYS.menu, KEYS.orders].forEach(function(k){
@@ -1719,14 +1687,9 @@ function renderData(m) {
   };
 }
 
-/* =========================================================
-   13. INICIALIZACIÓN Y REGISTRO DE SERVICE WORKER (PWA)
-   ========================================================= */
 document.addEventListener("DOMContentLoaded", function() {
-  // Verificamos la sesión al cargar
   checkAuth();
 
-  // Escuchar tecla Enter en los inputs de login/registro
   document.getElementById("loginPass").addEventListener("keydown", function(e) {
     if (e.key === "Enter") doLogin();
   });
@@ -1734,21 +1697,6 @@ document.addEventListener("DOMContentLoaded", function() {
     if (e.key === "Enter") doRegister();
   });
 
-  // Sincronizar cambios si el usuario tiene dos pestañas abiertas
-  window.addEventListener("storage", function(e){
-    if (!e.key) return;
-    if (e.key === KEYS.orders || e.key === KEYS.config || e.key === KEYS.menu || e.key === KEYS.cats) {
-      dbLoad();
-      if (document.getElementById("appContainer").classList.contains("hidden") === false) {
-        if (state.tab !== "products" && state.tab !== "categories") render();
-        else updateCounts();
-      }
-    }
-  });
-
-  // =========================================================
-  // REGISTRO DEL SERVICE WORKER PARA QUE SEA INSTALABLE COMO APP
-  // =========================================================
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw-admin.js').catch(function(err) {
