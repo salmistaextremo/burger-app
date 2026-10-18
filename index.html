@@ -621,15 +621,17 @@ async function loadSharedData(){
       CONFIG.payments = config.payments || CONFIG.payments;
     }
 
+    // --- CATEGORÍAS ---
     const { data: cats, error: err2 } = await supabaseClient.from('categories').select('*');
-    if (!err2 && cats && cats.length) {
+    if (!err2 && cats) {
       CATS.length = 0;
       CATS.push({ id:"todos", name:"Todo", icon:"✨" });
-      cats.forEach(x => CATS.push(x));
+      cats.forEach(x => CATS.push(x)); // Ahora acepta array vacío y no rompe
     }
 
+    // --- PRODUCTOS ---
     const { data: products, error: err3 } = await supabaseClient.from('products').select('*');
-    if (!err3 && products && products.length) {
+    if (!err3 && products) {
       MENU.length = 0;
       products.forEach(p => {
         MENU.push({
@@ -638,7 +640,7 @@ async function loadSharedData(){
           desc: p.description,
           extras: p.extras || []
         });
-      });
+      }); // Si borraste todo, MENU se queda vacío y la app mostrará "No hay productos"
     }
 
     if (document.getElementById("botBrand")) document.getElementById("botBrand").textContent = CONFIG.brand;
@@ -646,8 +648,7 @@ async function loadSharedData(){
   } catch(e) {
     console.warn("Usando datos por defecto (fallo de conexión):", e);
   }
-}
-  
+}  
 function applyBrandLogo(){
   var logoEl = document.getElementById("brandLogo");
   var avatarEl = document.getElementById("botAvatar");
