@@ -568,6 +568,8 @@ function updateCounts() {
   $("#cnt-products").textContent = DB.menu.length;
   $("#cnt-categories").textContent = DB.cats.length;
   $("#cnt-orders").textContent = DB.orders.length;
+  
+  // ✅ AQUÍ ESTABA EL ERROR (faltaban las comillas)
   $("#btnViewApp").href = "index.html";
 
   var sbLogo = $("#sbLogo");
