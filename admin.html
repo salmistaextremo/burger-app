@@ -643,12 +643,17 @@ async function dbSaveConfig() {
 }
 
 async function dbSaveCats() { 
-  await supabaseClient.from('categories').upsert(DB.cats); 
+  // Borramos las categorías antiguas y guardamos las nuevas
+  await supabaseClient.from('categories').delete().neq('id', '0');
+  await supabaseClient.from('categories').insert(DB.cats);
 }
 
 async function dbSaveMenu() { 
+  // Borramos los productos antiguos
+  await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  
+  // Insertamos los productos actuales sin el ID para que Supabase genere el UUID automáticamente
   const dbProducts = DB.menu.map(p => ({
-    id: p.id.length === 36 ? p.id : undefined, 
     category_id: p.cat,
     name: p.name,
     price: p.price,
@@ -658,9 +663,19 @@ async function dbSaveMenu() {
     description: p.desc,
     extras: p.extras
   }));
-  await supabaseClient.from('products').upsert(dbProducts); 
+  
+  const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
+  
+  if (error) {
+    console.error("Error guardando menú:", error);
+    toast("Error al guardar: " + error.message, "error");
+  } else if (data) {
+    // Actualizamos la memoria local con los nuevos IDs generados por Supabase
+    DB.menu = data.map(p => ({
+      ...p, cat: p.category_id, desc: p.description, extras: p.extras || []
+    }));
+  }
 }
-
 async function dbSaveOrders() { 
   const lastOrder = DB.orders[0];
   if(lastOrder) {
