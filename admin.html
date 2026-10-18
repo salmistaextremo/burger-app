@@ -593,8 +593,11 @@ function migratePayments(payments){
 
 async function dbLoad() {
   try {
-    const { data: config, error: err1 } = await supabaseClient.from('config').select('*').eq('id', 1);
-    if (!err1 && config && config.length > 0) {
+    // 1. CONFIGURACIÓN
+    const { data: config, error: errConfig } = await supabaseClient.from('config').select('*').eq('id', 1);
+    if (errConfig) throw errConfig;
+
+    if (config && config.length > 0) {
       const c = config[0];
       DB.config = { 
         ...DEFAULT_CONFIG, ...c,
@@ -602,6 +605,7 @@ async function dbLoad() {
         freeDeliveryFrom: c.freedeliveryfrom, helpHoursText: c.helphourstext
       };
     } else {
+      // Solo si la tabla está vacía, creamos la configuración inicial
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ 
         id: 1, brand: DB.config.brand, whatsapp: DB.config.whatsapp, currency: DB.config.currency,
@@ -610,24 +614,37 @@ async function dbLoad() {
       }]);
     }
 
-    const { data: cats } = await supabaseClient.from('categories').select('*');
-    DB.cats = (cats && cats.length) ? cats : JSON.parse(JSON.stringify(DEFAULT_CATS));
+    // 2. CATEGORÍAS
+    const { data: cats, error: errCats } = await supabaseClient.from('categories').select('*');
+    if (errCats) throw errCats;
+    DB.cats = cats || []; // Si está vacío, se queda vacío (no carga defaults)
 
-    const { data: products } = await supabaseClient.from('products').select('*');
-    if (products && products.length) {
-      DB.menu = products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
+    // 3. PRODUCTOS
+    const { data: products, error: errProducts } = await supabaseClient.from('products').select('*');
+    if (errProducts) throw errProducts;
+    
+    if (products) {
+      DB.menu = products.map(p => ({ 
+        ...p, 
+        cat: p.category_id, 
+        desc: p.description, 
+        extras: p.extras || [] 
+      }));
     } else {
-      DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+      DB.menu = []; // Si no hay productos, el array queda vacío
     }
 
-    const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+    // 4. PEDIDOS
+    const { data: orders, error: errOrders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+    if (errOrders) throw errOrders;
     DB.orders = orders || [];
 
   } catch(e) {
-    console.error("Error crítico:", e);
+    console.error("Error cargando de Supabase:", e);
+    alert("Error conectando con la base de datos. Revisa la consola. Detalle: " + e.message);
+    // IMPORTANTE: Si falla, NO sobrescribimos con defaults, dejamos que la app se detenga.
   }
 }
-
 async function dbSaveConfig() { 
   const { error } = await supabaseClient.from('config').upsert({ 
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
@@ -644,15 +661,13 @@ async function dbSaveCats() {
 }
 
 async function dbSaveMenu() { 
-  // 1. Borramos los productos anteriores (usando un ID que nunca existirá para borrar todo)
+  // Borramos todos los productos de la BD
   const { error: delError } = await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  
-  if (delError) {
-    alert("Error al limpiar productos: " + delError.message);
-    return;
-  }
+  if (delError) { alert("Error limpiando productos: " + delError.message); return; }
 
-  // 2. Preparamos los productos SIN el campo ID para que Supabase lo genere automáticamente
+  if (DB.menu.length === 0) return; // Si borraste todo, no insertamos nada.
+
+  // Insertamos los actuales (sin enviar el ID para que Supabase genere el UUID)
   const dbProducts = DB.menu.map(p => ({
     category_id: p.cat,
     name: p.name,
@@ -664,23 +679,16 @@ async function dbSaveMenu() {
     extras: p.extras
   }));
 
-  // 3. Insertamos los nuevos productos y pedimos que nos devuelvan los datos con el ID nuevo
   const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
   
   if (error) {
     alert("Error al guardar productos: " + error.message);
     console.error(error);
   } else if (data) {
-    // 4. Actualizamos los productos en la memoria de la app con los IDs reales que nos dio Supabase
-    DB.menu = data.map(p => ({ 
-      ...p, 
-      cat: p.category_id, 
-      desc: p.description, 
-      extras: p.extras || [] 
-    }));
+    // Sincronizamos la memoria con los nuevos IDs de Supabase
+    DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
   }
-}
-  
+}  
   async function dbSaveOrders() { 
   const lastOrder = DB.orders[0];
   if(lastOrder) {
