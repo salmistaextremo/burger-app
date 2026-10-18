@@ -593,33 +593,29 @@ function migratePayments(payments){
 
 async function dbLoad() {
   try {
-    const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
-    if (config) {
-      DB.config = { ...DEFAULT_CONFIG, ...config };
-      DB.config.phoneCall = config.phonecall;
-      DB.config.mapsUrl = config.mapsurl;
-      DB.config.deliveryFee = config.deliveryfee;
-      DB.config.freeDeliveryFrom = config.freedeliveryfrom;
-      DB.config.helpHoursText = config.helphourstext;
+    const { data: config, error: err1 } = await supabaseClient.from('config').select('*').eq('id', 1);
+    if (!err1 && config && config.length > 0) {
+      const c = config[0];
+      DB.config = { 
+        ...DEFAULT_CONFIG, ...c,
+        phoneCall: c.phonecall, mapsUrl: c.mapsurl, deliveryFee: c.deliveryfee, 
+        freeDeliveryFrom: c.freedeliveryfrom, helpHoursText: c.helphourstext
+      };
     } else {
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ 
-        id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
-        phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, currency: DB.config.currency, 
-        deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, 
-        hours: DB.config.hours, helphourstext: DB.config.helpHoursText, payments: DB.config.payments 
+        id: 1, brand: DB.config.brand, whatsapp: DB.config.whatsapp, currency: DB.config.currency,
+        phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee,
+        freedeliveryfrom: DB.config.freeDeliveryFrom, hours: DB.config.hours, helphourstext: DB.config.helpHoursText, payments: DB.config.payments 
       }]);
     }
 
     const { data: cats } = await supabaseClient.from('categories').select('*');
     DB.cats = (cats && cats.length) ? cats : JSON.parse(JSON.stringify(DEFAULT_CATS));
-    if (!cats || !cats.length) await supabaseClient.from('categories').insert(DB.cats);
 
     const { data: products } = await supabaseClient.from('products').select('*');
     if (products && products.length) {
-      DB.menu = products.map(p => ({
-        ...p, cat: p.category_id, desc: p.description, extras: p.extras || []
-      }));
+      DB.menu = products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
     } else {
       DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
     }
@@ -628,32 +624,30 @@ async function dbLoad() {
     DB.orders = orders || [];
 
   } catch(e) {
-    console.error("Error cargando de Supabase:", e);
-    throw e; // Relanzamos el error para que checkAuth lo atrape
+    console.error("Error crítico:", e);
   }
 }
-  
+
 async function dbSaveConfig() { 
-  await supabaseClient.from('config').upsert({ 
+  const { error } = await supabaseClient.from('config').upsert({ 
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, currency: DB.config.currency, 
     deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, 
     hours: DB.config.hours, helphourstext: DB.config.helpHoursText, payments: DB.config.payments 
-  }); 
+  });
+  if (error) alert("Error al guardar configuración: " + error.message);
 }
 
 async function dbSaveCats() { 
-  // Borramos las categorías antiguas y guardamos las nuevas
-  await supabaseClient.from('categories').delete().neq('id', '0');
-  await supabaseClient.from('categories').insert(DB.cats);
+  const { error } = await supabaseClient.from('categories').upsert(DB.cats);
+  if (error) alert("Error al guardar categorías: " + error.message);
 }
 
 async function dbSaveMenu() { 
-  // Borramos los productos antiguos
-  await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  
-  // Insertamos los productos actuales sin el ID para que Supabase genere el UUID automáticamente
+  // Mapeamos ignorando el ID local para que Supabase cree uno nuevo si no existe
   const dbProducts = DB.menu.map(p => ({
+    // Si el ID parece un UUID de Supabase (tiene guiones), lo mantenemos. Si no, lo dejamos null para que se genere.
+    id: p.id.includes('-') ? p.id : undefined, 
     category_id: p.cat,
     name: p.name,
     price: p.price,
@@ -663,20 +657,18 @@ async function dbSaveMenu() {
     description: p.desc,
     extras: p.extras
   }));
-  
-  const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
+
+  const { data, error } = await supabaseClient.from('products').upsert(dbProducts).select();
   
   if (error) {
-    console.error("Error guardando menú:", error);
-    toast("Error al guardar: " + error.message, "error");
+    alert("Error al guardar productos: " + error.message);
+    console.error(error);
   } else if (data) {
-    // Actualizamos la memoria local con los nuevos IDs generados por Supabase
-    DB.menu = data.map(p => ({
-      ...p, cat: p.category_id, desc: p.description, extras: p.extras || []
-    }));
+    // Sincronizamos los IDs reales generados por Supabase con la memoria local
+    DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
   }
 }
-async function dbSaveOrders() { 
+  async function dbSaveOrders() { 
   const lastOrder = DB.orders[0];
   if(lastOrder) {
     await supabaseClient.from('orders').upsert([{
