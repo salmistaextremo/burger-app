@@ -369,6 +369,17 @@ textarea{resize:vertical;min-height:80px}
 <div id="modal" class="modal hidden"></div>
 <div id="toast" class="toast"></div>
 
+<!-- Cargar Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Configura tus credenciales aquí (las sacas de Supabase -> Settings -> API)
+  const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co'; 
+  const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUI';
+  
+  // Inicializar el cliente global
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+</script>
 <script>
 /* =========================================================
    1. AUTENTICACIÓN (Local)
@@ -583,38 +594,90 @@ function migratePayments(payments){
   });
 }
 
-function dbLoad() {
+async function dbLoad() {
   try {
-    var c = localStorage.getItem(KEYS.config);
-    DB.config = c ? JSON.parse(c) : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    if (!DB.config.payments) DB.config.payments = JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
-    DB.config.payments = migratePayments(DB.config.payments);
-    if (DB.config.logo === undefined) DB.config.logo = "";
-    localStorage.setItem(KEYS.config, JSON.stringify(DB.config));
+    // 1. Cargar Config
+    const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
+    if (config) {
+      DB.config = { ...DEFAULT_CONFIG, ...config };
+    } else {
+      // Si la base de datos está vacía, insertar los valores por defecto
+      DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      await supabaseClient.from('config').insert([{ id: 1, ...DB.config }]);
+    }
 
-    var cc = localStorage.getItem(KEYS.cats);
-    DB.cats = cc ? JSON.parse(cc) : JSON.parse(JSON.stringify(DEFAULT_CATS));
-    if (!cc) localStorage.setItem(KEYS.cats, JSON.stringify(DB.cats));
+    // 2. Cargar Categorías
+    const { data: cats } = await supabaseClient.from('categories').select('*');
+    DB.cats = cats && cats.length ? cats : JSON.parse(JSON.stringify(DEFAULT_CATS));
+    
+    // 3. Cargar Productos
+    const { data: products } = await supabaseClient.from('products').select('*');
+    if (products && products.length) {
+      // Adaptamos los nombres de columna de SQL a los que usa tu app
+      DB.menu = products.map(p => ({
+        ...p, 
+        cat: p.category_id, 
+        desc: p.description
+      }));
+    } else {
+      DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+    }
 
-    var m = localStorage.getItem(KEYS.menu);
-    DB.menu = m ? JSON.parse(m) : JSON.parse(JSON.stringify(DEFAULT_MENU));
-    if (!m) localStorage.setItem(KEYS.menu, JSON.stringify(DB.menu));
+    // 4. Cargar Pedidos
+    const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+    DB.orders = orders || [];
 
-    var o = localStorage.getItem(KEYS.orders);
-    DB.orders = o ? JSON.parse(o) : [];
   } catch(e) {
-    console.error("Error cargando datos:", e);
+    console.error("Error cargando datos de Supabase:", e);
+    // Si falla internet, usamos los valores por defecto para no romper la app
     DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     DB.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
     DB.menu = JSON.parse(JSON.stringify(DEFAULT_MENU));
     DB.orders = [];
   }
 }
-function dbSaveConfig() { localStorage.setItem(KEYS.config, JSON.stringify(DB.config)); }
-function dbSaveCats()   { localStorage.setItem(KEYS.cats, JSON.stringify(DB.cats)); }
-function dbSaveMenu()   { localStorage.setItem(KEYS.menu, JSON.stringify(DB.menu)); }
-function dbSaveOrders() { localStorage.setItem(KEYS.orders, JSON.stringify(DB.orders)); }
-
+async function dbSaveConfig() { 
+  await supabaseClient.from('config').upsert({ id: 1, ...DB.config }); 
+}
+async function dbSaveCats() { 
+  // Para simplificar, borramos y volvemos a insertar todas las categorías
+  await supabaseClient.from('categories').delete().neq('id', '0'); 
+  await supabaseClient.from('categories').insert(DB.cats); 
+}
+async function dbSaveMenu() { 
+  await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
+  const dbMenu = DB.menu.map(p => ({
+    id: p.id.length === 36 ? p.id : undefined, // Si no es UUID, que SQL lo genere
+    category_id: p.cat,
+    name: p.name,
+    price: p.price,
+    emoji: p.emoji,
+    badge: p.badge || null,
+    img: p.img || null,
+    description: p.desc,
+    extras: p.extras
+  }));
+  await supabaseClient.from('products').insert(dbMenu); 
+}
+async function dbSaveOrders() { 
+  // Normalmente solo insertamos el nuevo pedido, no todos
+  const lastOrder = DB.orders[0];
+  await supabaseClient.from('orders').insert([{
+    code: lastOrder.code,
+    type: lastOrder.type,
+    status: lastOrder.status,
+    customer: lastOrder.customer,
+    payment: lastOrder.payment,
+    payment_details: lastOrder.paymentDetails,
+    payment_proof: lastOrder.paymentProof,
+    items: lastOrder.items,
+    subtotal: lastOrder.subtotal,
+    delivery: lastOrder.delivery,
+    total: lastOrder.total,
+    exchangerate: lastOrder.exchangeRate,
+    totalves: lastOrder.totalVES
+  }]); 
+}
 /* =========================================================
    4. HELPERS
    ========================================================= */
