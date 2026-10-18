@@ -29,6 +29,18 @@ textarea{resize:vertical;min-height:80px}
 
 .hidden{display:none !important}
 
+/* ===== AUTENTICACIÓN ===== */
+.auth-screen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:var(--surface);width:100%;max-width:400px;border-radius:20px;padding:32px 24px;box-shadow:var(--shadow-lg);text-align:center}
+.auth-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:grid;place-items:center;font-size:30px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(255,107,44,.3);color:#fff}
+.auth-box h2{margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-.5px}
+.auth-box p{margin:0 0 24px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.auth-box .field{margin-bottom:16px;text-align:left}
+.auth-box .btn{width:100%;margin-bottom:12px}
+.auth-link{font-size:13px;color:var(--brand-d);font-weight:600;cursor:pointer;text-decoration:underline}
+.auth-error{background:var(--danger-soft);color:var(--danger);padding:10px;border-radius:8px;font-size:12.5px;font-weight:600;margin-bottom:16px;display:none}
+
+/* ===== LAYOUT PRINCIPAL ===== */
 .app{display:flex;min-height:100vh}
 .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;flex:none;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:8px 10px 20px;border-bottom:1px solid var(--line);margin-bottom:12px}
@@ -46,6 +58,8 @@ textarea{resize:vertical;min-height:80px}
 .sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
 .sb-footer a,.sb-footer button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;transition:.15s}
 .sb-footer a:hover,.sb-footer button:hover{background:var(--surface-2);color:var(--ink)}
+.sb-footer .logout-btn{color:var(--danger)}
+.sb-footer .logout-btn:hover{background:var(--danger-soft)}
 
 .main{flex:1;padding:32px 40px;max-width:1200px}
 .page-title{margin-bottom:4px;font-size:26px;font-weight:900;letter-spacing:-.8px}
@@ -69,6 +83,17 @@ textarea{resize:vertical;min-height:80px}
 .card-title{font-size:15px;font-weight:700;margin-bottom:4px}
 .card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55}
 
+/* DASHBOARD */
+.welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:32px;margin-bottom:24px;box-shadow:0 10px 30px rgba(255,107,44,.3)}
+.welcome-card h1{margin:0 0 8px;font-size:28px;font-weight:900;letter-spacing:-.8px}
+.welcome-card p{margin:0;font-size:15px;opacity:.9}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
+.stat-icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:24px;flex:none}
+.stat-info p{margin:0;font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.stat-info h3{margin:4px 0 0;font-size:24px;font-weight:900;color:var(--ink)}
+
+/* PRODUCTOS */
 .p-toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .p-toolbar input{flex:1;min-width:200px}
 .p-toolbar select{width:auto;min-width:150px}
@@ -92,6 +117,7 @@ textarea{resize:vertical;min-height:80px}
 .p-actions button:hover{background:var(--line);color:var(--ink)}
 .p-actions button.danger:hover{background:var(--danger-soft);color:var(--danger)}
 
+/* MODAL */
 .modal{position:fixed;inset:0;z-index:100;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fade .2s}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:up .25s cubic-bezier(.2,.9,.3,1)}
@@ -103,6 +129,7 @@ textarea{resize:vertical;min-height:80px}
 .modal-body{padding:24px;overflow-y:auto;flex:1}
 .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex:none}
 
+/* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .form-grid .full{grid-column:1/-1}
 .field{margin-bottom:16px}
@@ -122,6 +149,12 @@ textarea{resize:vertical;min-height:80px}
   background:var(--surface-2);border:1px solid var(--line);
   pointer-events:none;
 }
+
+/* ICON SELECT */
+.icon-select-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px;margin-top:8px;max-height:150px;overflow-y:auto;padding:4px}
+.icon-opt{width:100%;aspect-ratio:1;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:22px;cursor:pointer;transition:.15s}
+.icon-opt:hover{border-color:var(--line-2);background:var(--surface-2)}
+.icon-opt.active{border-color:var(--brand);background:var(--brand-soft);box-shadow:0 0 0 2px var(--brand-soft)}
 
 .img-picker{position:relative;width:100%;height:200px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:var(--r);display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:.2s}
 .img-picker:hover{border-color:var(--brand);background:var(--brand-soft)}
@@ -239,11 +272,65 @@ textarea{resize:vertical;min-height:80px}
   .main{padding:20px 16px}
   .form-grid{grid-template-columns:1fr}
   .logo-block{flex-direction:column;text-align:center;align-items:center}
+  .stats-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- ===== PANTALLA DE LOGIN / REGISTRO ===== -->
+<div id="authScreen" class="auth-screen">
+  <!-- Login -->
+  <div id="loginBox" class="auth-box">
+    <div class="auth-logo">🍔</div>
+    <h2>Admin Panel</h2>
+    <p>Inicia sesión para administrar tu negocio.</p>
+    
+    <div class="auth-error" id="loginError">Usuario o contraseña incorrectos.</div>
+    
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="Ej: admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Entrar al panel</button>
+    <p style="margin-top:16px;margin-bottom:0;font-size:13px;color:var(--muted)">
+      ¿No tienes cuenta? <span class="auth-link" onclick="showRegister()">Crear una ahora</span>
+    </p>
+  </div>
+
+  <!-- Registro -->
+  <div id="registerBox" class="auth-box hidden">
+    <div class="auth-logo">🍔</div>
+    <h2>Crear Cuenta</h2>
+    <p>Registra tu usuario para empezar a configurar tu tienda.</p>
+    
+    <div class="auth-error" id="registerError">El usuario ya existe o las contraseñas no coinciden.</div>
+    
+    <div class="field">
+      <label>Nombre de usuario</label>
+      <input type="text" id="regUser" placeholder="Ej: admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="regPass" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label>Confirmar contraseña</label>
+      <input type="password" id="regPass2" placeholder="Repite la contraseña" autocomplete="new-password">
+    </div>
+    <button class="btn btn-primary" onclick="doRegister()">Crear cuenta y entrar</button>
+    <p style="margin-top:16px;margin-bottom:0;font-size:13px;color:var(--muted)">
+      ¿Ya tienes cuenta? <span class="auth-link" onclick="showLogin()">Inicia sesión</span>
+    </p>
+  </div>
+</div>
+
+<!-- ===== APP PRINCIPAL (OCULTA HASTA LOGUEARSE) ===== -->
+<div class="app hidden" id="appContainer">
   <aside class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
@@ -253,7 +340,8 @@ textarea{resize:vertical;min-height:80px}
       </div>
     </div>
     <nav class="sb-nav">
-      <button data-tab="products" class="active"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
+      <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
+      <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
       <button data-tab="categories"><span class="ico">📁</span>Categorías<span class="count" id="cnt-categories">0</span></button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
       <button data-tab="orders"><span class="ico">🧾</span>Pedidos<span class="count" id="cnt-orders">0</span></button>
@@ -261,6 +349,7 @@ textarea{resize:vertical;min-height:80px}
     </nav>
     <div class="sb-footer">
       <a href="index.html" target="_blank" id="btnViewApp"><span>👁️</span>Ver app cliente</a>
+      <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
   </aside>
 
@@ -272,17 +361,129 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 /* =========================================================
-   1. TIPOS DE PAGO DISPONIBLES
+   1. AUTENTICACIÓN (Local)
+   ========================================================= */
+var LS_USERS = "ff_admin_users";
+var LS_SESSION = "ff_admin_session";
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(LS_USERS)) || []; } catch(e){ return []; }
+}
+function saveUsers(users) {
+  localStorage.setItem(LS_USERS, JSON.stringify(users));
+}
+
+function checkAuth() {
+  var session = localStorage.getItem(LS_SESSION);
+  if (session) {
+    var data = JSON.parse(session);
+    document.getElementById("authScreen").classList.add("hidden");
+    document.getElementById("appContainer").classList.remove("hidden");
+    // Iniciar la app
+    dbLoad();
+    render();
+    setupNav();
+    // Guardar el nombre de usuario actual para la bienvenida
+    window.currentAdminUser = data.user;
+  } else {
+    document.getElementById("authScreen").classList.remove("hidden");
+    document.getElementById("appContainer").classList.add("hidden");
+    showLogin(); // Asegurar que el login sea lo primero que se vea
+  }
+}
+
+function showLogin() {
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("registerBox").classList.add("hidden");
+  document.getElementById("loginError").style.display = "none";
+}
+
+function showRegister() {
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("registerBox").classList.remove("hidden");
+  document.getElementById("registerError").style.display = "none";
+}
+
+function doLogin() {
+  var user = document.getElementById("loginUser").value.trim();
+  var pass = document.getElementById("loginPass").value;
+  var err = document.getElementById("loginError");
+
+  if (!user || !pass) {
+    err.textContent = "Por favor, llena todos los campos.";
+    err.style.display = "block";
+    return;
+  }
+
+  var users = getUsers();
+  var found = users.find(function(u){ return u.username === user && u.password === pass; });
+
+  if (found) {
+    localStorage.setItem(LS_SESSION, JSON.stringify({ user: user }));
+    checkAuth();
+    toast("✅ Bienvenido, " + user);
+  } else {
+    err.textContent = "Usuario o contraseña incorrectos.";
+    err.style.display = "block";
+  }
+}
+
+function doRegister() {
+  var user = document.getElementById("regUser").value.trim();
+  var pass = document.getElementById("regPass").value;
+  var pass2 = document.getElementById("regPass2").value;
+  var err = document.getElementById("registerError");
+
+  if (!user || !pass) {
+    err.textContent = "Por favor, llena todos los campos.";
+    err.style.display = "block";
+    return;
+  }
+  if (pass.length < 4) {
+    err.textContent = "La contraseña debe tener al menos 4 caracteres.";
+    err.style.display = "block";
+    return;
+  }
+  if (pass !== pass2) {
+    err.textContent = "Las contraseñas no coinciden.";
+    err.style.display = "block";
+    return;
+  }
+
+  var users = getUsers();
+  if (users.find(function(u){ return u.username === user; })) {
+    err.textContent = "Este usuario ya está registrado.";
+    err.style.display = "block";
+    return;
+  }
+
+  // Guardar nuevo usuario
+  users.push({ username: user, password: pass });
+  saveUsers(users);
+
+  // Iniciar sesión automáticamente
+  localStorage.setItem(LS_SESSION, JSON.stringify({ user: user }));
+  checkAuth();
+  toast("✅ Cuenta creada y sesión iniciada");
+}
+
+function doLogout() {
+  if (!confirm("¿Cerrar sesión?")) return;
+  localStorage.removeItem(LS_SESSION);
+  document.getElementById("loginUser").value = "";
+  document.getElementById("loginPass").value = "";
+  checkAuth();
+  toast("Sesión cerrada");
+}
+
+
+/* =========================================================
+   2. DEFAULT DATA
    ========================================================= */
 var PAYMENT_TYPES = {
-  efectivo: {
-    label: "Efectivo",
-    icon: "💵",
-    details: []
-  },
+  efectivo: { label: "Efectivo", icon: "💵", details: [] },
   pagomovil: {
-    label: "Pago Móvil",
-    icon: "📱",
+    label: "Pago Móvil", icon: "📱",
     details: [
       { key: "banco", label: "Banco", placeholder: "Ej: Banesco, Mercantil, BDV…", type: "text" },
       { key: "telefono", label: "Teléfono", placeholder: "Ej: 0414 123 4567", type: "tel" },
@@ -290,8 +491,7 @@ var PAYMENT_TYPES = {
     ]
   },
   transferencia: {
-    label: "Transferencia bancaria",
-    icon: "🏦",
+    label: "Transferencia bancaria", icon: "🏦",
     details: [
       { key: "banco", label: "Banco", placeholder: "Ej: Banesco", type: "text" },
       { key: "cuenta", label: "Número de cuenta", placeholder: "Ej: 0134-1234-56-7890123456", type: "text" },
@@ -299,61 +499,17 @@ var PAYMENT_TYPES = {
       { key: "rif", label: "RIF / Cédula", placeholder: "Ej: J-12345678-9", type: "text" }
     ]
   },
-  tarjeta: {
-    label: "Punto de venta",
-    icon: "💳",
-    details: [
-      { key: "nota", label: "Nota (opcional)", placeholder: "Ej: Se cobra al recibir", type: "text" }
-    ]
-  },
-  zelle: {
-    label: "Zelle",
-    icon: "🌐",
-    details: [
-      { key: "email", label: "Correo Zelle", placeholder: "Ej: pagos@ejemplo.com", type: "email" },
-      { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" }
-    ]
-  },
-  binance: {
-    label: "Binance (USDT)",
-    icon: "🪙",
-    details: [
-      { key: "wallet", label: "Wallet / Pay ID", placeholder: "Ej: 123456789", type: "text" },
-      { key: "red", label: "Red", placeholder: "Ej: BEP20, TRC20, ERC20", type: "text" },
-      { key: "titular", label: "Titular / Alias", placeholder: "Ej: JuanP", type: "text" }
-    ]
-  },
-  paypal: {
-    label: "PayPal",
-    icon: "💠",
-    details: [
-      { key: "email", label: "Correo PayPal", placeholder: "Ej: pagos@ejemplo.com", type: "email" },
-      { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" }
-    ]
-  },
-  otro: {
-    label: "Otro (coordinar)",
-    icon: "🤝",
-    details: [
-      { key: "info", label: "Instrucciones", placeholder: "Ej: Coordinar por WhatsApp con el asesor", type: "textarea" }
-    ]
-  }
+  tarjeta: { label: "Punto de venta", icon: "💳", details: [ { key: "nota", label: "Nota (opcional)", placeholder: "Ej: Se cobra al recibir", type: "text" } ] },
+  zelle: { label: "Zelle", icon: "🌐", details: [ { key: "email", label: "Correo Zelle", placeholder: "Ej: pagos@ejemplo.com", type: "email" }, { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" } ] },
+  binance: { label: "Binance (USDT)", icon: "🪙", details: [ { key: "wallet", label: "Wallet / Pay ID", placeholder: "Ej: 123456789", type: "text" }, { key: "red", label: "Red", placeholder: "Ej: BEP20, TRC20, ERC20", type: "text" }, { key: "titular", label: "Titular / Alias", placeholder: "Ej: JuanP", type: "text" } ] },
+  paypal: { label: "PayPal", icon: "💠", details: [ { key: "email", label: "Correo PayPal", placeholder: "Ej: pagos@ejemplo.com", type: "email" }, { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez", type: "text" } ] },
+  otro: { label: "Otro (coordinar)", icon: "🤝", details: [ { key: "info", label: "Instrucciones", placeholder: "Ej: Coordinar por WhatsApp con el asesor", type: "textarea" } ] }
 };
 
-/* =========================================================
-   2. DEFAULT DATA
-   ========================================================= */
 var DEFAULT_CONFIG = {
-  brand: "Burguer Express",
-  logo: "",
-  whatsapp: "584121234567",
-  phoneCall: "+584121234567",
-  mapsUrl: "https://maps.google.com/?q=Av.+Principal+123",
-  currency: "$",
-  deliveryFee: 2.00,
-  freeDeliveryFrom: 25.00,
-  hours: { open: 11, close: 23 },
-  helpHoursText: "11:00 a 23:00",
+  brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
+  mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$",
+  deliveryFee: 2.00, freeDeliveryFrom: 25.00, hours: { open: 11, close: 23 }, helpHoursText: "11:00 a 23:00",
   payments: [
     { id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} },
     { id:"pagomovil", type:"pagomovil", label:"Pago Móvil", icon:"📱", details:{} },
@@ -375,37 +531,28 @@ var DEFAULT_CATS = [
 ];
 
 var DEFAULT_MENU = [
-  { id:"h1", cat:"burgers", name:"Hamburguesa Clásica", price:6.50, emoji:"🍔", badge:"Top",
-    img:"", desc:"Carne de res 150g, queso cheddar, lechuga, tomate y salsa de la casa.",
-    extras:[{name:"Queso extra",price:1.00},{name:"Tocineta",price:1.50},{name:"Doble carne",price:2.50}] },
-  { id:"h2", cat:"burgers", name:"Hamburguesa Doble", price:8.90, emoji:"🍔",
-    img:"", desc:"Doble carne 300g, doble queso cheddar, pepinillos y salsa especial.",
-    extras:[{name:"Tocineta",price:1.50},{name:"Huevo frito",price:1.00}] },
-  { id:"c1", cat:"combos", name:"Combo Clásico", price:9.90, emoji:"🍱", badge:"Más vendido",
-    img:"", desc:"Hamburguesa clásica + papas fritas medianas + refresco 400ml.",
-    extras:[{name:"Agrandar papas",price:1.20},{name:"Queso extra",price:1.00}] },
-  { id:"p1", cat:"pollo", name:"Alitas BBQ (8u)", price:7.50, emoji:"🍗",
-    img:"", desc:"8 alitas glaseadas en BBQ ahumado con dip de ranch.",
-    extras:[{name:"Salsa de ajo",price:0.50},{name:"Salsa picante",price:0.50}] },
-  { id:"d1", cat:"perros", name:"Perro Clásico", price:3.50, emoji:"🌭",
-    img:"", desc:"Salchicha de res, papas ralladas, queso, salsa de tomate y mostaza.",
-    extras:[{name:"Queso cheddar",price:0.80},{name:"Tocineta",price:1.20}] },
-  { id:"a1", cat:"acomp", name:"Papas Fritas", price:2.80, emoji:"🍟",
-    img:"", desc:"Papas doradas y crujientes con sal de mar.",
-    extras:[{name:"Grandes",price:1.20},{name:"Con queso fundido",price:1.50}] },
-  { id:"b1", cat:"bebidas", name:"Refresco 400ml", price:1.80, emoji:"🥤",
-    img:"", desc:"Coca-Cola, Pepsi, Sprite o Fanta bien fría.",
-    extras:[{name:"Sin hielo",price:0}] },
-  { id:"po1", cat:"postres", name:"Sundae de Helado", price:2.90, emoji:"🍦",
-    img:"", desc:"Helado de vainilla con salsa de chocolate o fresa y maní.",
-    extras:[{name:"Doble helado",price:1.30}] }
+  { id:"h1", cat:"burgers", name:"Hamburguesa Clásica", price:6.50, emoji:"🍔", badge:"Top", img:"", desc:"Carne de res 150g, queso cheddar, lechuga, tomate y salsa de la casa.", extras:[{name:"Queso extra",price:1.00},{name:"Tocineta",price:1.50},{name:"Doble carne",price:2.50}] },
+  { id:"h2", cat:"burgers", name:"Hamburguesa Doble", price:8.90, emoji:"🍔", img:"", desc:"Doble carne 300g, doble queso cheddar, pepinillos y salsa especial.", extras:[{name:"Tocineta",price:1.50},{name:"Huevo frito",price:1.00}] },
+  { id:"c1", cat:"combos", name:"Combo Clásico", price:9.90, emoji:"🍱", badge:"Más vendido", img:"", desc:"Hamburguesa clásica + papas fritas medianas + refresco 400ml.", extras:[{name:"Agrandar papas",price:1.20},{name:"Queso extra",price:1.00}] },
+  { id:"p1", cat:"pollo", name:"Alitas BBQ (8u)", price:7.50, emoji:"🍗", img:"", desc:"8 alitas glaseadas en BBQ ahumado con dip de ranch.", extras:[{name:"Salsa de ajo",price:0.50},{name:"Salsa picante",price:0.50}] },
+  { id:"d1", cat:"perros", name:"Perro Clásico", price:3.50, emoji:"🌭", img:"", desc:"Salchicha de res, papas ralladas, queso, salsa de tomate y mostaza.", extras:[{name:"Queso cheddar",price:0.80},{name:"Tocineta",price:1.20}] },
+  { id:"a1", cat:"acomp", name:"Papas Fritas", price:2.80, emoji:"🍟", img:"", desc:"Papas doradas y crujientes con sal de mar.", extras:[{name:"Grandes",price:1.20},{name:"Con queso fundido",price:1.50}] },
+  { id:"b1", cat:"bebidas", name:"Refresco 400ml", price:1.80, emoji:"🥤", img:"", desc:"Coca-Cola, Pepsi, Sprite o Fanta bien fría.", extras:[{name:"Sin hielo",price:0}] },
+  { id:"po1", cat:"postres", name:"Sundae de Helado", price:2.90, emoji:"🍦", img:"", desc:"Helado de vainilla con salsa de chocolate o fresa y maní.", extras:[{name:"Doble helado",price:1.30}] }
+];
+
+/* ICONOS DISPONIBLES PARA LAS CATEGORÍAS */
+var CATEGORY_ICONS = [
+  "🍔","🍕","🌭","🍟","🍗","🍱","🥤","🥗","🌮","🌯","🍣","🍩","🍦","🍪","🍫",
+  "☕","🍺","🍷","🥪","🥙","🧆","🥘","🍝","🍜","🥟","🍤","🍙","🍚","🍛","🍲",
+  "🍢","🍡","🍧","🍨","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍿","🧂","🥫","🍽️",
+  "🍴","🥄","🔥","⭐","✨","🌟","💥","💫","🎉","🎁","🏆","👑"
 ];
 
 /* =========================================================
    3. STORAGE LAYER
    ========================================================= */
 var KEYS = { config:"ff_config", menu:"ff_menu", cats:"ff_cats", orders:"ff_orders" };
-
 var DB = { config: null, cats: [], menu: [], orders: [] };
 
 function migratePayments(payments){
@@ -416,19 +563,13 @@ function migratePayments(payments){
     var pid = (p.id || "").toLowerCase();
     var type = "otro";
     if (lbl.indexOf("efectivo") !== -1 || pid === "efectivo") type = "efectivo";
-    else if (lbl.indexOf("pago móvil") !== -1 || lbl.indexOf("pago movil") !== -1 || pid === "pagomovil") type = "pagomovil";
+    else if (lbl.indexOf("pago móvil") !== -1 || pid === "pagomovil") type = "pagomovil";
     else if (lbl.indexOf("transfer") !== -1 || pid === "transferencia") type = "transferencia";
-    else if (lbl.indexOf("punto") !== -1 || lbl.indexOf("tarjeta") !== -1 || pid === "tarjeta") type = "tarjeta";
+    else if (lbl.indexOf("punto") !== -1 || pid === "tarjeta") type = "tarjeta";
     else if (lbl.indexOf("zelle") !== -1 || pid === "zelle") type = "zelle";
     else if (lbl.indexOf("binance") !== -1 || pid === "binance") type = "binance";
     else if (lbl.indexOf("paypal") !== -1 || pid === "paypal") type = "paypal";
-    return {
-      id: p.id || uid("pay"),
-      type: type,
-      label: p.label || PAYMENT_TYPES[type].label,
-      icon: p.icon || PAYMENT_TYPES[type].icon,
-      details: {}
-    };
+    return { id: p.id || uid("pay"), type: type, label: p.label || PAYMENT_TYPES[type].label, icon: p.icon || PAYMENT_TYPES[type].icon, details: {} };
   });
 }
 
@@ -481,9 +622,7 @@ function paymentSummary(p){
   var t = PAYMENT_TYPES[p.type] || PAYMENT_TYPES.otro;
   var d = p.details || {};
   var parts = [];
-  t.details.forEach(function(f){
-    if (d[f.key]) parts.push(d[f.key]);
-  });
+  t.details.forEach(function(f){ if (d[f.key]) parts.push(d[f.key]); });
   return parts.length ? parts.join(" · ") : "";
 }
 
@@ -545,7 +684,15 @@ function handleImageFile(file, callback) {
 /* =========================================================
    6. NAVIGATION
    ========================================================= */
-var state = { tab: "products" };
+var state = { tab: "home" };
+
+function setupNav() {
+  $$(".sb-nav button").forEach(function(b){
+    b.onclick = function(){ switchTab(b.dataset.tab); };
+  });
+  // Ajustar el estado activo
+  $$(".sb-nav button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === state.tab); });
+}
 
 function switchTab(tab) {
   state.tab = tab;
@@ -556,7 +703,8 @@ function switchTab(tab) {
 
 function render() {
   var m = $("#main");
-  if (state.tab === "products") renderProducts(m);
+  if (state.tab === "home") renderHome(m);
+  else if (state.tab === "products") renderProducts(m);
   else if (state.tab === "categories") renderCategories(m);
   else if (state.tab === "business") renderBusiness(m);
   else if (state.tab === "orders") renderOrders(m);
@@ -568,24 +716,68 @@ function updateCounts() {
   $("#cnt-products").textContent = DB.menu.length;
   $("#cnt-categories").textContent = DB.cats.length;
   $("#cnt-orders").textContent = DB.orders.length;
-  
-  // ✅ AQUÍ ESTABA EL ERROR (faltaban las comillas)
   $("#btnViewApp").href = "index.html";
 
   var sbLogo = $("#sbLogo");
   var sbName = $("#sbBrandName");
   if (sbName) sbName.textContent = DB.config.brand || "Mi Tienda";
   if (sbLogo) {
-    if (DB.config.logo) {
-      sbLogo.innerHTML = '<img src="' + esc(DB.config.logo) + '" alt="logo">';
-    } else {
-      sbLogo.textContent = "⚙️";
-    }
+    if (DB.config.logo) sbLogo.innerHTML = '<img src="' + esc(DB.config.logo) + '" alt="logo">';
+    else sbLogo.textContent = "⚙️";
   }
 }
 
 /* =========================================================
-   7. TAB: PRODUCTOS
+   7. TAB: HOME (DASHBOARD)
+   ========================================================= */
+function renderHome(m) {
+  var adminName = window.currentAdminUser || "Admin";
+  var html =
+    '<div class="welcome-card">' +
+      '<h1>¡Hola, ' + esc(adminName) + '!</h1>' +
+      '<p>Bienvenido al panel de control de ' + esc(DB.config.brand) + '. Aquí puedes gestionar tu menú y ver los pedidos.</p>' +
+    '</div>' +
+
+    '<div class="stats-grid">' +
+      '<div class="stat-card">' +
+        '<div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div>' +
+        '<div class="stat-info">' +
+          '<p>Productos</p>' +
+          '<h3>' + DB.menu.length + '</h3>' +
+        '</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+        '<div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div>' +
+        '<div class="stat-info">' +
+          '<p>Categorías</p>' +
+          '<h3>' + DB.cats.length + '</h3>' +
+        '</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+        '<div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div>' +
+        '<div class="stat-info">' +
+          '<p>Pedidos</p>' +
+          '<h3>' + DB.orders.length + '</h3>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:16px">' +
+      '<button class="btn btn-primary" onclick="switchTab(\'products\')" style="padding:24px;flex-direction:column;gap:12px">' +
+        '<span style="font-size:32px">🍔</span>Gestionar Productos' +
+      '</button>' +
+      '<button class="btn btn-ghost" onclick="switchTab(\'orders\')" style="padding:24px;flex-direction:column;gap:12px">' +
+        '<span style="font-size:32px">🧾</span>Ver Pedidos' +
+      '</button>' +
+      '<button class="btn btn-ghost" onclick="switchTab(\'business\')" style="padding:24px;flex-direction:column;gap:12px">' +
+        '<span style="font-size:32px">🏪</span>Configurar Negocio' +
+      '</button>' +
+    '</div>';
+  m.innerHTML = html;
+}
+
+/* =========================================================
+   8. TAB: PRODUCTOS
    ========================================================= */
 var pFilters = { q: "", cat: "" };
 
@@ -652,22 +844,14 @@ function renderProductList() {
           '<h3>' + esc(cat.icon + " " + cat.name) + '</h3>' +
           '<span class="count">' + group.length + '</span>' +
         '</div>' +
-        '<div class="p-list">' +
-          group.map(productCard).join("") +
-        '</div>' +
+        '<div class="p-list">' + group.map(productCard).join("") + '</div>' +
       '</div>';
   });
   cont.innerHTML = html;
 
-  cont.querySelectorAll("[data-edit]").forEach(function(b){
-    b.onclick = function(){ openProductEditor(b.dataset.edit); };
-  });
-  cont.querySelectorAll("[data-dup]").forEach(function(b){
-    b.onclick = function(){ duplicateProduct(b.dataset.dup); };
-  });
-  cont.querySelectorAll("[data-del]").forEach(function(b){
-    b.onclick = function(){ deleteProduct(b.dataset.del); };
-  });
+  cont.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick = function(){ openProductEditor(b.dataset.edit); }; });
+  cont.querySelectorAll("[data-dup]").forEach(function(b){ b.onclick = function(){ duplicateProduct(b.dataset.dup); }; });
+  cont.querySelectorAll("[data-del]").forEach(function(b){ b.onclick = function(){ deleteProduct(b.dataset.del); }; });
 }
 
 function productCard(p) {
@@ -696,17 +880,7 @@ function openProductEditor(id) {
   var isNew = !p;
   if (isNew) {
     var firstCat = DB.cats[0] ? DB.cats[0].id : "";
-    p = {
-      id: uid("p"),
-      cat: firstCat,
-      name: "",
-      price: 0,
-      emoji: getCatIcon(firstCat),
-      badge: "",
-      img: "",
-      desc: "",
-      extras: []
-    };
+    p = { id: uid("p"), cat: firstCat, name: "", price: 0, emoji: getCatIcon(firstCat), badge: "", img: "", desc: "", extras: [] };
   }
   var temp = JSON.parse(JSON.stringify(p));
   var emojiTouched = false;
@@ -725,9 +899,7 @@ function openProductEditor(id) {
         '<label>Imagen del plato</label>' +
         '<div class="img-picker' + (temp.img ? ' has-image' : '') + '" id="imgPicker">' +
           '<input type="file" accept="image/*" id="imgFile">' +
-          (temp.img
-            ? '<img src="' + esc(temp.img) + '" id="imgPreview"><div class="overlay">Cambiar imagen</div>'
-            : '<div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>') +
+          (temp.img ? '<img src="' + esc(temp.img) + '" id="imgPreview"><div class="overlay">Cambiar imagen</div>' : '<div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>') +
         '</div>' +
         '<div class="img-actions">' +
           '<button class="btn btn-ghost btn-sm" id="btnImgUpload">📁 Subir desde dispositivo</button>' +
@@ -737,22 +909,12 @@ function openProductEditor(id) {
       '</div>' +
       '<div class="form-grid">' +
         '<div class="field"><label>Categoría</label><select id="fCat">' + catOptions + '</select></div>' +
-        '<div class="field">' +
-          '<label>Emoji (fallback)</label>' +
-          '<div class="emoji-field" id="emojiField" data-emoji="' + esc(temp.emoji) + '">' +
-            '<input type="text" id="fEmoji" value="' + esc(temp.emoji) + '" maxlength="4" placeholder="🍔">' +
-          '</div>' +
-          '<div class="hint" id="emojiHint">Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.</div>' +
-        '</div>' +
+        '<div class="field"><label>Emoji (fallback)</label><div class="emoji-field" id="emojiField" data-emoji="' + esc(temp.emoji) + '"><input type="text" id="fEmoji" value="' + esc(temp.emoji) + '" maxlength="4" placeholder="🍔"></div><div class="hint" id="emojiHint">Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.</div></div>' +
         '<div class="field full"><label>Nombre *</label><input type="text" id="fName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesa Clásica"></div>' +
         '<div class="field full"><label>Descripción</label><textarea id="fDesc" placeholder="Ingredientes, tamaño, etc.">' + esc(temp.desc) + '</textarea></div>' +
         '<div class="field"><label>Precio *</label><input type="number" id="fPrice" value="' + Number(temp.price) + '" step="0.01" min="0" placeholder="0.00"></div>' +
         '<div class="field"><label>Badge (opcional)</label><input type="text" id="fBadge" value="' + esc(temp.badge || "") + '" placeholder="Ej: Nuevo, Top, Chef" maxlength="15"></div>' +
-        '<div class="field full">' +
-          '<label>Extras / Opciones personalizables</label>' +
-          '<div class="extras-list" id="extrasList"></div>' +
-          '<button class="btn btn-ghost btn-sm" id="btnAddExtra">＋ Agregar extra</button>' +
-        '</div>' +
+        '<div class="field full"><label>Extras / Opciones personalizables</label><div class="extras-list" id="extrasList"></div><button class="btn btn-ghost btn-sm" id="btnAddExtra">＋ Agregar extra</button></div>' +
       '</div>' +
     '</div>' +
     '<div class="modal-foot">' +
@@ -767,9 +929,7 @@ function openProductEditor(id) {
   var emojiHint = $("#emojiHint");
   var catSelect = $("#fCat");
 
-  function syncEmojiPreview(){
-    emojiField.dataset.emoji = emojiInput.value.trim() || "🍔";
-  }
+  function syncEmojiPreview(){ emojiField.dataset.emoji = emojiInput.value.trim() || "🍔"; }
   function updateEmojiFromCategory(animate){
     var opt = catSelect.options[catSelect.selectedIndex];
     if (!opt) return;
@@ -866,21 +1026,11 @@ function openProductEditor(id) {
       return;
     }
     list.innerHTML = temp.extras.map(function(e, i){
-      return '<div class="extra-row">' +
-        '<input type="text" value="' + esc(e.name) + '" placeholder="Nombre del extra" data-ext-name="' + i + '">' +
-        '<input type="number" value="' + Number(e.price) + '" step="0.01" min="-10" placeholder="0.00" data-ext-price="' + i + '">' +
-        '<button data-ext-del="' + i + '" title="Eliminar">✕</button>' +
-      '</div>';
+      return '<div class="extra-row"><input type="text" value="' + esc(e.name) + '" placeholder="Nombre del extra" data-ext-name="' + i + '"><input type="number" value="' + Number(e.price) + '" step="0.01" min="-10" placeholder="0.00" data-ext-price="' + i + '"><button data-ext-del="' + i + '" title="Eliminar">✕</button></div>';
     }).join("");
-    list.querySelectorAll("[data-ext-name]").forEach(function(inp){
-      inp.oninput = function(){ temp.extras[Number(inp.dataset.extName)].name = inp.value; };
-    });
-    list.querySelectorAll("[data-ext-price]").forEach(function(inp){
-      inp.oninput = function(){ temp.extras[Number(inp.dataset.extPrice)].price = parseFloat(inp.value) || 0; };
-    });
-    list.querySelectorAll("[data-ext-del]").forEach(function(b){
-      b.onclick = function(){ temp.extras.splice(Number(b.dataset.extDel), 1); renderExtras(); };
-    });
+    list.querySelectorAll("[data-ext-name]").forEach(function(inp){ inp.oninput = function(){ temp.extras[Number(inp.dataset.extName)].name = inp.value; }; });
+    list.querySelectorAll("[data-ext-price]").forEach(function(inp){ inp.oninput = function(){ temp.extras[Number(inp.dataset.extPrice)].price = parseFloat(inp.value) || 0; }; });
+    list.querySelectorAll("[data-ext-del]").forEach(function(b){ b.onclick = function(){ temp.extras.splice(Number(b.dataset.extDel), 1); renderExtras(); }; });
   }
   renderExtras();
   $("#btnAddExtra").onclick = function(){
@@ -904,9 +1054,8 @@ function openProductEditor(id) {
 
     temp.extras = temp.extras.filter(function(e){ return e.name.trim(); });
 
-    if (isNew) {
-      DB.menu.push(temp);
-    } else {
+    if (isNew) DB.menu.push(temp);
+    else {
       var idx = DB.menu.findIndex(function(x){ return x.id === temp.id; });
       if (idx !== -1) DB.menu[idx] = temp;
     }
@@ -940,7 +1089,7 @@ function deleteProduct(id) {
 }
 
 /* =========================================================
-   8. TAB: CATEGORÍAS
+   9. TAB: CATEGORÍAS
    ========================================================= */
 function renderCategories(m) {
   var html =
@@ -956,10 +1105,7 @@ function renderCategories(m) {
         var count = DB.menu.filter(function(p){ return p.cat === c.id; }).length;
         return '<div class="cat-row">' +
           '<div class="cat-icon">' + esc(c.icon) + '</div>' +
-          '<div class="cat-info">' +
-            '<h4>' + esc(c.name) + '</h4>' +
-            '<p>' + esc(c.id) + '</p>' +
-          '</div>' +
+          '<div class="cat-info"><h4>' + esc(c.name) + '</h4><p>' + esc(c.id) + '</p></div>' +
           '<span class="cat-count">' + count + ' prod.</span>' +
           '<div class="cat-actions">' +
             '<button data-edit="' + esc(c.id) + '" title="Editar">✎</button>' +
@@ -971,12 +1117,8 @@ function renderCategories(m) {
   m.innerHTML = html;
 
   $("#btnNewCat").onclick = function(){ openCatEditor(null); };
-  m.querySelectorAll("[data-edit]").forEach(function(b){
-    b.onclick = function(){ openCatEditor(b.dataset.edit); };
-  });
-  m.querySelectorAll("[data-del]").forEach(function(b){
-    b.onclick = function(){ deleteCategory(b.dataset.del); };
-  });
+  m.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick = function(){ openCatEditor(b.dataset.edit); }; });
+  m.querySelectorAll("[data-del]").forEach(function(b){ b.onclick = function(){ deleteCategory(b.dataset.del); }; });
 }
 
 function openCatEditor(id) {
@@ -985,6 +1127,10 @@ function openCatEditor(id) {
   if (isNew) c = { id: "", name: "", icon: "🍽️" };
   var temp = { id: c.id, name: c.name, icon: c.icon };
 
+  var iconGrid = CATEGORY_ICONS.map(function(ic){
+    return '<button type="button" class="icon-opt ' + (temp.icon === ic ? 'active' : '') + '" data-icon="' + ic + '">' + ic + '</button>';
+  }).join("");
+
   var html =
     '<div class="modal-head">' +
       '<h2>' + (isNew ? "Nueva categoría" : "Editar categoría") + '</h2>' +
@@ -992,9 +1138,12 @@ function openCatEditor(id) {
     '</div>' +
     '<div class="modal-body">' +
       '<div class="form-grid">' +
-        '<div class="field"><label>Emoji / Ícono</label><input type="text" id="cIcon" value="' + esc(temp.icon) + '" maxlength="4" placeholder="🍔"></div>' +
+        '<div class="field full">' +
+          '<label>Ícono de la categoría</label>' +
+          '<div class="icon-select-grid" id="iconGrid">' + iconGrid + '</div>' +
+        '</div>' +
         '<div class="field"><label>Nombre *</label><input type="text" id="cName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesas"></div>' +
-        '<div class="field full"><label>ID (identificador interno)</label><input type="text" id="cId" value="' + esc(temp.id) + '" placeholder="burgers" ' + (!isNew ? 'disabled style="background:var(--surface-2);color:var(--muted)"' : '') + '><div class="hint">Solo minúsculas, números y guiones. No se puede cambiar después.</div></div>' +
+        '<div class="field"><label>ID (identificador interno)</label><input type="text" id="cId" value="' + esc(temp.id) + '" placeholder="burgers" ' + (!isNew ? 'disabled style="background:var(--surface-2);color:var(--muted)"' : '') + '><div class="hint">Solo minúsculas, números y guiones. No se puede cambiar después.</div></div>' +
       '</div>' +
     '</div>' +
     '<div class="modal-foot">' +
@@ -1004,10 +1153,18 @@ function openCatEditor(id) {
 
   openModal(html);
 
+  // Manejar selección de ícono
+  $$("#iconGrid .icon-opt").forEach(function(btn){
+    btn.onclick = function(){
+      temp.icon = btn.dataset.icon;
+      $$("#iconGrid .icon-opt").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+    };
+  });
+
   $("#btnCancelCat").onclick = closeModal;
   $("#btnSaveCat").onclick = function(){
     temp.name = $("#cName").value.trim();
-    temp.icon = $("#cIcon").value.trim() || "🍽️";
     if (isNew) temp.id = slug($("#cId").value.trim() || temp.name);
 
     if (!temp.name){ toast("El nombre es obligatorio", "error"); return; }
@@ -1023,9 +1180,7 @@ function openCatEditor(id) {
       if (idx !== -1) DB.cats[idx] = temp;
       DB.menu.forEach(function(p){
         if (p.cat === temp.id){
-          if (!p.emoji || p.emoji === c.icon){
-            p.emoji = temp.icon;
-          }
+          if (!p.emoji || p.emoji === c.icon) p.emoji = temp.icon;
         }
       });
       dbSaveMenu();
@@ -1053,7 +1208,7 @@ function deleteCategory(id) {
 }
 
 /* =========================================================
-   9. TAB: NEGOCIO (LOGO + INFO + PAYMENTS)
+   10. TAB: NEGOCIO
    ========================================================= */
 function renderBusiness(m) {
   var c = DB.config;
@@ -1071,9 +1226,7 @@ function renderBusiness(m) {
       '<div class="logo-block">' +
         '<div class="logo-picker' + (c.logo ? ' has-image' : '') + '" id="logoPicker">' +
           '<input type="file" accept="image/*" id="logoFile">' +
-          (c.logo
-            ? '<img src="' + esc(c.logo) + '" id="logoPreview"><div class="overlay">Cambiar</div>'
-            : '<div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>') +
+          (c.logo ? '<img src="' + esc(c.logo) + '" id="logoPreview"><div class="overlay">Cambiar</div>' : '<div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>') +
         '</div>' +
         '<div class="logo-info">' +
           '<h4>Tu marca, tu identidad</h4>' +
@@ -1216,75 +1369,48 @@ function renderBusiness(m) {
         '</div>' +
       '</div>';
     }).join("");
-    list.querySelectorAll("[data-pay-edit]").forEach(function(b){
-      b.onclick = function(){ openPaymentEditor(b.dataset.payEdit); };
-    });
-    list.querySelectorAll("[data-pay-del]").forEach(function(b){
-      b.onclick = function(){ deletePayment(b.dataset.payDel); };
-    });
+    list.querySelectorAll("[data-pay-edit]").forEach(function(b){ b.onclick = function(){ openPaymentEditor(b.dataset.payEdit); }; });
+    list.querySelectorAll("[data-pay-del]").forEach(function(b){ b.onclick = function(){ deletePayment(b.dataset.payDel); }; });
   }
 
   function openPaymentEditor(payId) {
     var p = payId ? DB.config.payments.find(function(x){ return x.id === payId; }) : null;
     var isNew = !p;
-    if (isNew) {
-      p = { id: uid("pay"), type: "efectivo", label: "Efectivo", icon: "💵", details: {} };
-    }
+    if (isNew) p = { id: uid("pay"), type: "efectivo", label: "Efectivo", icon: "💵", details: {} };
     var temp = JSON.parse(JSON.stringify(p));
     var selectedType = temp.type || "efectivo";
 
     function typeButtonsHTML(active){
       return Object.keys(PAYMENT_TYPES).map(function(k){
         var t = PAYMENT_TYPES[k];
-        return '<button class="pay-type-btn' + (k === active ? ' active' : '') + '" data-pay-type="' + esc(k) + '">' +
-          '<span class="icon">' + t.icon + '</span>' + esc(t.label) +
-        '</button>';
+        return '<button class="pay-type-btn' + (k === active ? ' active' : '') + '" data-pay-type="' + esc(k) + '"><span class="icon">' + t.icon + '</span>' + esc(t.label) + '</button>';
       }).join("");
     }
 
     function detailsHTML(type, details){
       var t = PAYMENT_TYPES[type];
       if (!t || !t.details.length){
-        return '<div class="pay-detail-section">' +
-          '<h4>Sin información adicional</h4>' +
-          '<div class="hint">Este método de pago no requiere datos extra. El cliente coordinará directamente contigo.</div>' +
-        '</div>';
+        return '<div class="pay-detail-section"><h4>Sin información adicional</h4><div class="hint">Este método de pago no requiere datos extra. El cliente coordinará directamente contigo.</div></div>';
       }
-      return '<div class="pay-detail-section">' +
-        '<h4>Datos para el cliente</h4>' +
-        '<div class="hint">Esta información se mostrará al cliente cuando seleccione este método de pago.</div>' +
-        '<div class="form-grid">' +
+      return '<div class="pay-detail-section"><h4>Datos para el cliente</h4><div class="hint">Esta información se mostrará al cliente cuando seleccione este método de pago.</div><div class="form-grid">' +
           t.details.map(function(f){
             var val = (details && details[f.key]) || "";
-            if (f.type === "textarea"){
-              return '<div class="field full"><label>' + esc(f.label) + '</label><textarea data-detail-key="' + esc(f.key) + '" placeholder="' + esc(f.placeholder) + '">' + esc(val) + '</textarea></div>';
-            }
+            if (f.type === "textarea") return '<div class="field full"><label>' + esc(f.label) + '</label><textarea data-detail-key="' + esc(f.key) + '" placeholder="' + esc(f.placeholder) + '">' + esc(val) + '</textarea></div>';
             return '<div class="field"><label>' + esc(f.label) + '</label><input type="' + esc(f.type || "text") + '" data-detail-key="' + esc(f.key) + '" value="' + esc(val) + '" placeholder="' + esc(f.placeholder) + '"></div>';
-          }).join("") +
-        '</div>' +
-      '</div>';
+          }).join("") + '</div></div>';
     }
 
     var html =
-      '<div class="modal-head">' +
-        '<h2>' + (isNew ? "Nuevo método de pago" : "Editar método de pago") + '</h2>' +
-        '<button class="modal-close">✕</button>' +
-      '</div>' +
+      '<div class="modal-head"><h2>' + (isNew ? "Nuevo método de pago" : "Editar método de pago") + '</h2><button class="modal-close">✕</button></div>' +
       '<div class="modal-body">' +
-        '<div class="field">' +
-          '<label>Tipo de pago</label>' +
-          '<div class="pay-type-grid" id="payTypeGrid">' + typeButtonsHTML(selectedType) + '</div>' +
-        '</div>' +
+        '<div class="field"><label>Tipo de pago</label><div class="pay-type-grid" id="payTypeGrid">' + typeButtonsHTML(selectedType) + '</div></div>' +
         '<div class="form-grid">' +
           '<div class="field"><label>Nombre visible</label><input type="text" id="payLabel" value="' + esc(temp.label) + '" placeholder="Ej: Pago Móvil"></div>' +
           '<div class="field"><label>Ícono (emoji)</label><input type="text" id="payIcon" value="' + esc(temp.icon) + '" maxlength="4" placeholder="💳"></div>' +
         '</div>' +
         '<div id="payDetailsContainer">' + detailsHTML(selectedType, temp.details) + '</div>' +
       '</div>' +
-      '<div class="modal-foot">' +
-        '<button class="btn btn-ghost" id="btnPayCancel">Cancelar</button>' +
-        '<button class="btn btn-primary" id="btnPaySave">' + (isNew ? "Agregar método" : "Guardar cambios") + '</button>' +
-      '</div>';
+      '<div class="modal-foot"><button class="btn btn-ghost" id="btnPayCancel">Cancelar</button><button class="btn btn-primary" id="btnPaySave">' + (isNew ? "Agregar método" : "Guardar cambios") + '</button></div>';
 
     openModal(html);
 
@@ -1295,9 +1421,7 @@ function renderBusiness(m) {
       var t = PAYMENT_TYPES[type];
       if (!t) return;
       selectedType = type;
-      $$("#payTypeGrid .pay-type-btn").forEach(function(b){
-        b.classList.toggle("active", b.dataset.payType === type);
-      });
+      $$("#payTypeGrid .pay-type-btn").forEach(function(b){ b.classList.toggle("active", b.dataset.payType === type); });
       $("#payLabel").value = t.label;
       $("#payIcon").value = t.icon;
       $("#payDetailsContainer").innerHTML = detailsHTML(type, {});
@@ -1315,17 +1439,10 @@ function renderBusiness(m) {
         if (v) details[inp.dataset.detailKey] = v;
       });
 
-      var newPay = {
-        id: temp.id,
-        type: selectedType,
-        label: label,
-        icon: icon,
-        details: details
-      };
+      var newPay = { id: temp.id, type: selectedType, label: label, icon: icon, details: details };
 
-      if (isNew) {
-        DB.config.payments.push(newPay);
-      } else {
+      if (isNew) DB.config.payments.push(newPay);
+      else {
         var idx = DB.config.payments.findIndex(function(x){ return x.id === temp.id; });
         if (idx !== -1) DB.config.payments[idx] = newPay;
       }
@@ -1375,25 +1492,17 @@ function renderBusiness(m) {
 }
 
 /* =========================================================
-   10. TAB: PEDIDOS
+   11. TAB: PEDIDOS
    ========================================================= */
 function renderOrders(m) {
   var html =
     '<div class="page-head">' +
-      '<div>' +
-        '<h1 class="page-title">Pedidos</h1>' +
-        '<p class="page-sub">Todos los pedidos que han llegado por la app del cliente.</p>' +
-      '</div>' +
+      '<div><h1 class="page-title">Pedidos</h1><p class="page-sub">Todos los pedidos que han llegado por la app del cliente.</p></div>' +
       (DB.orders.length ? '<button class="btn btn-danger" id="btnClearOrders">🗑️ Borrar historial</button>' : '') +
     '</div>';
 
   if (!DB.orders.length) {
-    html +=
-      '<div class="empty">' +
-        '<div class="big">🧾</div>' +
-        '<h3>Sin pedidos todavía</h3>' +
-        '<p>Cuando un cliente confirme un pedido desde la app, aparecerá aquí automáticamente.</p>' +
-      '</div>';
+    html += '<div class="empty"><div class="big">🧾</div><h3>Sin pedidos todavía</h3><p>Cuando un cliente confirme un pedido desde la app, aparecerá aquí automáticamente.</p></div>';
     m.innerHTML = html;
     return;
   }
@@ -1436,7 +1545,7 @@ function orderCard(o) {
 }
 
 /* =========================================================
-   11. TAB: DATOS
+   12. TAB: DATOS
    ========================================================= */
 function renderData(m) {
   var totalBytes = 0;
@@ -1449,43 +1558,25 @@ function renderData(m) {
   var pct = Math.min(100, (totalBytes / 1024 / maxKB) * 100);
 
   var html =
-    '<div class="page-head">' +
-      '<div>' +
-        '<h1 class="page-title">Datos</h1>' +
-        '<p class="page-sub">Exporta, importa o restaura la configuración completa de la app.</p>' +
-      '</div>' +
-    '</div>' +
-
+    '<div class="page-head"><div><h1 class="page-title">Datos</h1><p class="page-sub">Exporta, importa o restaura la configuración completa de la app.</p></div></div>' +
     '<div class="card"><div class="card-body">' +
       '<div class="card-title">Uso de almacenamiento</div>' +
       '<div class="card-desc">Las imágenes se guardan comprimidas en el navegador. Si llegas al límite, exporta un respaldo y limpia imágenes.</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">' +
-        '<span style="color:var(--muted)">' + usedKB + ' KB usados</span>' +
-        '<span style="color:var(--muted)">de ~' + maxKB + ' KB</span>' +
-      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--muted)">' + usedKB + ' KB usados</span><span style="color:var(--muted)">de ~' + maxKB + ' KB</span></div>' +
       '<div class="storage-bar"><i style="width:' + pct + '%"></i></div>' +
     '</div></div>' +
-
     '<div class="data-actions">' +
       '<button class="btn btn-primary" id="btnExport">⬇️ Exportar respaldo (.json)</button>' +
       '<button class="btn btn-ghost" id="btnImport">⬆️ Importar desde archivo</button>' +
       '<button class="btn btn-ghost" id="btnSeed">🌱 Cargar datos de ejemplo</button>' +
       '<button class="btn btn-danger" id="btnResetAll">⚠️ Restaurar todo</button>' +
     '</div>' +
-
     '<input type="file" id="importFile" accept=".json,application/json" style="display:none">';
 
   m.innerHTML = html;
 
   $("#btnExport").onclick = function(){
-    var data = {
-      version: 2,
-      exportedAt: new Date().toISOString(),
-      config: DB.config,
-      cats: DB.cats,
-      menu: DB.menu,
-      orders: DB.orders
-    };
+    var data = { version: 2, exportedAt: new Date().toISOString(), config: DB.config, cats: DB.cats, menu: DB.menu, orders: DB.orders };
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
@@ -1506,9 +1597,7 @@ function renderData(m) {
     reader.onload = function(ev){
       try {
         var data = JSON.parse(ev.target.result);
-        if (!data.config || !data.menu || !data.cats){
-          toast("Archivo inválido: faltan campos", "error"); return;
-        }
+        if (!data.config || !data.menu || !data.cats){ toast("Archivo inválido: faltan campos", "error"); return; }
         if (!confirm("Esto reemplazará TODOS los datos actuales.\n\n¿Continuar?")) return;
         DB.config = data.config;
         if (!DB.config.payments) DB.config.payments = JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
@@ -1551,30 +1640,31 @@ function renderData(m) {
 }
 
 /* =========================================================
-   12. INIT
+   13. INICIALIZACIÓN
    ========================================================= */
-function init() {
-  dbLoad();
-  $$(".sb-nav button").forEach(function(b){
-    b.onclick = function(){ switchTab(b.dataset.tab); };
+document.addEventListener("DOMContentLoaded", function() {
+  // Verificamos la sesión al cargar
+  checkAuth();
+
+  // Escuchar tecla Enter en los inputs de login/registro
+  document.getElementById("loginPass").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") doLogin();
   });
-  render();
-}
+  document.getElementById("regPass2").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") doRegister();
+  });
 
-document.addEventListener("DOMContentLoaded", init);
-
-window.addEventListener("storage", function(e){
-  if (!e.key) return;
-  if (e.key === KEYS.orders){
-    try { DB.orders = JSON.parse(e.newValue || "[]"); } catch(err){}
-    if (state.tab === "orders") render();
-    updateCounts();
-  }
-  if (e.key === KEYS.config || e.key === KEYS.menu || e.key === KEYS.cats){
-    dbLoad();
-    if (state.tab !== "products" && state.tab !== "categories") render();
-    else updateCounts();
-  }
+  // Sincronizar cambios si el usuario tiene dos pestañas abiertas
+  window.addEventListener("storage", function(e){
+    if (!e.key) return;
+    if (e.key === KEYS.orders || e.key === KEYS.config || e.key === KEYS.menu || e.key === KEYS.cats) {
+      dbLoad();
+      if (document.getElementById("appContainer").classList.contains("hidden") === false) {
+        if (state.tab !== "products" && state.tab !== "categories") render();
+        else updateCounts();
+      }
+    }
+  });
 });
 </script>
 </body>
