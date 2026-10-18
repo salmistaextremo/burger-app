@@ -1310,6 +1310,36 @@ function go(view){
 function updateStoreStatus(){ var h = new Date().getHours(); var open = h >= CONFIG.hours.open && h < CONFIG.hours.close; var el = $("#storeStatus"); el.textContent = open ? "Abierto ahora · entrega 25-40 min" : "Cerrado · abre a las " + CONFIG.hours.open + ":00"; el.classList.toggle("closed", !open); }
 
 /* Corrección 3: init asíncrono y con await */
+
+  // ==========================================
+  // ESCUCHAR CAMBIOS EN TIEMPO REAL (SUPABASE)
+  // ==========================================
+  supabaseClient.channel('realtime-menu')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+      console.log('Cambio en productos:', payload);
+      loadSharedData().then(() => {
+        renderMenu();
+        renderChips();
+        if (!$("#botGuided").classList.contains("hidden")) guidedRender();
+        toast("🔄 Menú actualizado");
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
+      loadSharedData().then(() => {
+        renderChips();
+        renderMenu();
+        if (!$("#botGuided").classList.contains("hidden")) guidedRender();
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'config' }, payload => {
+      loadSharedData().then(() => {
+        $("#brandName").textContent = CONFIG.brand;
+        renderMenu();
+        toast("🔄 Información actualizada");
+      });
+    })
+    .subscribe();
+  
 async function init(){
   loadLocal();
   await loadSharedData(); // Esperamos los datos de Supabase
