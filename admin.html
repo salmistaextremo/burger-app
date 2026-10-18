@@ -6,6 +6,16 @@
 <title>Panel Admin — Burguer Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- ===== ETIQUETAS PWA ===== -->
+<link rel="manifest" href="/manifest-admin.json">
+<meta name="theme-color" content="#FF6B2C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Admin Burger">
+<link rel="apple-touch-icon" href="/icon-admin-192.png">
+<!-- ========================== -->
+
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -1640,7 +1650,7 @@ function renderData(m) {
 }
 
 /* =========================================================
-   13. INICIALIZACIÓN
+   13. INICIALIZACIÓN Y REGISTRO DE SERVICE WORKER (PWA)
    ========================================================= */
 document.addEventListener("DOMContentLoaded", function() {
   // Verificamos la sesión al cargar
@@ -1665,6 +1675,17 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }
   });
+
+  // =========================================================
+  // REGISTRO DEL SERVICE WORKER PARA QUE SEA INSTALABLE COMO APP
+  // =========================================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw-admin.js').catch(function(err) {
+        console.warn('El Service Worker no se registró:', err);
+      });
+    });
+  }
 });
 </script>
 </body>
