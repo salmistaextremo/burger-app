@@ -392,25 +392,25 @@ function saveUsers(users) {
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 }
 
-function checkAuth() {
+async function checkAuth() {
   var session = localStorage.getItem(LS_SESSION);
   if (session) {
     var data = JSON.parse(session);
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
-    // Iniciar la app
-    dbLoad();
+    
+    // 🔥 AQUÍ ESTÁ LA MAGIA: Esperamos a que Supabase traiga los datos
+    await dbLoad(); 
+    
     render();
     setupNav();
-    // Guardar el nombre de usuario actual para la bienvenida
     window.currentAdminUser = data.user;
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
-    showLogin(); // Asegurar que el login sea lo primero que se vea
+    showLogin();
   }
 }
-
 function showLogin() {
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("registerBox").classList.add("hidden");
