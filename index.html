@@ -506,6 +506,13 @@ main{padding:18px}
   <div id="toast" class="toast"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co/rest/v1/'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
+  const supabaseClient = window.supabase.createSession(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
 <script>
 /* =========================================================
    1. CONFIGURACIÓN Y DATOS POR DEFECTO
@@ -603,26 +610,33 @@ var MENU = [
 var EXCHANGE_RATE = null;
 var EXCHANGE_RATE_SOURCE = "";
 
-async function loadSharedData() {
+async function loadSharedData(){
   try {
-    // 1. Traer Configuración
+    // 1. Configuración
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
     if (config) {
-      Object.keys(config).forEach(k => {
-        if (k !== 'payments' && config[k] !== null) CONFIG[k] = config[k];
-      });
-      if (config.payments) CONFIG.payments = config.payments;
+      CONFIG.brand = config.brand || CONFIG.brand;
+      CONFIG.logo = config.logo || "";
+      CONFIG.whatsapp = config.whatsapp || CONFIG.whatsapp;
+      CONFIG.phoneCall = config.phonecall || CONFIG.phoneCall;
+      CONFIG.mapsUrl = config.mapsurl || CONFIG.mapsUrl;
+      CONFIG.currency = config.currency || CONFIG.currency;
+      CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
+      CONFIG.freeDeliveryFrom = config.freedeliveryfrom || CONFIG.freeDeliveryFrom;
+      CONFIG.hours = config.hours || CONFIG.hours;
+      CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
+      CONFIG.payments = config.payments || CONFIG.payments;
     }
 
-    // 2. Traer Categorías
+    // 2. Categorías
     const { data: cats } = await supabaseClient.from('categories').select('*');
     if (cats && cats.length) {
       CATS.length = 0;
-      CATS.push({ id: "todos", name: "Todo", icon: "✨" });
-      cats.forEach(c => CATS.push(c));
+      CATS.push({ id:"todos", name:"Todo", icon:"✨" });
+      cats.forEach(x => CATS.push(x));
     }
 
-    // 3. Traer Productos
+    // 3. Productos
     const { data: products } = await supabaseClient.from('products').select('*');
     if (products && products.length) {
       MENU.length = 0;
@@ -630,18 +644,19 @@ async function loadSharedData() {
         MENU.push({
           ...p,
           cat: p.category_id,
-          desc: p.description
+          desc: p.description,
+          extras: p.extras || []
         });
       });
     }
 
+    document.getElementById("botBrand").textContent = CONFIG.brand;
     applyBrandLogo();
-    renderMenu();
-    renderChips();
   } catch(e) {
-    console.warn("Usando menú por defecto (fallo de conexión):", e);
+    console.warn("Usando datos por defecto (fallo de conexión):", e);
   }
 }
+  
 function applyBrandLogo(){
   var logoEl = document.getElementById("brandLogo");
   var avatarEl = document.getElementById("botAvatar");
@@ -1748,7 +1763,28 @@ async function confirmOrder(){
     totalves: order.totalVES
   }]);
 
- 
+   // Guardar pedido en Supabase
+  try {
+    await supabaseClient.from('orders').insert([{
+      code: order.code,
+      type: order.type,
+      status: order.status,
+      customer: order.customer,
+      payment: order.payment,
+      payment_details: order.paymentDetails,
+      payment_proof: order.paymentProof,
+      items: order.items,
+      subtotal: order.subtotal,
+      delivery: order.delivery,
+      total: order.total,
+      exchangerate: order.exchangeRate,
+      totalves: order.totalVES
+    }]);
+  } catch(err) {
+    console.error("Error guardando pedido en BD:", err);
+  }
+
+  
   /* Enviar pedido con comprobante si aplica */
   sendOrder(order, proof, state.proofFile);
 }
