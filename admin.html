@@ -583,7 +583,12 @@ function renderBusiness(m) {
         
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
-        <div class="field full"><label>Texto de horario para el cliente (Ej: 11:00 a 23:00)</label><input type="text" id="bHelpHours" value="${esc(DB.config.helpHoursText || '11:00 a 23:00')}"></div>
+        
+        <div class="field full">
+          <label>Texto de horario para el cliente (opcional)</label>
+          <textarea id="bHelpHours" rows="3" placeholder="Ej: Lunes a Jueves: 11:00 AM - 11:00 PM&#10;Viernes y Sábado: 11:00 AM - 1:00 AM&#10;Domingo: 12:00 PM - 10:00 PM">${esc(DB.config.helpHoursText || '')}</textarea>
+          <div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si dejas este campo vacío, se generará automáticamente con los días y horas que seleccionaste arriba.</div>
+        </div>
       </div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar cambios</button>
     </div></div>
