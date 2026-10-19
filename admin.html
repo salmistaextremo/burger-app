@@ -6,15 +6,6 @@
 <title>Panel Admin — Burguer Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- ===== ETIQUETAS PWA ===== -->
-<link rel="manifest" href="/manifest-admin.json">
-<meta name="theme-color" content="#FF6B2C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="/icon-admin-192.png">
-
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -26,7 +17,6 @@
   --danger:#EF4444; --danger-soft:#FEF2F2;
   --r:12px; --r-lg:16px;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 12px rgba(0,0,0,.08);
   --shadow-lg:0 20px 50px rgba(0,0,0,.15);
 }
 *{margin:0;padding:0}
@@ -35,27 +25,23 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 input,textarea,select{font-family:inherit;font-size:14px;width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);outline:none;transition:.15s}
 input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(255,107,44,.12)}
 textarea{resize:vertical;min-height:80px}
-
 .hidden{display:none !important}
 
-/* ===== AUTENTICACIÓN ===== */
 .auth-screen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:var(--surface);width:100%;max-width:400px;border-radius:20px;padding:32px 24px;box-shadow:var(--shadow-lg);text-align:center}
-.auth-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:grid;place-items:center;font-size:30px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(255,107,44,.3);color:#fff}
-.auth-box h2{margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-.5px}
-.auth-box p{margin:0 0 24px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.auth-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:grid;place-items:center;font-size:30px;margin:0 auto 16px;color:#fff}
+.auth-box h2{margin:0 0 8px;font-size:22px;font-weight:800}
+.auth-box p{margin:0 0 24px;font-size:13.5px;color:var(--muted)}
 .auth-box .field{margin-bottom:16px;text-align:left}
-.auth-box .btn{width:100%;margin-bottom:12px}
+.auth-box .btn{width:100%}
 .auth-error{background:var(--danger-soft);color:var(--danger);padding:10px;border-radius:8px;font-size:12.5px;font-weight:600;margin-bottom:16px;display:none}
 
-/* ===== LAYOUT PRINCIPAL ===== */
 .app{display:flex;min-height:100vh}
 .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;flex:none;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:8px 10px 20px;border-bottom:1px solid var(--line);margin-bottom:12px}
-.sb-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;overflow:hidden;position:relative}
-.sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.sb-brand-text h1{font-size:14px;font-weight:800;letter-spacing:-.3px}
-.sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
+.sb-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff}
+.sb-brand-text h1{font-size:14px;font-weight:800}
+.sb-brand-text p{font-size:11px;color:var(--muted)}
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1}
 .sb-nav button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s}
 .sb-nav button .ico{font-size:17px;width:20px;text-align:center}
@@ -64,215 +50,123 @@ textarea{resize:vertical;min-height:80px}
 .sb-nav button .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--surface-2);color:var(--muted);padding:2px 7px;border-radius:99px}
 .sb-nav button.active .count{background:var(--brand);color:#fff}
 .sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
-.sb-footer a,.sb-footer button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;transition:.15s}
-.sb-footer a:hover,.sb-footer button:hover{background:var(--surface-2);color:var(--ink)}
+.sb-footer a,.sb-footer button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;}
 .sb-footer .logout-btn{color:var(--danger)}
-.sb-footer .logout-btn:hover{background:var(--danger-soft)}
 
 .main{flex:1;padding:32px 40px;max-width:1200px}
-.page-title{margin-bottom:4px;font-size:26px;font-weight:900;letter-spacing:-.8px}
-.page-sub{color:var(--muted);font-size:13.5px;margin-bottom:24px;line-height:1.5}
+.page-title{margin-bottom:4px;font-size:26px;font-weight:900}
+.page-sub{color:var(--muted);font-size:13.5px;margin-bottom:24px}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-.page-head .btn-primary{flex:none}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;transition:.15s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;transition:.15s;}
 .btn:active{transform:scale(.97)}
-.btn-primary{background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;box-shadow:0 4px 12px rgba(255,107,44,.28)}
-.btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink-2)}
-.btn-ghost:hover{background:var(--surface-2);border-color:var(--line-2)}
-.btn-danger{background:var(--danger-soft);color:var(--danger);border:1px solid #FECACA}
-.btn-sm{padding:7px 12px;font-size:12.5px;border-radius:9px}
+.btn-primary{background:linear-gradient(135deg,var(--brand-2),var(--brand));color:#fff;}
+.btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);}
+.btn-ghost:hover{background:var(--surface-2);}
+.btn-sm{padding:7px 12px;font-size:12.5px;}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
 .card-body{padding:20px}
 .card-title{font-size:15px;font-weight:700;margin-bottom:4px}
-.card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55}
+.card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px}
 
-/* DASHBOARD */
-.welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:32px;margin-bottom:24px;box-shadow:0 10px 30px rgba(255,107,44,.3)}
-.welcome-card h1{margin:0 0 8px;font-size:28px;font-weight:900;letter-spacing:-.8px}
-.welcome-card p{margin:0;font-size:15px;opacity:.9}
+.welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:32px;margin-bottom:24px;}
+.welcome-card h1{margin:0 0 8px;font-size:28px;font-weight:900}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
-.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;}
 .stat-icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:24px;flex:none}
-.stat-info p{margin:0;font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.stat-info h3{margin:4px 0 0;font-size:24px;font-weight:900;color:var(--ink)}
+.stat-info p{margin:0;font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;}
+.stat-info h3{margin:4px 0 0;font-size:24px;font-weight:900}
 
 /* REPORTES */
 .report-filters{display:flex;gap:16px;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap}
 .report-filters .field{margin:0;flex:1;min-width:150px}
-.report-actions{display:flex;gap:10px;margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
+
+/* ESTILO VERTICAL PARA LOS BOTONES DE REPORTE */
+.report-actions { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  margin-bottom: 24px; 
+}
+.report-actions .btn {
+  width: 100%;
+  max-width: 350px; /* Opcional: para que no se estiren demasiado en PC */
+}
+
 .report-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
 .report-table th{text-align:left;padding:12px;border-bottom:2px solid var(--line);color:var(--muted);font-weight:700}
 .report-table td{padding:12px;border-bottom:1px solid var(--line);color:var(--ink-2)}
 .report-table tr:hover td{background:var(--surface-2)}
 
-/* PRODUCTOS, FORM, MODAL etc (Mantenidos igual) */
-.p-toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.p-toolbar input{flex:1;min-width:200px}
-.cat-section{margin-bottom:28px}
-.cat-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.cat-section-head h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
 .p-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.p-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;gap:12px;padding:12px;transition:.15s;box-shadow:var(--shadow)}
-.p-thumb{width:70px;height:70px;border-radius:10px;background:var(--surface-2);flex:none;display:grid;place-items:center;font-size:30px;overflow:hidden;position:relative;border:1px solid var(--line)}
-.p-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.p-info{flex:1;min-width:0;display:flex;flex-direction:column}
-.p-info h4{font-size:14px;font-weight:700;margin-bottom:3px}
-.p-info p{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:6px}
-.p-meta{display:flex;align-items:center;gap:8px;margin-top:auto}
-.p-price{font-size:14px;font-weight:800;color:var(--brand)}
-.p-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--brand-soft);color:var(--brand)}
-.p-actions{margin-left:auto;display:flex;gap:4px;flex:none}
-.p-actions button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--surface-2);color:var(--muted);transition:.15s}
-.p-actions button:hover{background:var(--line);color:var(--ink)}
+.p-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;gap:12px;padding:12px;}
+.p-thumb{width:70px;height:70px;border-radius:10px;background:var(--surface-2);flex:none;display:grid;place-items:center;font-size:30px;}
+.p-info{flex:1;min-width:0}
+.p-actions{margin-left:auto;display:flex;gap:4px;}
+.p-actions button{width:30px;height:30px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
-.modal{position:fixed;inset:0;z-index:100;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line);flex:none}
-.modal-head h2{font-size:17px;font-weight:800}
-.modal-close{width:34px;height:34px;border-radius:9px;font-size:16px;color:var(--muted);display:grid;place-items:center}
-.modal-body{padding:24px;overflow-y:auto;flex:1}
-.modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex:none}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(17,24,39,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;}
+.modal-body{padding:24px;overflow-y:auto;}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
 
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-grid .full{grid-column:1/-1}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
-.field .hint{font-size:11px;color:var(--muted);margin-top:5px}
-
-.emoji-field{position:relative}
-.emoji-field input{padding-right:52px;font-size:16px;text-align:center}
-.emoji-field::after{content:attr(data-emoji);position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:22px;background:var(--surface-2);border:1px solid var(--line);pointer-events:none;}
-
-.icon-select-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px;margin-top:8px;max-height:150px;overflow-y:auto;padding:4px}
-.icon-opt{width:100%;aspect-ratio:1;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:22px;cursor:pointer;transition:.15s}
-.icon-opt.active{border-color:var(--brand);background:var(--brand-soft);}
-
-.img-picker{position:relative;width:100%;height:200px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:var(--r);display:grid;place-items:center;overflow:hidden;cursor:pointer;}
-.img-picker input{display:none}
-.img-picker img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.img-picker .placeholder{text-align:center;color:var(--muted)}
-.img-actions{display:flex;gap:8px;margin-top:10px}
-
-.logo-block{display:flex;gap:16px;align-items:center}
-.logo-picker{position:relative;width:110px;height:110px;border-radius:16px;background:var(--surface-2);border:2px dashed var(--line-2);display:grid;place-items:center;overflow:hidden;cursor:pointer;flex:none}
-.logo-picker img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
-.logo-info h4{font-size:14px;font-weight:700;margin-bottom:4px}
-
-.extras-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.extra-row{display:flex;gap:8px;align-items:center}
-.extra-row input:first-child{flex:2}
-.extra-row input:nth-child(2){flex:1;max-width:110px}
-.extra-row button{width:36px;height:36px;border-radius:9px;background:var(--danger-soft);color:var(--danger);flex:none;display:grid;place-items:center;}
-
-.pay-list{display:flex;flex-direction:column;gap:10px}
-.pay-item{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);}
-.pay-icon{width:46px;height:46px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;font-size:22px;flex:none;}
-.pay-body{flex:1;min-width:0}
-.pay-body h4{font-size:14px;font-weight:700;}
-.pay-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
-
-.pay-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:20px}
-.pay-type-btn{padding:14px 10px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink-2)}
-.pay-type-btn.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-d)}
-
-.cat-list{display:flex;flex-direction:column;gap:8px}
-.cat-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);}
-.cat-icon{width:44px;height:44px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;font-size:22px;}
-.cat-info{flex:1;}
-.cat-info h4{font-size:14px;font-weight:700;}
-.cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
-
-.order-list{display:flex;flex-direction:column;gap:10px}
-.order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;}
-.order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
-.order-code{font-size:18px;font-weight:900;color:var(--brand);}
-.order-status{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;background:var(--brand-soft);color:var(--brand);text-transform:uppercase;}
-.order-date{margin-left:auto;font-size:11.5px;color:var(--muted);}
-.order-customer{font-size:13px;line-height:1.6;margin-bottom:10px;}
-.order-items{background:var(--surface-2);border-radius:10px;padding:12px;font-size:12.5px;}
-.order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
-
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;opacity:0;transition:.3s;}
+.toast.show{opacity:1;}
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
-.empty .big{font-size:52px;opacity:.35;margin-bottom:14px;}
 
-@media(max-width:860px){
-  .app{flex-direction:column}
-  .sidebar{width:100%;height:auto;position:static;flex-direction:row;padding:12px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line)}
-  .sb-brand{padding:0 12px 0 0;border:none;margin:0;flex:none}
-  .sb-brand-text{display:none}
-  .sb-nav{flex-direction:row;gap:4px;flex:none}
-  .sb-nav button{padding:9px 14px;white-space:nowrap;}
-  .sb-footer{flex-direction:row;border:none;padding:0;margin-left:auto;}
-  .main{padding:20px 16px}
-  .form-grid{grid-template-columns:1fr}
-  .logo-block{flex-direction:column;text-align:center;}
-  .report-filters{flex-direction:column;align-items:stretch;}
-}
-
-/* ESTILOS ESPECÍFICOS PARA IMPRESIÓN (PDF) */
 @media print {
   body * { visibility: hidden; }
   .main, .main * { visibility: visible; }
   .main { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
-  .sidebar, .report-filters, .report-actions, .btn { display: none !important; }
+  .sidebar, .report-filters, .report-actions { display: none !important; }
   .card, .stat-card { box-shadow: none !important; border: 1px solid #ccc !important; }
   .stats-grid { display: flex !important; flex-wrap: wrap; gap: 10px; }
   .stat-card { flex: 1; min-width: 150px; }
-  .report-table th { background: #eee !important; -webkit-print-color-adjust: exact; }
+}
+@media(max-width:860px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;padding:12px;overflow-x:auto;}
+  .main{padding:20px 16px}
 }
 </style>
 </head>
 <body>
 
-<!-- ===== PANTALLA DE LOGIN ===== -->
 <div id="authScreen" class="auth-screen">
   <div id="loginBox" class="auth-box">
     <div class="auth-logo">🍔</div>
     <h2>Admin Panel</h2>
     <p>Inicia sesión con tu cuenta de administrador.</p>
     <div class="auth-error" id="loginError">Correo o contraseña incorrectos.</div>
-    <div class="field">
-      <label>Correo Electrónico</label>
-      <input type="email" id="loginUser" placeholder="admin@tuburguer.com" autocomplete="username">
-    </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
-    </div>
+    <div class="field"><label>Correo Electrónico</label><input type="email" id="loginUser" placeholder="admin@tuburguer.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="loginPass" placeholder="••••••••"></div>
     <button class="btn btn-primary" onclick="doLogin()">Entrar al panel</button>
   </div>
 </div>
 
-<!-- ===== APP PRINCIPAL ===== -->
 <div class="app hidden" id="appContainer">
   <aside class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
-      <div class="sb-brand-text">
-        <h1>Admin Panel</h1>
-        <p id="sbBrandName">Burguer Express</p>
-      </div>
+      <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Burguer Express</p></div>
     </div>
     <nav class="sb-nav">
       <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
       <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
       <button data-tab="categories"><span class="ico">📁</span>Categorías<span class="count" id="cnt-categories">0</span></button>
       <button data-tab="orders"><span class="ico">🧾</span>Pedidos<span class="count" id="cnt-orders">0</span></button>
-      <button data-tab="reports"><span class="ico">📈</span>Reportes</button> <!-- NUEVA PESTAÑA -->
+      <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
-      <button data-tab="data"><span class="ico">💾</span>Datos</button>
     </nav>
     <div class="sb-footer">
-      <a href="index.html" target="_blank" id="btnViewApp"><span>👁️</span>Ver app cliente</a>
+      <a href="index.html" target="_blank"><span>👁️</span>Ver app cliente</a>
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
   </aside>
-
   <main class="main" id="main"></main>
 </div>
 
@@ -287,31 +181,15 @@ textarea{resize:vertical;min-height:80px}
 </script>
 
 <script>
-/* =========================================================
-   1. AUTENTICACIÓN Y DATOS GLOBALES
-   ========================================================= */
-let currentTenantId = null; // Si usas multi-tenant, aquí iría el ID. Por ahora usamos el flujo simple.
-var DB = { config: null, cats: [], menu: [], orders: [] };
-
-var DEFAULT_CONFIG = {
-  brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
-  mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, hours: { open: 11, close: 23 }, helpHoursText: "11:00 a 23:00",
-  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
-};
+var DB = { config: {}, cats: [], menu: [], orders: [] };
+var state = { tab: "home" };
 
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session && session.user) {
+  if (session) {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
-    try {
-      await dbLoad(); 
-      render();
-      setupNav();
-      window.currentAdminUser = session.user.email; 
-    } catch(error) {
-      console.error("Error cargando datos:", error);
-    }
+    await dbLoad(); render(); setupNav();
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
@@ -322,177 +200,91 @@ function doLogin() {
   const email = document.getElementById("loginUser").value.trim();
   const password = document.getElementById("loginPass").value;
   const err = document.getElementById("loginError");
-  const btn = document.querySelector("#loginBox .btn-primary");
-
-  if (!email || !password) { err.textContent = "Llena todos los campos."; err.style.display = "block"; return; }
-
-  btn.disabled = true; btn.textContent = "Entrando..."; err.style.display = "none";
-
-  supabaseClient.auth.signInWithPassword({ email, password })
-    .then(({ data, error }) => {
-      btn.disabled = false; btn.textContent = "Entrar al panel";
-      if (error) { err.textContent = "Correo o contraseña incorrectos."; err.style.display = "block"; } 
-      else { toast("✅ Bienvenido"); }
-    });
+  supabaseClient.auth.signInWithPassword({ email, password }).then(({ error }) => {
+    if (error) { err.style.display = "block"; } else { toast("✅ Bienvenido"); }
+  });
 }
 
 function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
-  supabaseClient.auth.signOut().then(() => {
-    toast("Sesión cerrada");
-    document.getElementById("loginUser").value = "";
-    document.getElementById("loginPass").value = "";
-  });
+  supabaseClient.auth.signOut().then(() => location.reload());
 }
 
-/* =========================================================
-   2. CARGA Y GUARDADO EN SUPABASE
-   ========================================================= */
 async function dbLoad() {
-  try {
-    const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
-    if (config) {
-      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
-    } else {
-      DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      await supabaseClient.from('config').insert([{ id: 1, brand: DB.config.brand, whatsapp: DB.config.whatsapp }]);
-    }
-
-    const { data: cats } = await supabaseClient.from('categories').select('*');
-    DB.cats = cats || [];
-
-    const { data: products } = await supabaseClient.from('products').select('*');
-    DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] })) : [];
-
-    const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
-    DB.orders = orders || [];
-  } catch(e) { console.error(e); }
+  const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
+  DB.config = config || {};
+  const { data: cats } = await supabaseClient.from('categories').select('*');
+  DB.cats = cats || [];
+  const { data: products } = await supabaseClient.from('products').select('*');
+  DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description })) : [];
+  const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+  DB.orders = orders || [];
 }
 
-async function dbSaveConfig() { await supabaseClient.from('config').upsert({ id: 1, ...DB.config, phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText }); }
-async function dbSaveCats() { await supabaseClient.from('categories').upsert(DB.cats); }
-async function dbSaveMenu() {
-  await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  if (!DB.menu.length) return;
-  const dbProducts = DB.menu.map(p => ({ category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji, badge: p.badge || null, img: p.img || null, description: p.desc, extras: p.extras }));
-  const { data } = await supabaseClient.from('products').insert(dbProducts).select();
-  if (data) DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
-}
-async function dbSaveOrders() { if(DB.orders[0]) await supabaseClient.from('orders').upsert([DB.orders[0]]); }
-
-/* =========================================================
-   3. UI Y RENDERIZADO
-   ========================================================= */
-var state = { tab: "home" };
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
-function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
-function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
-
+function toast(m){ var t = $("#toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
 function setupNav() {
-  $$(".sb-nav button").forEach(b => { b.onclick = () => { state.tab = b.dataset.tab; $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); render(); window.scrollTo(0,0); }; });
+  $$(".sb-nav button").forEach(b => b.onclick = () => { state.tab = b.dataset.tab; $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); render(); window.scrollTo(0,0); });
 }
 
 function render() {
   var m = $("#main");
   if (state.tab === "home") renderHome(m);
   else if (state.tab === "products") renderProducts(m);
-  else if (state.tab === "categories") renderCategories(m);
   else if (state.tab === "orders") renderOrders(m);
-  else if (state.tab === "reports") renderReports(m); // NUEVA SECCIÓN
+  else if (state.tab === "reports") renderReports(m);
   else if (state.tab === "business") renderBusiness(m);
-  else if (state.tab === "data") renderData(m);
-  updateCounts();
-}
-
-function updateCounts() {
+  else if (state.tab === "categories") renderCategories(m);
   $("#cnt-products").textContent = DB.menu.length;
   $("#cnt-categories").textContent = DB.cats.length;
   $("#cnt-orders").textContent = DB.orders.length;
 }
 
-/* =========================================================
-   4. RENDER: HOME Y PRODUCTOS (Mantenidos)
-   ========================================================= */
 function renderHome(m) {
-  var adminName = window.currentAdminUser || "Admin";
   m.innerHTML = `
-    <div class="welcome-card">
-      <h1>¡Hola, ${esc(adminName)}!</h1>
-      <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
-    </div>
+    <div class="welcome-card"><h1>¡Hola, Admin!</h1><p>Bienvenido a ${DB.config.brand || 'tu negocio'}.</p></div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div><div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div><div class="stat-info"><p>Pedidos</p><h3>${DB.orders.length}</h3></div></div>
     </div>`;
 }
 
 function renderProducts(m) {
-  m.innerHTML = `
-    <div class="page-head">
-      <div><h1 class="page-title">Productos</h1><p class="page-sub">Administra tu menú.</p></div>
-      <button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button>
-    </div>
-    <div class="p-list">
-      ${DB.menu.map(p => `
-        <div class="p-card">
-          <div class="p-thumb">${p.img ? `<img src="${esc(p.img)}">` : p.emoji}</div>
-          <div class="p-info">
-            <h4>${esc(p.name)}</h4>
-            <p>${esc(p.desc)}</p>
-            <div class="p-meta"><span class="p-price">${money(p.price)}</span></div>
-          </div>
-          <div class="p-actions">
-            <button onclick="openProductEditor('${p.id}')">✎</button>
-            <button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button>
-          </div>
-        </div>`).join("")}
-    </div>`;
+  m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary">＋ Nuevo</button></div>
+    <div class="p-list">${DB.menu.map(p => `<div class="p-card"><div class="p-thumb">${p.emoji}</div><div class="p-info"><h4>${p.name}</h4><p>${p.desc}</p><b style="color:var(--brand)">$${p.price}</b></div></div>`).join("")}</div>`;
 }
 
-async function deleteProduct(id) {
-  if (!confirm("¿Eliminar producto?")) return;
-  await supabaseClient.from('products').delete().eq('id', id);
-  DB.menu = DB.menu.filter(x => x.id !== id); render();
+function renderOrders(m) {
+  m.innerHTML = `<h1 class="page-title">Pedidos</h1>` + (DB.orders.length === 0 ? `<div class="empty">Sin pedidos</div>` : DB.orders.map(o => `<div class="card" style="margin-bottom:10px;padding:16px"><b>${o.code}</b> - ${o.customer.name} - $${o.total}</div>`).join(""));
 }
 
-/* =========================================================
-   5. NUEVA SECCIÓN: REPORTES
-   ========================================================= */
+function renderCategories(m) { m.innerHTML = `<h1 class="page-title">Categorías</h1>`; }
+function renderBusiness(m) { m.innerHTML = `<h1 class="page-title">Negocio</h1>`; }
+
+/* SECCIÓN DE REPORTES (BOTONES VERTICALES) */
 function renderReports(m) {
-  // Por defecto, mostrar el mes actual
   const hoy = new Date();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
   const ultimoDia = hoy.toISOString().split('T')[0];
 
   m.innerHTML = `
-    <div class="page-head">
-      <div><h1 class="page-title">Reportes</h1><p class="page-sub">Analiza el rendimiento de tu negocio.</p></div>
-    </div>
-
+    <div class="page-head"><div><h1 class="page-title">Reportes</h1><p class="page-sub">Analiza el rendimiento de tu negocio.</p></div></div>
     <div class="card" style="margin-bottom:24px">
       <div class="card-body">
         <div class="report-filters">
-          <div class="field">
-            <label>Desde</label>
-            <input type="date" id="rep-start" value="${primerDia}">
-          </div>
-          <div class="field">
-            <label>Hasta</label>
-            <input type="date" id="rep-end" value="${ultimoDia}">
-          </div>
-          <button class="btn btn-primary" onclick="generarReporte()">Generar Reporte</button>
+          <div class="field"><label>Desde</label><input type="date" id="rep-start" value="${primerDia}"></div>
+          <div class="field"><label>Hasta</label><input type="date" id="rep-end" value="${ultimoDia}"></div>
+          <button class="btn btn-primary" onclick="generarReporte()">Generar</button>
         </div>
         
+        <!-- BOTONES EN VERTICAL -->
         <div class="report-actions" id="rep-actions" style="display:none">
           <button class="btn btn-ghost" onclick="exportarCSV()">📊 Descargar Excel/CSV</button>
           <button class="btn btn-ghost" onclick="window.print()">📄 Guardar como PDF</button>
         </div>
       </div>
     </div>
-
     <div id="report-content"></div>
   `;
 }
@@ -500,157 +292,54 @@ function renderReports(m) {
 function generarReporte() {
   const start = new Date(document.getElementById("rep-start").value + "T00:00:00");
   const end = new Date(document.getElementById("rep-end").value + "T23:59:59");
-  
-  if (isNaN(start) || isNaN(end) || start > end) {
-    toast("Rango de fechas inválido", "error"); return;
-  }
+  const filtered = DB.orders.filter(o => { const d = new Date(o.created_at); return d >= start && d <= end; });
 
-  // 1. Filtrar pedidos
-  const filtered = DB.orders.filter(o => {
-    const d = new Date(o.created_at || o.createdAt);
-    return d >= start && d <= end;
-  });
-
-  // 2. Calcular métricas
-  let totalIngresos = 0;
-  let clientesSet = new Set();
+  let totalIngresos = 0; let clientesSet = new Set();
   let productosVendidos = {};
 
   filtered.forEach(o => {
     totalIngresos += Number(o.total);
     if (o.customer && o.customer.phone) clientesSet.add(o.customer.phone);
-    
-    if (o.items) {
-      o.items.forEach(it => {
-        if (!productosVendidos[it.name]) productosVendidos[it.name] = { qty: 0, total: 0 };
-        productosVendidos[it.name].qty += it.qty;
-        productosVendidos[it.name].total += (it.unit * it.qty);
-      });
-    }
+    if (o.items) o.items.forEach(it => {
+      if (!productosVendidos[it.name]) productosVendidos[it.name] = { qty: 0, total: 0 };
+      productosVendidos[it.name].qty += it.qty;
+      productosVendidos[it.name].total += (it.unit * it.qty);
+    });
   });
 
-  // 3. Renderizar el reporte
   document.getElementById("rep-actions").style.display = "flex";
-  const cont = document.getElementById("report-content");
-
-  cont.innerHTML = `
+  document.getElementById("report-content").innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:var(--ok-soft);color:var(--ok)">💰</div><div class="stat-info"><p>Ingresos Totales</p><h3>${money(totalIngresos)}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">🧾</div><div class="stat-info"><p>Pedidos Realizados</p><h3>${filtered.length}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">👥</div><div class="stat-info"><p>Clientes Únicos</p><h3>${clientesSet.size}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--ok-soft);color:var(--ok)">💰</div><div class="stat-info"><p>Ingresos</p><h3>$${totalIngresos.toFixed(2)}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">🧾</div><div class="stat-info"><p>Pedidos</p><h3>${filtered.length}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">👥</div><div class="stat-info"><p>Clientes</p><h3>${clientesSet.size}</h3></div></div>
     </div>
-
-    <div class="card">
-      <div class="card-body">
-        <div class="card-title">Productos más vendidos</div>
-        <table class="report-table">
-          <thead><tr><th>Producto</th><th>Cantidad Vendida</th><th>Ingresos</th></tr></thead>
-          <tbody>
-            ${Object.keys(productosVendidos).sort((a,b)=>productosVendidos[b].qty - productosVendidos[a].qty).map(name => `
-              <tr>
-                <td><b>${esc(name)}</b></td>
-                <td>${productosVendidos[name].qty} u.</td>
-                <td>${money(productosVendidos[name].total)}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:24px">
-      <div class="card-body">
-        <div class="card-title">Detalle de Pedidos</div>
-        <table class="report-table">
-          <thead><tr><th>Fecha</th><th>Código</th><th>Cliente</th><th>Pago</th><th>Total</th></tr></thead>
-          <tbody>
-            ${filtered.map(o => `
-              <tr>
-                <td>${new Date(o.created_at || o.createdAt).toLocaleDateString()}</td>
-                <td>${esc(o.code)}</td>
-                <td>${esc(o.customer.name)}</td>
-                <td>${esc(o.payment)}</td>
-                <td><b>${money(o.total)}</b></td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="card"><div class="card-body">
+      <div class="card-title">Productos más vendidos</div>
+      <table class="report-table"><thead><tr><th>Producto</th><th>Cant.</th><th>Ingreso</th></tr></thead><tbody>
+        ${Object.keys(productosVendidos).sort((a,b)=>productosVendidos[b].qty - productosVendidos[a].qty).map(name => `
+          <tr><td><b>${name}</b></td><td>${productosVendidos[name].qty}</td><td>$${productosVendidos[name].total.toFixed(2)}</td></tr>
+        `).join("")}
+      </tbody></table>
+    </div></div>
   `;
-
-  window.currentReportData = filtered; // Guardamos para exportar
+  window.currentReportData = filtered;
 }
 
 function exportarCSV() {
-  if (!window.currentReportData || window.currentReportData.length === 0) {
-    toast("No hay datos para exportar", "error"); return;
-  }
-
-  // Encabezados
-  let csv = "Codigo,Fecha,Cliente,Telefono,Metodo de Pago,Total\n";
-
-  // Filas
+  if (!window.currentReportData || !window.currentReportData.length) return toast("No hay datos");
+  let csv = "Codigo,Fecha,Cliente,Telefono,Pago,Total\n";
   window.currentReportData.forEach(o => {
-    const date = new Date(o.created_at || o.createdAt).toLocaleString();
-    csv += `"${o.code}","${date}","${o.customer.name}","${o.customer.phone}","${o.payment}",${o.total}\n`;
+    csv += `"${o.code}","${new Date(o.created_at).toLocaleString()}","${o.customer.name}","${o.customer.phone}","${o.payment}",${o.total}\n`;
   });
-
-  // Crear archivo
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  toast("✅ Excel/CSV descargado");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  toast("✅ Descargado");
 }
 
-/* =========================================================
-   6. RESTO DE FUNCIONES (Pedidos, Negocio, etc.)
-   ========================================================= */
-function renderOrders(m) {
-  m.innerHTML = `
-    <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
-    ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
-    `<div class="order-list">${DB.orders.map(o => `
-      <div class="order-card">
-        <div class="order-head"><span class="order-code">${esc(o.code)}</span><span class="order-status">${esc(o.status)}</span><span class="order-date">${new Date(o.created_at).toLocaleString()}</span></div>
-        <div class="order-customer"><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}</div>
-        <div class="order-items">${o.items.map(it=>`<div>${it.qty}x ${esc(it.name)} - ${money(it.unit * it.qty)}</div>`).join("")}<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div></div>
-      </div>`).join("")}</div>`}
-  `;
-}
-
-function renderBusiness(m) {
-  m.innerHTML = `
-    <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
-    <div class="card"><div class="card-body">
-      <div class="form-grid">
-        <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
-        <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
-      </div>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="DB.config.brand=document.getElementById('bBrand').value; DB.config.whatsapp=document.getElementById('bWhatsapp').value; dbSaveConfig(); toast('Guardado');">Guardar cambios</button>
-    </div></div>`;
-}
-
-function renderCategories(m) {
-  m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Categorías</h1></div></div><div class="cat-list">${DB.cats.map(c=>`<div class="cat-row"><div class="cat-icon">${c.icon}</div><div class="cat-info"><h4>${esc(c.name)}</h4></div></div>`).join("")}</div>`;
-}
-
-function renderData(m) { m.innerHTML = `<h1 class="page-title">Datos</h1>`; } // Placeholder
-function openProductEditor(id) { toast("Editor de producto (mantenido de versión anterior)"); } // Placeholder simplificado para el ejemplo
-
-/* =========================================================
-   7. INICIALIZACIÓN
-   ========================================================= */
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", () => {
   checkAuth();
-  document.getElementById("loginPass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
-  supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') checkAuth(); });
-  if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw-admin.js').catch(()=>{})); }
+  document.getElementById("loginPass").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
 });
 </script>
 </body>
