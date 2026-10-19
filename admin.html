@@ -6,8 +6,10 @@
 <title>Panel Admin — Burguer Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="manifest" href="/manifest-admin.json">
+<!-- PWA para que funcione el Badge en el icono -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Admin Burguer","short_name":"Admin","start_url":"/admin.html","display":"standalone","background_color":"#ffffff","theme_color":"#FF6B2C","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
 <meta name="theme-color" content="#FF6B2C">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -53,6 +55,10 @@ textarea{resize:vertical;min-height:80px}
 .sb-nav button.active{background:var(--brand-soft);color:var(--brand-d);font-weight:600}
 .sb-nav button .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--surface-2);color:var(--muted);padding:2px 7px;border-radius:99px}
 .sb-nav button.active .count{background:var(--brand);color:#fff}
+/* NUEVO BADGE DE PEDIDOS PENDIENTES */
+.sb-nav button .count.new{background:var(--danger);color:#fff;animation:pulse-badge 2s infinite;}
+@keyframes pulse-badge{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
 .sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
 .sb-footer a,.sb-footer button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);text-decoration:none;transition:.15s}
 .sb-footer a:hover,.sb-footer button:hover{background:var(--surface-2);color:var(--ink)}
@@ -176,6 +182,7 @@ textarea{resize:vertical;min-height:80px}
 </head>
 <body>
 
+<!-- Sonido de notificación -->
 <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
 <div id="authScreen" class="auth-screen">
@@ -237,11 +244,67 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
+// ---- LÓGICA DE NOTIFICACIONES (NUEVA) ----
+
+// 1. Desbloquear audio con la primera interacción del usuario
+function unlockAudio() {
+  const audio = document.getElementById('notifSound');
+  if (audio) {
+    audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+  }
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('touchstart', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
+
+// 2. Pedir permiso para notificaciones Push
+function requestNotificationPermission() {
+  if ("Notification" in window) {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+  }
+}
+
+// 3. Actualizar el Badge (el numerito rojo en el icono de la app y en la pestaña)
+function updateAppBadge() {
+  const pendingOrders = DB.orders.filter(o => o.status === 'recibido' || !o.status).length;
+  
+  // Badge en la App instalada (Icono de la app)
+  if ("setAppBadge" in navigator) {
+    if (pendingOrders > 0) navigator.setAppBadge(pendingOrders).catch(console.error);
+    else navigator.clearAppBadge().catch(console.error);
+  }
+
+  // Título de la pestaña del navegador
+  if (pendingOrders > 0) document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
+  else document.title = `Panel Admin — Burguer Express`;
+
+  // Badge visual en el menú lateral (la campanita roja en la pestaña "Pedidos")
+  const orderCountEl = $("#cnt-orders");
+  if (orderCountEl) {
+    if (pendingOrders > 0) {
+      orderCountEl.textContent = pendingOrders;
+      orderCountEl.classList.add("new");
+    } else {
+      orderCountEl.classList.remove("new");
+      orderCountEl.textContent = DB.orders.length; // Mostrar el total si no hay pendientes
+    }
+  }
+}
+
+// ---------------------------------------------
+
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
+    
+    // Pedir permiso de notificación al entrar
+    requestNotificationPermission();
+
     try {
       await dbLoad(); render(); setupNav(); setupOrderListener();
       window.currentAdminUser = session.user.email; 
@@ -273,6 +336,8 @@ function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
   supabaseClient.auth.signOut().then(() => {
     if (window.adminOrderChannel) { supabaseClient.removeChannel(window.adminOrderChannel); window.adminOrderChannel = null; }
+    if ("clearAppBadge" in navigator) navigator.clearAppBadge();
+    document.title = "Panel Admin — Burguer Express";
     toast("Sesión cerrada");
     document.getElementById("loginUser").value = "";
     document.getElementById("loginPass").value = "";
@@ -295,6 +360,7 @@ async function dbLoad() {
     DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] })) : [];
     const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
     DB.orders = orders || [];
+    updateAppBadge(); // <-- Actualizamos el badge al cargar
   } catch(e) { console.error(e); }
 }
 
@@ -321,6 +387,7 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
     const order = DB.orders.find(o => o.id === orderId);
     if (order) order.status = newStatus;
     toast("✅ Estado actualizado y enviado al cliente");
+    updateAppBadge(); // <-- Actualizamos el badge al cambiar estado
     render();
   } else {
     toast("Error al actualizar estado", "error");
@@ -332,19 +399,43 @@ function setupOrderListener() {
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
+      
+      // 1. Reproducir sonido
       const audio = document.getElementById('notifSound');
-      if (audio) { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked by browser:', e)); }
+      if (audio) { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked:', e)); }
+      
+      // 2. Mostrar Notificación Push (si está permitido)
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🔔 ¡Nuevo Pedido!", {
+          body: `Pedido ${newOrder.code} de ${newOrder.customer.name}\nTotal: $${newOrder.total}`,
+          icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+          vibrate: [200, 100, 200]
+        });
+      }
+
+      // 3. Toast visual interno
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
+      
+      // 4. Recargar la data y actualizar UI/Badges
       dbLoad().then(() => {
+        updateAppBadge();
         if (state.tab === 'orders') renderOrders(document.getElementById('main'));
-        updateCounts();
       });
     })
     .subscribe();
 }
 
 function setupNav() {
-  $$(".sb-nav button").forEach(b => { b.onclick = () => { state.tab = b.dataset.tab; $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); render(); window.scrollTo(0,0); }; });
+  $$(".sb-nav button").forEach(b => { 
+    b.onclick = () => { 
+      state.tab = b.dataset.tab; 
+      $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
+      // Si entra a pedidos, quitamos el título de "Nuevo pedido"
+      if (state.tab === 'orders') document.title = "Panel Admin — Burguer Express";
+      render(); 
+      window.scrollTo(0,0); 
+    }; 
+  });
 }
 
 function render() {
@@ -361,7 +452,7 @@ function render() {
 function updateCounts() {
   $("#cnt-products").textContent = DB.menu.length;
   $("#cnt-categories").textContent = DB.cats.length;
-  $("#cnt-orders").textContent = DB.orders.length;
+  updateAppBadge();
 }
 
 function renderHome(m) {
@@ -371,7 +462,7 @@ function renderHome(m) {
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div><div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div><div class="stat-info"><p>Pedidos</p><h3>${DB.orders.length}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div><div class="stat-info"><p>Pedidos Totales</p><h3>${DB.orders.length}</h3></div></div>
     </div>`;
 }
 
