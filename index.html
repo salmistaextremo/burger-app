@@ -311,8 +311,8 @@ main{padding:18px}
           <label>Dirección de entrega *</label>
           <textarea id="f-addr" placeholder="Calle, número, sector…"></textarea>
           <div class="err">Ingresa la dirección de entrega</div>
-          <!-- NUEVO BOTÓN DE GEOLOCALIZACIÓN -->
-          <button type="button" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">
+          <!-- BOTÓN DE GEOLOCALIZACIÓN (ESTADO DINÁMICO) -->
+          <button type="button" id="btnLocation" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">
             📍 Compartir ubicación exacta (Google Maps)
           </button>
           <div id="locationStatus" style="font-size:12px; color:var(--brand); margin-top:8px; display:none; font-weight:500;"></div>
@@ -520,23 +520,31 @@ function getLocation() {
     toast("Tu navegador no soporta geolocalización");
     return;
   }
+  const btn = document.getElementById("btnLocation");
   const statusEl = document.getElementById("locationStatus");
-  statusEl.style.display = "block";
-  statusEl.innerHTML = "⏳ Obteniendo ubicación...";
-  statusEl.style.color = "var(--muted)";
+  
+  btn.innerHTML = "⏳ Obteniendo ubicación...";
+  btn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
       state.userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
-      statusEl.innerHTML = `✅ Ubicación adjuntada: <a href="${state.userLocationUrl}" target="_blank" style="color:var(--brand); text-decoration:underline;">Ver en Maps</a>`;
-      statusEl.style.color = "var(--ok)";
+      
+      btn.innerHTML = "✅ Ubicación capturada";
+      btn.style.borderColor = "var(--ok)";
+      btn.style.color = "var(--ok)";
+      btn.disabled = false;
+      
+      statusEl.style.display = "block";
+      statusEl.innerHTML = `<a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
       toast("Ubicación capturada con éxito");
     },
     (error) => {
-      statusEl.style.display = "none";
-      toast("Error al obtener ubicación. Revisa los permisos.");
+      btn.innerHTML = "📍 Compartir ubicación exacta";
+      btn.disabled = false;
+      toast("No se pudo obtener la ubicación. Revisa los permisos.");
       console.error(error);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -704,6 +712,20 @@ function updateOrderType() {
 function renderCheckout(){
   renderPayments();
   if (state.clientName) $("#f-name").value = state.clientName;
+  
+  // Si ya capturamos la ubicación al entrar, actualizamos el botón visualmente
+  if (state.userLocationUrl) {
+    const btn = document.getElementById("btnLocation");
+    const statusEl = document.getElementById("locationStatus");
+    if (btn && statusEl) {
+      btn.innerHTML = "✅ Ubicación capturada";
+      btn.style.borderColor = "var(--ok)";
+      btn.style.color = "var(--ok)";
+      statusEl.style.display = "block";
+      statusEl.innerHTML = `<a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
+    }
+  }
+
   updateOrderType();
 }
 
@@ -729,7 +751,6 @@ async function submitOrder() {
   var total = sub + del;
   var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
 
-  // MENSAJE DE WHATSAPP CON UBICACIÓN GPS
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
   if (isDelivery) {
     msg += `*Dirección:* ${addr} (${ref})\n`;
@@ -761,7 +782,7 @@ async function submitOrder() {
 
   saveName(name);
   state.cart = [];
-  state.userLocationUrl = null; // Limpiar ubicación
+  state.userLocationUrl = null; // Limpiar ubicación para el próximo pedido
   saveCart();
   updateBadge();
   localStorage.setItem('ff_current_order_code', code);
@@ -864,6 +885,23 @@ function go(view){
     if (!name) return;
     saveName(name);
     document.getElementById("botWelcome").classList.add("hidden");
+    
+    // SOLICITAR PERMISO DE UBICACIÓN AQUÍ
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          state.userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+          console.log("Ubicación capturada automáticamente al iniciar");
+        },
+        (error) => {
+          console.log("Permiso de ubicación denegado o error:", error);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
     go("menu");
   });
 })();
