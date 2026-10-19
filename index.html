@@ -279,16 +279,15 @@ main{padding:18px}
 .btn-rate-close { width: 100%; padding: 14px; margin-top: 10px; border-radius: 16px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: .2s; }
 .btn-rate-close:hover { color: var(--ink); }
 
-/* OVERLAY DE TIENDA CERRADA */
 .closed-overlay { position: fixed; inset: 0; z-index: 300; background: #F8F9FA; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; animation: fade .4s; }
 .closed-icon { font-size: 64px; margin-bottom: 20px; }
 .closed-title { font-size: 24px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
 .closed-sub { font-size: 15px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; max-width: 320px; }
 .closed-schedule { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; width: 100%; max-width: 320px; margin-bottom: 32px; box-shadow: var(--shadow-sm); text-align: left; }
 .closed-schedule h4 { margin: 0 0 12px; font-size: 14px; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); padding-bottom: 10px; }
-.closed-schedule .row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px; color: var(--muted); }
+.closed-schedule .row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px; color: var(--muted); line-height: 1.4; }
 .closed-schedule .row:last-child { margin-bottom: 0; }
-.closed-schedule .row b { color: var(--ink-2); font-weight: 600; }
+.closed-schedule .row b { color: var(--ink-2); font-weight: 600; text-align: right; }
 .btn-exit { width: 100%; max-width: 320px; padding: 16px; border-radius: 16px; border: none; background: var(--ink); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: .2s; }
 .btn-exit:active { transform: scale(.98); }
 </style>
@@ -303,11 +302,9 @@ main{padding:18px}
     <h2 class="closed-title">Actualmente no estamos trabajando</h2>
     <p class="closed-sub">Nuestro horario de atención ha finalizado. Vuelve en nuestro próximo turno para ordenar.</p>
     
-    <div class="closed-schedule">
+    <div class="closed-schedule" id="closedScheduleBox">
       <h4>Nuestros horarios:</h4>
-      <div class="row"><span>Lunes a Jueves</span><b>11:00 AM - 11:00 PM</b></div>
-      <div class="row"><span>Viernes y Sábado</span><b>11:00 AM - 1:00 AM</b></div>
-      <div class="row"><span>Domingo</span><b>12:00 PM - 10:00 PM</b></div>
+      <!-- Se llena dinámicamente con JS -->
     </div>
 
     <button class="btn-exit" onclick="exitApp()">Cerrar Aplicación</button>
@@ -432,10 +429,8 @@ main{padding:18px}
       <details class="faq"><summary>¿Cómo pago mi pedido?</summary><div class="ans">Aceptamos efectivo, Pago Móvil, transferencia, tarjeta y puntos. Al confirmar enviamos el resumen por WhatsApp con los datos.</div></details>
       <details class="faq"><summary>¿Puedo modificar mi pedido?</summary><div class="ans">Sí, mientras esté en estado <b>Recibido</b>. Escríbenos con tu número de pedido y lo ajustamos.</div></details>
       <div class="sec-title">Horario</div>
-      <div class="card" style="display:block;padding:18px;cursor:default">
-        <div class="trow"><span>Lunes a Jueves</span><b>11:00 — 23:00</b></div>
-        <div class="trow"><span>Viernes y Sábado</span><b>11:00 — 01:00</b></div>
-        <div class="trow"><span>Domingo</span><b>12:00 — 22:00</b></div>
+      <div class="card" style="display:block;padding:18px;cursor:default" id="helpScheduleBox">
+        <!-- Se llena dinámicamente con JS -->
       </div>
     </section>
   </main>
@@ -487,6 +482,7 @@ var CONFIG = {
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, 
   hours: { open: "11:00", close: "23:00" }, 
+  days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00",
   payments: [],
   stages: {
@@ -515,7 +511,6 @@ var MENU = [];
 var EXCHANGE_RATE = null;
 var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 
-// CARGAR CONFIGURACIÓN
 async function loadSharedData(){
   try {
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
@@ -529,6 +524,7 @@ async function loadSharedData(){
       CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
       CONFIG.payments = config.payments || [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }];
       CONFIG.hours = config.hours || { open: "11:00", close: "23:00" };
+      CONFIG.days = config.days || [1, 2, 3, 4, 5, 6, 0];
       CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
     }
     const { data: cats } = await supabaseClient.from('categories').select('*');
@@ -557,25 +553,69 @@ function applyBrandLogo(){
   if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
 }
 
+// GENERAR EL TEXTO DEL HORARIO DINÁMICAMENTE
+function getScheduleHTML() {
+  const activeDays = CONFIG.days || [1,2,3,4,5,6,0];
+  if (activeDays.length === 0) return `<div class="row"><span>Sin horario definido</span><b>--</b></div>`;
+
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const sortedDays = [...activeDays].sort((a,b) => a - b);
+
+  let label = "";
+  if (sortedDays.length === 7) {
+    label = "Todos los días";
+  } else if (sortedDays.join(',') === '1,2,3,4,5') {
+    label = "Lunes a Viernes";
+  } else if (sortedDays.join(',') === '1,2,3,4,5,6') {
+    label = "Lunes a Sábado";
+  } else {
+    label = sortedDays.map(d => dayNames[d]).join(', ');
+  }
+
+  // Si el admin escribió un texto personalizado, usarlo. Si no, generarlo con las horas.
+  let finalText = CONFIG.helpHoursText;
+  if (!finalText || finalText.trim() === '') {
+    finalText = `${CONFIG.hours.open} a ${CONFIG.hours.close}`;
+  }
+
+  // Si el texto tiene saltos de línea, renderizarlos como <br>
+  finalText = finalText.replace(/\n/g, '<br>');
+
+  // Si el texto personalizado contiene varias líneas, lo mostramos tal cual.
+  // Si es una sola línea, lo mostramos al lado de los días.
+  if (finalText.includes('<br>')) {
+    return `<div style="font-size:13.5px; color:var(--muted); line-height:1.6;">${finalText}</div>`;
+  } else {
+    return `<div class="row"><span>${label}</span><b>${finalText}</b></div>`;
+  }
+}
+
 // VERIFICAR SI LA TIENDA ESTÁ ABIERTA
 function checkStoreStatus() {
   if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return;
   
   let now = new Date();
+  let currentDay = now.getDay(); // 0 = Domingo
   let currentMins = now.getHours() * 60 + now.getMinutes();
   
+  // 1. Verificar si hoy es un día laborable
+  const activeDays = CONFIG.days || [1,2,3,4,5,6,0];
+  const isWorkingDay = activeDays.includes(currentDay);
+
+  // 2. Verificar si estamos dentro del horario
   let [openH, openM] = CONFIG.hours.open.split(':').map(Number);
   let [closeH, closeM] = CONFIG.hours.close.split(':').map(Number);
   let openMins = openH * 60 + openM;
   let closeMins = closeH * 60 + closeM;
   
-  let isOpen = false;
-  // Si la hora de cierre es mayor (ej 11:00 a 23:00) o si cruza la medianoche (ej 18:00 a 02:00)
+  let isOpenTime = false;
   if (closeMins > openMins) {
-    isOpen = currentMins >= openMins && currentMins < closeMins;
+    isOpenTime = currentMins >= openMins && currentMins < closeMins;
   } else {
-    isOpen = currentMins >= openMins || currentMins < closeMins;
+    isOpenTime = currentMins >= openMins || currentMins < closeMins;
   }
+
+  const isOpen = isWorkingDay && isOpenTime;
 
   const statusEl = document.getElementById("storeStatus");
   const closedOverlay = document.getElementById("closedOverlay");
@@ -589,18 +629,20 @@ function checkStoreStatus() {
     statusEl.classList.add("closed");
     closedOverlay.classList.remove("hidden");
   }
+
+  // Actualizar textos de horarios
+  const scheduleHtml = getScheduleHTML();
+  document.getElementById("closedScheduleBox").innerHTML = `<h4>Nuestros horarios:</h4>${scheduleHtml}`;
+  document.getElementById("helpScheduleBox").innerHTML = scheduleHtml;
 }
 
-// BOTÓN DE SALIR
 function exitApp() {
-  window.close(); // Intenta cerrar la pestaña
-  // Si el navegador bloquea window.close(), reemplaza el contenido con un mensaje
+  window.close();
   setTimeout(() => {
     document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;color:#666;text-align:center;padding:20px;"><h2>Gracias por visitarnos.<br>Ya puedes cerrar esta pestaña.</h2></div>';
   }, 100);
 }
 
-// TASA DE CAMBIO NO BLOQUEANTE
 async function fetchExchangeRate() {
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
@@ -608,29 +650,19 @@ async function fetchExchangeRate() {
       let data = await res.json();
       if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
         EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
-        updateRateBadge();
-        refreshCurrentView();
-        return;
+        updateRateBadge(); refreshCurrentView(); return;
       }
     }
   } catch (e) {}
-
   try {
     let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     let data = await res.json();
     if (data && data.promedio) {
       EXCHANGE_RATE = parseFloat(data.promedio);
-      updateRateBadge();
-      refreshCurrentView();
-      return;
+      updateRateBadge(); refreshCurrentView(); return;
     }
   } catch (e) {}
-
-  if (!EXCHANGE_RATE) {
-    EXCHANGE_RATE = 36.50; // Respaldo
-    updateRateBadge();
-    refreshCurrentView();
-  }
+  if (!EXCHANGE_RATE) { EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView(); }
 }
 
 function updateRateBadge(){
@@ -1060,9 +1092,6 @@ function lookupOrder() {
   renderTracking();
 }
 
-/* =========================================================
-   LÓGICA DEL SISTEMA DE CALIFICACIÓN
-   ========================================================= */
 let currentRating = 0;
 let currentOrderCodeToRate = null;
 
@@ -1077,7 +1106,6 @@ function openRatingModal(orderCode) {
 function closeRatingModal() {
   document.getElementById('ratingModal').classList.remove('show');
   currentOrderCodeToRate = null;
-  // LIMPIAR PEDIDO ACTUAL Y CERRAR VENTANA DE PEDIDOS
   localStorage.removeItem('ff_current_order_code');
   go('menu');
 }
@@ -1125,7 +1153,7 @@ async function submitRating() {
 
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
     toast("¡Gracias por tu calificación! ⭐");
-    closeRatingModal(); // Cierra la ventana y vuelve al menú
+    closeRatingModal(); 
     
   } catch (err) {
     console.error(err);
@@ -1191,9 +1219,7 @@ async function init(){
   loadLocal();
   await loadSharedData();
   
-  // Verificar horario apenas carga la página
   checkStoreStatus();
-  // Volver a verificar cada minuto (por si cambia de abierto a cerrado mientras navega)
   setInterval(checkStoreStatus, 60000);
 
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
