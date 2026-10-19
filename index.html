@@ -259,7 +259,6 @@ main{padding:18px}
 <body>
 <div id="app">
 
-  <!-- WELCOME BOT (Oculto por defecto, se muestra con JS si es necesario) -->
   <div id="botWelcome" class="bot-overlay hidden">
     <div class="bot-avatar" id="botAvatar">🍔</div>
     <h2 class="bot-title">¡Bienvenido a <span id="botBrand">Burguer Express</span>!</h2>
@@ -270,7 +269,6 @@ main{padding:18px}
     </div>
   </div>
 
-  <!-- HEADER -->
   <header class="hdr">
     <div class="hdr-top">
       <div class="brand">
@@ -289,12 +287,10 @@ main{padding:18px}
     <div class="chips" id="chips"></div>
   </header>
 
-  <!-- MAIN VIEWS -->
   <main>
     <section id="view-menu" class="view"><div id="menuList" class="menu-list"></div></section>
     <section id="view-cart" class="view hidden"><div id="cartList"></div><div id="cartTotals"></div><div id="cartActions"></div></section>
 
-    <!-- CHECKOUT -->
     <section id="view-checkout" class="view hidden">
       <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;letter-spacing:-.4px">Finalizar pedido</h2>
       <p style="font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.6">Completa tus datos. Al confirmar se abrirá WhatsApp con el resumen y recibirás tu <b style="color:var(--brand)">número de pedido</b> para rastrearlo.</p>
@@ -311,7 +307,16 @@ main{padding:18px}
       </div>
       
       <div id="addressBlock">
-        <div class="field" id="f-addr-w"><label>Dirección de entrega *</label><textarea id="f-addr" placeholder="Calle, número, sector…"></textarea><div class="err">Ingresa la dirección de entrega</div></div>
+        <div class="field" id="f-addr-w">
+          <label>Dirección de entrega *</label>
+          <textarea id="f-addr" placeholder="Calle, número, sector…"></textarea>
+          <div class="err">Ingresa la dirección de entrega</div>
+          <!-- NUEVO BOTÓN DE GEOLOCALIZACIÓN -->
+          <button type="button" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">
+            📍 Compartir ubicación exacta (Google Maps)
+          </button>
+          <div id="locationStatus" style="font-size:12px; color:var(--brand); margin-top:8px; display:none; font-weight:500;"></div>
+        </div>
         <div class="field"><label>Punto de referencia (opcional)</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
       </div>
 
@@ -348,7 +353,6 @@ main{padding:18px}
       <button class="btn btn-ghost" style="margin-top:10px" onclick="go('cart')">← Volver al carrito</button>
     </section>
 
-    <!-- TRACKING -->
     <section id="view-tracking" class="view hidden">
       <div id="trackDynamic"></div>
       <div class="lookup">
@@ -361,7 +365,6 @@ main{padding:18px}
       </div>
     </section>
 
-    <!-- HELP -->
     <section id="view-help" class="view hidden">
       <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;letter-spacing:-.4px">Atención al cliente</h2>
       <p style="font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.6">Estamos en línea de <b id="helpHours">11:00 a 23:00</b>. Escríbenos y te respondemos en minutos.</p>
@@ -383,7 +386,6 @@ main{padding:18px}
     </section>
   </main>
 
-  <!-- NAV -->
   <nav class="nav">
     <button class="nav-btn active" data-view="menu"><span class="ni">🍔</span>Menú</button>
     <button class="nav-btn" data-view="cart"><span class="ni">🛒</span>Carrito<span class="nav-badge hidden" id="navBadge">0</span></button>
@@ -502,7 +504,7 @@ function fallbackCopy(text) {
   t.remove();
 }
 
-var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null };
+var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
@@ -511,6 +513,35 @@ function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(stat
 function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
 
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
+
+/* NUEVA FUNCIÓN DE GEOLOCALIZACIÓN */
+function getLocation() {
+  if (!navigator.geolocation) {
+    toast("Tu navegador no soporta geolocalización");
+    return;
+  }
+  const statusEl = document.getElementById("locationStatus");
+  statusEl.style.display = "block";
+  statusEl.innerHTML = "⏳ Obteniendo ubicación...";
+  statusEl.style.color = "var(--muted)";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      state.userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      statusEl.innerHTML = `✅ Ubicación adjuntada: <a href="${state.userLocationUrl}" target="_blank" style="color:var(--brand); text-decoration:underline;">Ver en Maps</a>`;
+      statusEl.style.color = "var(--ok)";
+      toast("Ubicación capturada con éxito");
+    },
+    (error) => {
+      statusEl.style.display = "none";
+      toast("Error al obtener ubicación. Revisa los permisos.");
+      console.error(error);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
 
 function renderPayments(){
   var sel = $("#paySelect"); if (!sel) return;
@@ -698,8 +729,12 @@ async function submitOrder() {
   var total = sub + del;
   var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
 
+  // MENSAJE DE WHATSAPP CON UBICACIÓN GPS
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
-  if (isDelivery) msg += `*Dirección:* ${addr} (${ref})\n`;
+  if (isDelivery) {
+    msg += `*Dirección:* ${addr} (${ref})\n`;
+    if (state.userLocationUrl) msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
+  }
   msg += `*Tipo:* ${isDelivery ? 'Delivery' : 'Retiro en tienda'}\n*Pago:* ${payMethod}\n\n*Productos:*\n`;
   state.cart.forEach(i => {
     msg += `- ${i.qty}x ${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`;
@@ -709,7 +744,7 @@ async function submitOrder() {
 
   var orderData = {
     code: code, status: 'recibido',
-    customer: { name, phone, address: addr, ref: ref },
+    customer: { name, phone, address: addr, ref: ref, locationUrl: state.userLocationUrl },
     items: state.cart, total: total,
     type: isDelivery ? 'delivery' : 'pickup',
     payment_method: payMethod, notes: notes
@@ -726,6 +761,7 @@ async function submitOrder() {
 
   saveName(name);
   state.cart = [];
+  state.userLocationUrl = null; // Limpiar ubicación
   saveCart();
   updateBadge();
   localStorage.setItem('ff_current_order_code', code);
@@ -733,13 +769,9 @@ async function submitOrder() {
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
   toast("Pedido enviado con éxito");
   
-  // Forzamos la actualización de la vista a tracking
   go('tracking');
 }
 
-/* =========================================================
-   RASTREO EN TIEMPO REAL (CORREGIDO)
-   ========================================================= */
 async function renderTracking() {
   var trackDiv = $("#trackDynamic");
   var code = localStorage.getItem('ff_current_order_code');
@@ -749,7 +781,6 @@ async function renderTracking() {
     return; 
   }
 
-  // Limpiar canal anterior si existe
   if (window.clientOrderChannel) {
     supabaseClient.removeChannel(window.clientOrderChannel);
     window.clientOrderChannel = null;
@@ -780,7 +811,6 @@ async function renderTracking() {
       </div>`;
   }
 
-  // Carga inicial
   const { data: order, error } = await supabaseClient.from('orders').select('*').eq('code', code).single();
   if (error || !order) { 
     trackDiv.innerHTML = `<div class="empty"><div class="big">❌</div><p>Pedido no encontrado.</p></div>`; 
@@ -788,12 +818,10 @@ async function renderTracking() {
   }
   updateTrackingUI(order);
 
-  // Suscripción Realtime para actualizaciones en vivo
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       if (payload.new.code === code) {
         updateTrackingUI(payload.new);
-        // Mostrar notificación en el cliente
         toast("🔄 El estado de tu pedido ha cambiado");
       }
     })
@@ -807,9 +835,6 @@ function lookupOrder() {
   renderTracking();
 }
 
-/* =========================================================
-   NAVEGACIÓN Y INICIALIZACIÓN
-   ========================================================= */
 function go(view){
   state.view = view;
   $$(".view").forEach(v => v.classList.add("hidden"));
@@ -853,9 +878,6 @@ async function init(){
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
   $("#btnHelp").onclick = () => go("help");
 
-  // GESTIÓN DE SESIÓN Y RECARGA:
-  // Si ya hay un nombre guardado (el usuario ya entró antes), ocultamos la bienvenida
-  // y lo enviamos directo al seguimiento si tiene un pedido en curso.
   if (state.clientName) {
     document.getElementById("botWelcome").classList.add("hidden");
     document.getElementById("botNameInput").value = state.clientName;
@@ -866,7 +888,6 @@ async function init(){
       go('menu');
     }
   } else {
-    // Solo mostramos la bienvenida si es un usuario nuevo
     document.getElementById('botWelcome').classList.remove('hidden');
   }
 }
