@@ -474,39 +474,60 @@ function applyBrandLogo(){
   if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
 }
 
-/* TASA DE CAMBIO MEJORADA (CON RESPALDO) */
-async function fetchExchangeRate(){
+/* 
+  TASA DE CAMBIO DIRECTA DEL BCV
+  Intentamos hacer scraping del sitio oficial. Si falla, usamos la API.
+*/
+async function fetchExchangeRate() {
+  // 1. Intentar obtener la tasa directamente del BCV (usando un proxy CORS)
   try {
-    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
-    if (res.ok) {
-      let data = await res.json();
-      let rate = data.promedio || data.venta || data.compra;
-      if (rate > 0) {
-        EXCHANGE_RATE = rate;
-        updateRateBadge();
-        refreshCurrentView();
-        return;
-      }
-    }
-    throw new Error("API 1 falló");
-  } catch (e) {
-    console.log("Usando API secundaria para la tasa...");
-    try {
-      let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
-      if (res.ok) {
-        let data = await res.json();
-        let rate = data.monitors.bcv.price;
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.bcv.org.ve/');
+    const res = await fetch(proxyUrl);
+    const html = await res.text();
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const dolarDiv = doc.getElementById('dolar');
+    
+    if (dolarDiv) {
+      const strong = dolarDiv.querySelector('strong');
+      if (strong) {
+        let val = strong.textContent.trim(); // Ej: "881,0664"
+        // Convertir coma decimal a punto para parseFloat
+        val = val.replace(/\./g, '').replace(',', '.');
+        const rate = parseFloat(val);
         if (rate > 0) {
           EXCHANGE_RATE = rate;
           updateRateBadge();
           refreshCurrentView();
-          return;
+          console.log("Tasa obtenida directamente del BCV:", rate);
+          return; // Éxito, salimos de la función
         }
       }
-    } catch (e2) {
-      console.log("Todas las APIs fallaron. Usando valor por defecto.");
     }
-    EXCHANGE_RATE = 36.50; // Fallback
+    throw new Error("No se pudo encontrar el elemento 'dolar' en el HTML del BCV");
+  } catch (e) {
+    console.warn("Fallo el scraping del BCV, usando API de respaldo:", e);
+  }
+
+  // 2. Fallback: Usar API de DolarAPI
+  try {
+    const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    const data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      updateRateBadge();
+      refreshCurrentView();
+      console.log("Tasa obtenida de DolarAPI:", EXCHANGE_RATE);
+      return;
+    }
+  } catch (e2) {
+    console.error("También falló la API de respaldo:", e2);
+  }
+
+  // 3. Último recurso: Valor por defecto (solo si todo falla)
+  if (!EXCHANGE_RATE) {
+    EXCHANGE_RATE = 36.50;
     updateRateBadge();
     refreshCurrentView();
   }
@@ -514,7 +535,11 @@ async function fetchExchangeRate(){
 
 function updateRateBadge(){
   var badge = document.getElementById("rateBadge");
-  if (badge && EXCHANGE_RATE) badge.innerHTML = '1 USD = Bs. ' + EXCHANGE_RATE.toFixed(2);
+  if (badge && EXCHANGE_RATE) {
+    // Mostrar 4 decimales si es necesario, o 2 si es un número redondo
+    var formattedRate = EXCHANGE_RATE.toFixed(4).replace(/\.?0+$/, '');
+    badge.innerHTML = '1 USD = Bs. ' + formattedRate;
+  }
 }
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
@@ -546,7 +571,6 @@ function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_nam
 
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
 
-/* GEOLOCALIZACIÓN */
 function getLocation() {
   const btn = document.getElementById("btnLocation");
   const statusEl = document.getElementById("locationStatus");
@@ -684,11 +708,8 @@ function openProduct(id){
 }
 function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; }
 
-/* EXTRAS CORREGIDOS */
 function renderModal(){
   var m = state.modal; var p = m.product;
-  
-  // Mantener el estado "checked" al re-renderizar
   var extrasHtml = p.extras.map(e => {
     const isChecked = m.extras.includes(e.name);
     return `
@@ -866,7 +887,6 @@ async function renderTracking() {
     return; 
   }
 
-  // Limpiar intervalos y canales previos para no consumir batería de más
   if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
   if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
 
@@ -940,7 +960,6 @@ function go(view){
   $("#searchWrap").style.display = view === "menu" ? "" : "none"; $("#chips").style.display = view === "menu" ? "" : "none";
   $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
   
-  // LIMPIAR INTERVALOS SI SALIMOS DE TRACKING
   if (view !== "tracking") {
     if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
     if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
@@ -988,6 +1007,9 @@ async function init(){
   await loadSharedData();
   
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
+  
+  // Actualizar la tasa cada 30 minutos para mantenerla fresca
+  setInterval(fetchExchangeRate, 30 * 60 * 1000);
   
   $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
