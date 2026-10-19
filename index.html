@@ -312,7 +312,6 @@ main{padding:18px}
           <textarea id="f-addr" placeholder="Calle, número, sector…"></textarea>
           <div class="err">Ingresa la dirección de entrega</div>
           
-          <!-- BOTÓN DE GEOLOCALIZACIÓN -->
           <button type="button" id="btnLocation" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">
             📍 Compartir ubicación exacta (Google Maps)
           </button>
@@ -475,12 +474,44 @@ function applyBrandLogo(){
   if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
 }
 
-function fetchExchangeRate(){
-  fetch("https://ve.dolarapi.com/v1/dolares/oficial").then(r => r.json()).then(data => {
-    var rate = data.promedio || data.venta || data.compra;
-    if (rate > 0) { EXCHANGE_RATE = rate; updateRateBadge(); refreshCurrentView(); }
-  }).catch(() => { EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView(); });
+/* TASA DE CAMBIO MEJORADA (CON RESPALDO) */
+async function fetchExchangeRate(){
+  try {
+    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    if (res.ok) {
+      let data = await res.json();
+      let rate = data.promedio || data.venta || data.compra;
+      if (rate > 0) {
+        EXCHANGE_RATE = rate;
+        updateRateBadge();
+        refreshCurrentView();
+        return;
+      }
+    }
+    throw new Error("API 1 falló");
+  } catch (e) {
+    console.log("Usando API secundaria para la tasa...");
+    try {
+      let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
+      if (res.ok) {
+        let data = await res.json();
+        let rate = data.monitors.bcv.price;
+        if (rate > 0) {
+          EXCHANGE_RATE = rate;
+          updateRateBadge();
+          refreshCurrentView();
+          return;
+        }
+      }
+    } catch (e2) {
+      console.log("Todas las APIs fallaron. Usando valor por defecto.");
+    }
+    EXCHANGE_RATE = 36.50; // Fallback
+    updateRateBadge();
+    refreshCurrentView();
+  }
 }
+
 function updateRateBadge(){
   var badge = document.getElementById("rateBadge");
   if (badge && EXCHANGE_RATE) badge.innerHTML = '1 USD = Bs. ' + EXCHANGE_RATE.toFixed(2);
@@ -515,7 +546,7 @@ function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_nam
 
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
 
-/* GEOLOCALIZACIÓN MEJORADA */
+/* GEOLOCALIZACIÓN */
 function getLocation() {
   const btn = document.getElementById("btnLocation");
   const statusEl = document.getElementById("locationStatus");
@@ -653,9 +684,22 @@ function openProduct(id){
 }
 function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; }
 
+/* EXTRAS CORREGIDOS */
 function renderModal(){
   var m = state.modal; var p = m.product;
-  var extrasHtml = p.extras.map(e => `<label class="opt"><span>${esc(e.name)} +${money(e.price)}</span><span style="display:flex;gap:10px"><input type="checkbox" onchange="toggleExtra('${esc(e.name)}', this.checked)"><span class="box">✓</span></span></label>`).join("");
+  
+  // Mantener el estado "checked" al re-renderizar
+  var extrasHtml = p.extras.map(e => {
+    const isChecked = m.extras.includes(e.name);
+    return `
+      <label class="opt">
+        <span>${esc(e.name)} +${money(e.price)}</span>
+        <span style="display:flex;gap:10px">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExtra('${esc(e.name)}', this.checked)">
+          <span class="box">✓</span>
+        </span>
+      </label>`;
+  }).join("");
   
   $("#modal").innerHTML = `
     <div class="sheet">
@@ -673,7 +717,14 @@ function renderModal(){
     </div>`;
 }
 
-function toggleExtra(name, on){ if(on) state.modal.extras.push(name); else state.modal.extras = state.modal.extras.filter(x=>x!==name); renderModal(); }
+function toggleExtra(name, on){ 
+  if(on) {
+    if(!state.modal.extras.includes(name)) state.modal.extras.push(name); 
+  } else {
+    state.modal.extras = state.modal.extras.filter(x=>x!==name); 
+  }
+  renderModal(); 
+}
 
 function addToCart(){
   var m = state.modal; var p = m.product;
@@ -815,7 +866,7 @@ async function renderTracking() {
     return; 
   }
 
-  // Limpiar cualquier canal o intervalo previo
+  // Limpiar intervalos y canales previos para no consumir batería de más
   if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
   if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
 
@@ -861,18 +912,15 @@ async function renderTracking() {
     return true;
   }
 
-  // 1. Carga inicial
   const ok = await fetchOrderAndUpdate();
   if (!ok) return;
 
-  // 2. Suscripción Realtime (WebSocket)
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
       fetchOrderAndUpdate();
     })
     .subscribe();
 
-  // 3. Polling de respaldo (cada 5 segundos) para garantizar actualización
   window.trackingInterval = setInterval(() => {
     fetchOrderAndUpdate();
   }, 5000);
@@ -892,6 +940,12 @@ function go(view){
   $("#searchWrap").style.display = view === "menu" ? "" : "none"; $("#chips").style.display = view === "menu" ? "" : "none";
   $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
   
+  // LIMPIAR INTERVALOS SI SALIMOS DE TRACKING
+  if (view !== "tracking") {
+    if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
+    if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
+  }
+
   if (view === "menu") renderMenu(); 
   if (view === "cart") renderCart(); 
   if (view === "checkout") renderCheckout();
