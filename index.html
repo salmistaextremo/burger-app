@@ -477,8 +477,30 @@ function applyBrandLogo(){
 /* 
   TASA DE CAMBIO CON TRIPLE RESPALDO (BLINDADO)
 */
+/*
+  TASA DE CAMBIO CON RESPALDO OFICIAL
+*/
 async function fetchExchangeRate() {
-  // 1. Intentar con la API de PyDolarVe (Muy estable, extrae del BCV)
+  // 1. Intentar con AllRatesToday (Es CORS-Open y extrae directo del BCV)
+  try {
+    let res = await fetch("https://allratestoday.com/api/open/central-bank/bcv?source=USD&target=VES");
+    if (res.ok) {
+      let data = await res.json();
+      // En esta API, el valor viene en data.rate
+      let rate = parseFloat(data.rate);
+      if (rate > 0) {
+        EXCHANGE_RATE = rate;
+        updateRateBadge();
+        refreshCurrentView();
+        console.log("Tasa obtenida de AllRatesToday:", EXCHANGE_RATE);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn("Falló AllRatesToday, intentando PyDolarVe...");
+  }
+
+  // 2. Intentar con PyDolarVe (Muy estable, extrae del BCV)
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
@@ -487,67 +509,15 @@ async function fetchExchangeRate() {
         EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
         updateRateBadge();
         refreshCurrentView();
-        console.log("Tasa obtenida de PyDolarVe (BCV):", EXCHANGE_RATE);
+        console.log("Tasa obtenida de PyDolarVe:", EXCHANGE_RATE);
         return;
       }
     }
   } catch (e) {
-    console.warn("Falló PyDolarVe, intentando scraping...");
+    console.warn("Falló PyDolarVe, intentando DolarAPI...");
   }
 
-  // 2. Intentar Scraping directo al BCV con CORS Proxy (corsproxy.io)
-  try {
-    let proxyUrl = "https://corsproxy.io/?" + encodeURIComponent("https://www.bcv.org.ve/");
-    let res = await fetch(proxyUrl);
-    let html = await res.text();
-    let doc = new DOMParser().parseFromString(html, 'text/html');
-    let dolarDiv = doc.getElementById('dolar');
-    
-    if (dolarDiv) {
-      let strong = dolarDiv.querySelector('strong');
-      if (strong) {
-        let val = strong.textContent.trim().replace(/\./g, '').replace(',', '.');
-        let rate = parseFloat(val);
-        if (rate > 0) {
-          EXCHANGE_RATE = rate;
-          updateRateBadge();
-          refreshCurrentView();
-          console.log("Tasa obtenida del BCV (corsproxy):", EXCHANGE_RATE);
-          return;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("Falló corsproxy, intentando allorigins...");
-  }
-
-  // 3. Intentar Scraping directo al BCV con allorigins
-  try {
-    let proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.bcv.org.ve/");
-    let res = await fetch(proxyUrl);
-    let html = await res.text();
-    let doc = new DOMParser().parseFromString(html, 'text/html');
-    let dolarDiv = doc.getElementById('dolar');
-    
-    if (dolarDiv) {
-      let strong = dolarDiv.querySelector('strong');
-      if (strong) {
-        let val = strong.textContent.trim().replace(/\./g, '').replace(',', '.');
-        let rate = parseFloat(val);
-        if (rate > 0) {
-          EXCHANGE_RATE = rate;
-          updateRateBadge();
-          refreshCurrentView();
-          console.log("Tasa obtenida del BCV (allorigins):", EXCHANGE_RATE);
-          return;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("Falló allorigins, intentando DolarAPI...");
-  }
-
-  // 4. Último recurso: DolarAPI
+  // 3. Último recurso: DolarAPI
   try {
     let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     let data = await res.json();
@@ -562,14 +532,14 @@ async function fetchExchangeRate() {
     console.error("Todas las opciones fallaron. Usando valor de emergencia.");
   }
 
-  // 5. Fallback de emergencia
+  // 4. Fallback de emergencia (Solo si no hay internet o todas las APIs fallan)
   if (!EXCHANGE_RATE) {
     EXCHANGE_RATE = 36.50;
     updateRateBadge();
     refreshCurrentView();
   }
 }
-
+  
 function updateRateBadge(){
   var badge = document.getElementById("rateBadge");
   if (badge && EXCHANGE_RATE) {
