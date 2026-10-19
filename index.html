@@ -243,6 +243,23 @@ main{padding:18px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* =========================================================
+   PANTALLA DE BIENVENIDA (RESTAURADA)
+   ========================================================= */
+.bot-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 28px;text-align:center;animation:fade .4s}
+.bot-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg, var(--brand-2), var(--brand));display:grid;place-items:center;font-size:48px;margin-bottom:24px;box-shadow:0 16px 40px var(--brand-glow);animation:bounceIn .6s cubic-bezier(.2,.9,.3,1);overflow:hidden;position:relative}
+.bot-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@keyframes bounceIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.bot-title{font-size:26px;font-weight:800;letter-spacing:-.8px;margin:0 0 10px;color:var(--ink);line-height:1.2}
+.bot-sub{font-size:14px;color:var(--muted);line-height:1.7;margin:0 0 32px;max-width:340px;font-weight:400}
+.bot-input-wrap{width:100%;max-width:340px}
+.bot-input{width:100%;padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);font-size:16px;font-family:inherit;outline:none;color:var(--ink);text-align:center;font-weight:600;transition:.2s}
+.bot-input::placeholder{color:var(--muted-2);font-weight:400}
+.bot-input:focus{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--brand-soft)}
+.bot-btn{width:100%;margin-top:14px;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px var(--brand-glow);transition:.2s;letter-spacing:.2px}
+.bot-btn:active{transform:scale(.98)}
+.bot-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+
+/* =========================================================
    SISTEMA DE CALIFICACIÓN Y ANIMACIONES
    ========================================================= */
 .rating-modal { position: fixed; inset: 0; z-index: 200; background: rgba(26,29,33,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
@@ -270,6 +287,7 @@ main{padding:18px}
 <body>
 <div id="app">
 
+  <!-- WELCOME BOT (Ahora con el CSS correcto) -->
   <div id="botWelcome" class="bot-overlay hidden">
     <div class="bot-avatar" id="botAvatar">🍔</div>
     <h2 class="bot-title">¡Bienvenido a <span id="botBrand">Burguer Express</span>!</h2>
@@ -1016,7 +1034,6 @@ function hoverRating(val) {
 function setRating(val) {
   currentRating = val;
   updateStarsUI(val);
-  // Animación de rebote en la estrella seleccionada
   const stars = document.querySelectorAll('.star');
   const star = stars[val - 1];
   star.classList.add('bounce');
@@ -1045,19 +1062,16 @@ async function submitRating() {
   btn.disabled = true; btn.textContent = "Enviando...";
 
   try {
-    // Guardar en Supabase
     const { error } = await supabaseClient.from('orders')
       .update({ rating: currentRating, review_text: comment })
       .eq('code', currentOrderCodeToRate);
 
     if (error) throw error;
 
-    // Guardar en localStorage para no volver a preguntar
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
-    
     toast("¡Gracias por tu calificación! ⭐");
     closeRatingModal();
-    renderTracking(); // Recargar la vista para ocultar el botón
+    renderTracking(); 
     
   } catch (err) {
     console.error(err);
@@ -1067,7 +1081,6 @@ async function submitRating() {
   }
 }
 
-// Cerrar modal si se hace clic fuera del recuadro
 document.getElementById('ratingModal').addEventListener('click', function(e) {
   if (e.target === this) closeRatingModal();
 });
