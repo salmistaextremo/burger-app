@@ -6,7 +6,6 @@
 <title>Panel Admin — Burguer Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- PWA para que funcione el Badge en el icono -->
 <link rel="manifest" href='data:application/manifest+json,{"name":"Admin Burguer","short_name":"Admin","start_url":"/admin.html","display":"standalone","background_color":"#ffffff","theme_color":"#FF6B2C","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
 <meta name="theme-color" content="#FF6B2C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,7 +31,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0
 textarea{resize:vertical;min-height:80px}
 .hidden{display:none !important}
 
-/* BANNER DE NOTIFICACIONES */
 .notif-banner{display:flex;background:var(--brand);color:#fff;padding:12px 20px;text-align:center;font-size:14px;font-weight:600;align-items:center;justify-content:center;gap:10px;cursor:pointer;position:relative;z-index:1000;transition:.3s;}
 .notif-banner:hover{background:var(--brand-d);}
 .notif-banner.hidden{display:none !important;}
@@ -53,8 +51,6 @@ textarea{resize:vertical;min-height:80px}
 .sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sb-brand-text h1{font-size:14px;font-weight:800;}
 .sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
-
-/* NAVEGACIÓN LATERAL (MEJORADA) */
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar {display: none;}
 .sb-nav button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s;flex-shrink:0;}
@@ -109,7 +105,8 @@ textarea{resize:vertical;min-height:80px}
 .report-table tr:hover td{background:var(--surface-2)}
 
 .p-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.p-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;gap:12px;padding:12px;transition:.15s;box-shadow:var(--shadow)}
+.p-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;gap:12px;padding:12px;transition:.15s;box-shadow:var(--shadow); position:relative;}
+.p-card.unavailable { opacity: 0.6; filter: grayscale(0.8); }
 .p-thumb{width:70px;height:70px;border-radius:10px;background:var(--surface-2);flex:none;display:grid;place-items:center;font-size:30px;overflow:hidden;position:relative;border:1px solid var(--line)}
 .p-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .p-info{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -117,8 +114,12 @@ textarea{resize:vertical;min-height:80px}
 .p-info p{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:6px}
 .p-meta{display:flex;align-items:center;gap:8px;margin-top:auto}
 .p-price{font-size:14px;font-weight:800;color:var(--brand)}
-.p-actions{margin-left:auto;display:flex;gap:4px;flex:none}
+.p-actions{margin-left:auto;display:flex;gap:4px;flex:none; align-items:center;}
 .p-actions button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--surface-2);color:var(--muted);transition:.15s}
+.p-actions button:hover { background: var(--line); color: var(--ink); }
+.p-actions button.btn-toggle-avail { width: auto; padding: 0 8px; font-size: 12px; font-weight: 700; border-radius: 6px; }
+.p-actions button.btn-toggle-avail.avail { background: var(--ok-soft); color: var(--ok); }
+.p-actions button.btn-toggle-avail.unavail { background: var(--danger-soft); color: var(--danger); }
 
 .modal{position:fixed;inset:0;z-index:100;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
 .modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
@@ -157,10 +158,8 @@ textarea{resize:vertical;min-height:80px}
 .cat-info h4{font-size:14px;font-weight:700;}
 .cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
-/* ESTILOS DE PEDIDOS Y DESTACADO (MEJORADO) */
 .order-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
-/* Fondo más oscuro para los pedidos nuevos (pending) */
 .order-card.pending { background: #FFF0E6; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.12); }
 .order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .order-code{font-size:18px;font-weight:900;color:var(--brand);}
@@ -179,7 +178,6 @@ textarea{resize:vertical;min-height:80px}
 
 @media(max-width:860px){
   .app{flex-direction:column}
-  /* Sidebar convertido en barra superior deslizable sin scrollbar visible */
   .sidebar{width:100%;height:auto;position:static;flex-direction:row;padding:12px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .sidebar::-webkit-scrollbar {display: none;}
   .sb-brand{padding:0 12px 0 0;border:none;margin:0;flex:none}
@@ -394,7 +392,7 @@ async function dbLoad() {
     const { data: cats } = await supabaseClient.from('categories').select('*');
     DB.cats = cats || [];
     const { data: products } = await supabaseClient.from('products').select('*');
-    DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] })) : [];
+    DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false })) : [];
     const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
     DB.orders = orders || [];
     updateAppBadge();
@@ -412,10 +410,10 @@ async function dbSaveConfig() {
 async function dbSaveMenu() {
   await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   if (!DB.menu.length) return;
-  const dbProducts = DB.menu.map(p => ({ category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji, badge: p.badge || null, img: p.img || null, description: p.desc, extras: p.extras }));
+  const dbProducts = DB.menu.map(p => ({ category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji, badge: p.badge || null, img: p.img || null, description: p.desc, extras: p.extras, available: p.available !== false }));
   const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
   if (error) throw error;
-  if (data) DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
+  if (data) DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
 }
 
 async function dbUpdateOrderStatus(orderId, newStatus) {
@@ -431,9 +429,6 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
   }
 }
 
-/* =========================================================
-   TIEMPO REAL (ESCUCHAR NUEVOS PEDIDOS)
-   ========================================================= */
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
@@ -491,7 +486,6 @@ function updateCounts() {
   updateAppBadge();
 }
 
-/* INICIO CON NOTIFICACIÓN CLIQUEABLE */
 function renderHome(m) {
   var adminName = window.currentAdminUser || "Admin";
   const pendingOrders = DB.orders.filter(o => o.status === 'recibido' || !o.status).length;
@@ -728,12 +722,35 @@ function closeModal() { document.getElementById("modal").classList.add("hidden")
 function renderProducts(m) {
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button></div>
-    <div class="p-list">${DB.menu.map(p => `
-        <div class="p-card">
+    <div class="p-list">${DB.menu.map(p => {
+      const isAvail = p.available !== false;
+      return `
+        <div class="p-card ${isAvail ? '' : 'unavailable'}">
           <div class="p-thumb">${p.img ? `<img src="${esc(p.img)}">` : p.emoji}</div>
           <div class="p-info"><h4>${esc(p.name)}</h4><p>${esc(p.desc)}</p><div class="p-meta"><span class="p-price">${money(p.price)}</span></div></div>
-          <div class="p-actions"><button onclick="openProductEditor('${p.id}')">✎</button><button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button></div>
-        </div>`).join("")}</div>`;
+          <div class="p-actions">
+            <button class="btn-toggle-avail ${isAvail ? 'avail' : 'unavail'}" onclick="toggleAvailability('${p.id}')" title="Cambiar disponibilidad">
+              ${isAvail ? '✅' : '🚫'}
+            </button>
+            <button onclick="openProductEditor('${p.id}')">✎</button>
+            <button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button>
+          </div>
+        </div>`;
+    }).join("")}</div>`;
+}
+
+async function toggleAvailability(id) {
+  const p = DB.menu.find(x => x.id === id);
+  if (!p) return;
+  p.available = !(p.available !== false); // Alternar
+  try {
+    await dbSaveMenu();
+    toast(`Producto marcado como ${p.available ? 'Disponible' : 'Agotado'}`);
+    renderProducts(document.getElementById('main'));
+  } catch (err) {
+    p.available = !p.available; // Revertir si falla
+    toast("Error al cambiar disponibilidad", "error");
+  }
 }
 
 async function deleteProduct(id) {
@@ -809,7 +826,13 @@ async function saveProduct() {
     if (exName && !isNaN(exPrice) && exPrice > 0) extras.push({ name: exName, price: exPrice });
   });
 
-  const productData = { name, desc, price, cat, emoji, badge, img: tempImgData, extras };
+  let avail = true;
+  if (editingProductId) {
+    const existing = DB.menu.find(p => p.id === editingProductId);
+    avail = existing.available !== false;
+  }
+
+  const productData = { name, desc, price, cat, emoji, badge, img: tempImgData, extras, available: avail };
   if (editingProductId) { const idx = DB.menu.findIndex(p => p.id === editingProductId); if (idx > -1) DB.menu[idx] = { ...DB.menu[idx], ...productData }; }
   else DB.menu.push({ id: 'temp-' + Date.now(), ...productData });
 
