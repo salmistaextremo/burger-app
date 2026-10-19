@@ -278,10 +278,40 @@ main{padding:18px}
 .btn-rate-submit:active { transform: scale(0.98); box-shadow: 0 4px 14px rgba(255, 152, 0, 0.4); }
 .btn-rate-close { width: 100%; padding: 14px; margin-top: 10px; border-radius: 16px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: .2s; }
 .btn-rate-close:hover { color: var(--ink); }
+
+/* OVERLAY DE TIENDA CERRADA */
+.closed-overlay { position: fixed; inset: 0; z-index: 300; background: #F8F9FA; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; animation: fade .4s; }
+.closed-icon { font-size: 64px; margin-bottom: 20px; }
+.closed-title { font-size: 24px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
+.closed-sub { font-size: 15px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; max-width: 320px; }
+.closed-schedule { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; width: 100%; max-width: 320px; margin-bottom: 32px; box-shadow: var(--shadow-sm); text-align: left; }
+.closed-schedule h4 { margin: 0 0 12px; font-size: 14px; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.closed-schedule .row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px; color: var(--muted); }
+.closed-schedule .row:last-child { margin-bottom: 0; }
+.closed-schedule .row b { color: var(--ink-2); font-weight: 600; }
+.btn-exit { width: 100%; max-width: 320px; padding: 16px; border-radius: 16px; border: none; background: var(--ink); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: .2s; }
+.btn-exit:active { transform: scale(.98); }
 </style>
 </head>
 <body>
+
 <div id="app">
+
+  <!-- PANTALLA DE TIENDA CERRADA -->
+  <div id="closedOverlay" class="closed-overlay hidden">
+    <div class="closed-icon">💤</div>
+    <h2 class="closed-title">Actualmente no estamos trabajando</h2>
+    <p class="closed-sub">Nuestro horario de atención ha finalizado. Vuelve en nuestro próximo turno para ordenar.</p>
+    
+    <div class="closed-schedule">
+      <h4>Nuestros horarios:</h4>
+      <div class="row"><span>Lunes a Jueves</span><b>11:00 AM - 11:00 PM</b></div>
+      <div class="row"><span>Viernes y Sábado</span><b>11:00 AM - 1:00 AM</b></div>
+      <div class="row"><span>Domingo</span><b>12:00 PM - 10:00 PM</b></div>
+    </div>
+
+    <button class="btn-exit" onclick="exitApp()">Cerrar Aplicación</button>
+  </div>
 
   <div id="botWelcome" class="bot-overlay hidden">
     <div class="bot-avatar" id="botAvatar">🍔</div>
@@ -455,7 +485,9 @@ main{padding:18px}
 var CONFIG = {
   brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
-  freeDeliveryFrom: 25.00, hours: { open: "11:00", close: "23:00" }, helpHoursText: "11:00 a 23:00",
+  freeDeliveryFrom: 25.00, 
+  hours: { open: "11:00", close: "23:00" }, 
+  helpHoursText: "11:00 a 23:00",
   payments: [],
   stages: {
     delivery: [
@@ -481,7 +513,9 @@ var NO_PROOF_TYPES = ["efectivo", "tarjeta", "otro"];
 var CATS = [ { id:"todos", name:"Todo", icon:"✨" } ];
 var MENU = [];
 var EXCHANGE_RATE = null;
+var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 
+// CARGAR CONFIGURACIÓN
 async function loadSharedData(){
   try {
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
@@ -494,4 +528,695 @@ async function loadSharedData(){
       CONFIG.currency = config.currency || CONFIG.currency;
       CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
       CONFIG.payments = config.payments || [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }];
-      CONFIG.hours = config.hours || { open: "11:00
+      CONFIG.hours = config.hours || { open: "11:00", close: "23:00" };
+      CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
+    }
+    const { data: cats } = await supabaseClient.from('categories').select('*');
+    if (cats) {
+      CATS.length = 0; CATS.push({ id:"todos", name:"Todo", icon:"✨" });
+      cats.forEach(x => CATS.push(x));
+    }
+    const { data: products } = await supabaseClient.from('products').select('*');
+    if (products) {
+      MENU.length = 0;
+      products.forEach(p => MENU.push({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+    }
+    document.getElementById("botBrand").textContent = CONFIG.brand;
+    document.getElementById("brandName").textContent = CONFIG.brand;
+    document.getElementById("helpHours").textContent = CONFIG.helpHoursText;
+    applyBrandLogo();
+  } catch(e) { console.warn("Error Supabase:", e); }
+}
+
+function applyBrandLogo(){
+  var logoEl = document.getElementById("brandLogo"); var avatarEl = document.getElementById("botAvatar");
+  if (logoEl) {
+    if (CONFIG.logo) { logoEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; logoEl.style.background = "transparent"; logoEl.style.boxShadow = "none"; }
+    else { logoEl.innerHTML = "🍔"; logoEl.style.background = ""; logoEl.style.boxShadow = ""; }
+  }
+  if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
+}
+
+// VERIFICAR SI LA TIENDA ESTÁ ABIERTA
+function checkStoreStatus() {
+  if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return;
+  
+  let now = new Date();
+  let currentMins = now.getHours() * 60 + now.getMinutes();
+  
+  let [openH, openM] = CONFIG.hours.open.split(':').map(Number);
+  let [closeH, closeM] = CONFIG.hours.close.split(':').map(Number);
+  let openMins = openH * 60 + openM;
+  let closeMins = closeH * 60 + closeM;
+  
+  let isOpen = false;
+  // Si la hora de cierre es mayor (ej 11:00 a 23:00) o si cruza la medianoche (ej 18:00 a 02:00)
+  if (closeMins > openMins) {
+    isOpen = currentMins >= openMins && currentMins < closeMins;
+  } else {
+    isOpen = currentMins >= openMins || currentMins < closeMins;
+  }
+
+  const statusEl = document.getElementById("storeStatus");
+  const closedOverlay = document.getElementById("closedOverlay");
+
+  if (isOpen) {
+    statusEl.textContent = "Abierto ahora";
+    statusEl.classList.remove("closed");
+    closedOverlay.classList.add("hidden");
+  } else {
+    statusEl.textContent = "Cerrado";
+    statusEl.classList.add("closed");
+    closedOverlay.classList.remove("hidden");
+  }
+}
+
+// BOTÓN DE SALIR
+function exitApp() {
+  window.close(); // Intenta cerrar la pestaña
+  // Si el navegador bloquea window.close(), reemplaza el contenido con un mensaje
+  setTimeout(() => {
+    document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;color:#666;text-align:center;padding:20px;"><h2>Gracias por visitarnos.<br>Ya puedes cerrar esta pestaña.</h2></div>';
+  }, 100);
+}
+
+// TASA DE CAMBIO NO BLOQUEANTE
+async function fetchExchangeRate() {
+  try {
+    let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
+    if (res.ok) {
+      let data = await res.json();
+      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
+        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
+        updateRateBadge();
+        refreshCurrentView();
+        return;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    let data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      updateRateBadge();
+      refreshCurrentView();
+      return;
+    }
+  } catch (e) {}
+
+  if (!EXCHANGE_RATE) {
+    EXCHANGE_RATE = 36.50; // Respaldo
+    updateRateBadge();
+    refreshCurrentView();
+  }
+}
+
+function updateRateBadge(){
+  var badge = document.getElementById("rateBadge");
+  if (badge && EXCHANGE_RATE) {
+    var formattedRate = EXCHANGE_RATE.toFixed(4).replace(/\.?0+$/, '');
+    badge.innerHTML = '1 USD = Bs. ' + formattedRate;
+  }
+}
+
+function $(s, r){ r = r || document; return r.querySelector(s); }
+function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function money(n){ var usd = CONFIG.currency + Number(n).toFixed(2); if (EXCHANGE_RATE) return usd + '<span class="price-ves">≈ <strong>Bs. ' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; return usd; }
+function findProduct(id){ return MENU.find(p => p.id === id); }
+
+function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  t.remove();
+}
+
+function loadLocal() {
+  try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
+  try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
+}
+function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(state.cart)); }
+function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
+
+function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
+
+function getLocation() {
+  const btn = document.getElementById("btnLocation");
+  const statusEl = document.getElementById("locationStatus");
+
+  if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
+
+  btn.innerHTML = "⏳ Obteniendo ubicación...";
+  btn.disabled = true;
+  statusEl.style.display = "block";
+  statusEl.style.color = "var(--muted)";
+  statusEl.innerHTML = "Esperando permiso de ubicación...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      
+      btn.innerHTML = "✅ Ubicación capturada";
+      btn.style.borderColor = "var(--ok)";
+      btn.style.color = "var(--ok)";
+      btn.disabled = false;
+      
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
+      toast("Ubicación capturada con éxito");
+    },
+    (error) => {
+      btn.innerHTML = "📍 Reintentar compartir ubicación";
+      btn.disabled = false;
+      statusEl.style.color = "var(--danger)";
+      let msg = "Error al obtener ubicación.";
+      if (error.code === 1) msg = "Permiso denegado. Habilita la ubicación en tu navegador.";
+      if (error.code === 2) msg = "Ubicación no disponible. Verifica tu GPS.";
+      if (error.code === 3) msg = "Tiempo de espera agotado. Intenta de nuevo.";
+      statusEl.innerHTML = msg;
+      toast(msg);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function renderPayments(){
+  var sel = $("#paySelect"); if (!sel) return;
+  sel.innerHTML = CONFIG.payments.map((p, i) => `<option value="${esc(p.id)}" ${i === 0 ? 'selected' : ''}>${p.icon} ${esc(p.label)}</option>`).join("");
+  sel.onchange = () => { updatePayDetails(); updateProofField(); };
+  updatePayDetails(); updateProofField();
+}
+
+function updatePayDetails(){
+  var box = $("#payDetails"); var sel = $("#paySelect");
+  var p = CONFIG.payments.find(x => x.id === sel.value);
+  if (!p || NO_DETAILS_TYPES.includes(p.type)) { box.classList.remove("show"); box.innerHTML = ""; return; }
+  
+  var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
+  if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
+
+  let textoCompleto = `Datos de ${p.label}:\n`;
+  keys.forEach(k => { textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`; });
+
+  var btnCopiarTodo = "";
+  if (p.type === 'pagomovil' || p.type === 'transferencia') {
+    btnCopiarTodo = `<button class="copy-all-btn" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">📋 Copiar todos los datos</button>`;
+  }
+
+  var rows = keys.map(k => `
+    <div class="pay-details-row">
+      <span class="lbl">${esc(DETAIL_LABELS[k] || k)}</span>
+      <div class="val-wrap">
+        <span class="val">${esc(details[k])}</span>
+        <button class="copy-btn" onclick="copyToClipboard('${esc(details[k])}')">📋</button>
+      </div>
+    </div>`).join("");
+
+  box.innerHTML = `<div class="pay-details-title">📋 Datos para realizar el pago</div>${btnCopiarTodo}${rows}`;
+  box.classList.add("show");
+}
+
+function updateProofField(){
+  var field = $("#proofField"); var sel = $("#paySelect");
+  var p = CONFIG.payments.find(x => x.id === sel.value);
+  if (!p || NO_PROOF_TYPES.includes(p.type)) { field.classList.remove("show"); if (state.proofImage) clearProof(); }
+  else { field.classList.add("show"); }
+}
+
+function handleProofUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { toast("Imagen muy grande (máx 10MB)"); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    state.proofImage = ev.target.result;
+    $("#proofImg").src = state.proofImage;
+    $("#proofPickerWrap").classList.add("hidden");
+    $("#proofPreviewWrap").classList.remove("hidden");
+    toast("Comprobante adjuntado");
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearProof() {
+  state.proofImage = null;
+  $("#proofFile").value = "";
+  $("#proofPickerWrap").classList.remove("hidden");
+  $("#proofPreviewWrap").classList.add("hidden");
+}
+
+function renderChips(){
+  var wrap = $("#chips");
+  wrap.innerHTML = CATS.map(c => `<button class="chip ${state.category === c.id ? 'active' : ''}" onclick="state.category='${c.id}'; renderChips(); renderMenu();">${c.icon} ${esc(c.name)}</button>`).join("");
+}
+
+function renderMenu(){
+  var q = state.query.trim().toLowerCase();
+  var items = MENU.filter(p => (state.category === "todos" || p.cat === state.category) && (!q || p.name.toLowerCase().includes(q)));
+  var list = $("#menuList");
+  if (!items.length) { list.innerHTML = `<div class="empty"><div class="big">🔍</div><p>No hay productos.</p></div>`; return; }
+  
+  list.innerHTML = items.map(p => {
+    const isAvail = p.available !== false;
+    return `
+    <article class="card ${isAvail ? '' : 'sold-out'}" onclick="${isAvail ? `openProduct('${p.id}')` : ''}">
+      <div class="card-img">
+        <span class="card-emoji">${p.emoji}</span>
+        ${p.img ? `<img src="${esc(p.img)}">` : ''}
+        ${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}
+        ${!isAvail ? `<span class="sold-out-badge">Agotado</span>` : ''}
+      </div>
+      <div class="card-body"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="card-foot"><span class="price">${money(p.price)}</span>${isAvail ? `<button class="add-btn" onclick="event.stopPropagation(); openProduct('${p.id}')">+</button>` : ''}</div></div>
+    </article>`;
+  }).join("");
+}
+
+function openProduct(id){
+  var p = findProduct(id); if (!p || p.available === false) return;
+  state.modal = { product: p, qty: 1, extras: [], notes: "" };
+  renderModal(); $("#modal").classList.remove("hidden");
+}
+function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; }
+
+function renderModal(){
+  var m = state.modal; var p = m.product;
+  var extrasHtml = p.extras.map(e => {
+    const isChecked = m.extras.includes(e.name);
+    return `
+      <label class="opt">
+        <span>${esc(e.name)} +${money(e.price)}</span>
+        <span style="display:flex;gap:10px">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExtra('${esc(e.name)}', this.checked)">
+          <span class="box">✓</span>
+        </span>
+      </label>`;
+  }).join("");
+  
+  $("#modal").innerHTML = `
+    <div class="sheet">
+      <div class="sheet-hero"><span class="sheet-hero-emoji">${p.emoji}</span>${p.img ? `<img src="${esc(p.img)}">` : ''}<button class="sheet-close" onclick="closeModal()">✕</button></div>
+      <div class="sheet-body">
+        <h2>${esc(p.name)}</h2><p class="desc">${esc(p.desc)}</p>
+        ${extrasHtml}
+        <div class="field"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla"></div>
+        <div class="qty-row">
+          <div class="qty"><button onclick="state.modal.qty=Math.max(1,state.modal.qty-1); renderModal()">−</button><span>${m.qty}</span><button onclick="state.modal.qty++; renderModal()">+</button></div>
+          <div style="font-size:24px;font-weight:900;color:var(--brand)">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
+        </div>
+        <button class="btn btn-primary" onclick="addToCart()">Agregar al carrito</button>
+      </div>
+    </div>`;
+}
+
+function toggleExtra(name, on){ 
+  if(on) {
+    if(!state.modal.extras.includes(name)) state.modal.extras.push(name); 
+  } else {
+    state.modal.extras = state.modal.extras.filter(x=>x!==name); 
+  }
+  renderModal(); 
+}
+
+function addToCart(){
+  var m = state.modal; var p = m.product;
+  var key = p.id + "|" + m.extras.sort().join(",") + "|" + m.notes;
+  var unit = p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0);
+  var found = state.cart.find(i => i.key === key);
+  if (found) found.qty += m.qty;
+  else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
+  saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
+}
+
+function updateBadge(){
+  var n = state.cart.reduce((a,i)=>a+i.qty,0);
+  var b = $("#navBadge");
+  if (b) { b.textContent = n; b.classList.toggle("hidden", n === 0); }
+}
+
+function renderCart(){
+  var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
+  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="go('menu')">Ver menú</button>`; return; }
+  
+  list.innerHTML = state.cart.map(i => `
+    <div class="cart-item">
+      <div class="ci-emoji">${i.emoji}</div>
+      <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
+      <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQty('${i.key}',-1)">−</button><span>${i.qty}</span><button onclick="changeQty('${i.key}',1)">+</button></div></div>
+    </div>`).join("");
+
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
+  totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
+  actions.innerHTML = `<button class="btn btn-primary" onclick="go('checkout')">Continuar con el pedido →</button>`;
+}
+
+function changeQty(key, d){
+  var it = state.cart.find(i => i.key === key); if(!it) return;
+  it.qty += d; if(it.qty <= 0) state.cart = state.cart.filter(i=>i.key!==key);
+  saveCart(); updateBadge(); renderCart();
+}
+
+function updateOrderType() {
+  var isDelivery = $("input[name='otype']:checked").value === 'delivery';
+  $("#addressBlock").style.display = isDelivery ? "block" : "none";
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+  var del = isDelivery ? CONFIG.deliveryFee : 0;
+  $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
+}
+
+function renderCheckout(){
+  renderPayments();
+  if (state.clientName) $("#f-name").value = state.clientName;
+  
+  if (state.userLocationUrl) {
+    const btn = document.getElementById("btnLocation");
+    const statusEl = document.getElementById("locationStatus");
+    if (btn && statusEl) {
+      btn.innerHTML = "✅ Ubicación capturada";
+      btn.style.borderColor = "var(--ok)";
+      btn.style.color = "var(--ok)";
+      statusEl.style.display = "block";
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
+    }
+  }
+
+  updateOrderType();
+}
+
+async function submitOrder() {
+  var name = $("#f-name").value.trim();
+  var phone = $("#f-phone").value.trim();
+  var isDelivery = $("input[name='otype']:checked").value === 'delivery';
+  var addr = $("#f-addr").value.trim();
+  var ref = $("#f-ref").value.trim();
+  var notes = $("#f-notes").value.trim();
+  var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
+  
+  var valid = true;
+  if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
+  if (!phone) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
+  if (isDelivery && !addr) { $("#f-addr-w").classList.add("invalid"); valid = false; } else { $("#f-addr-w").classList.remove("invalid"); }
+  
+  if (!valid) { toast("Completa los campos obligatorios"); return; }
+  if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
+
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+  var del = isDelivery ? CONFIG.deliveryFee : 0;
+  var total = sub + del;
+  var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
+
+  var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
+  if (isDelivery) {
+    msg += `*Dirección:* ${addr} (${ref})\n`;
+    if (state.userLocationUrl) msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
+  }
+  msg += `*Tipo:* ${isDelivery ? 'Delivery' : 'Retiro en tienda'}\n*Pago:* ${payMethod}\n\n*Productos:*\n`;
+  state.cart.forEach(i => {
+    msg += `- ${i.qty}x ${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`;
+  });
+  msg += `\n*Subtotal:* $${sub.toFixed(2)}\n*Delivery:* $${del.toFixed(2)}\n*TOTAL:* $${total.toFixed(2)}\n`;
+  if (notes) msg += `\n*Notas:* ${notes}`;
+
+  var orderData = {
+    code: code, status: 'recibido',
+    customer: { name, phone, address: addr, ref: ref, locationUrl: state.userLocationUrl },
+    items: state.cart, total: total,
+    type: isDelivery ? 'delivery' : 'pickup',
+    payment_method: payMethod, notes: notes
+  };
+
+  var btn = document.getElementById("btnConfirm");
+  btn.disabled = true; btn.innerHTML = "Enviando...";
+
+  const { error } = await supabaseClient.from('orders').insert([orderData]);
+  if (error) {
+    console.error("Error de Supabase:", error);
+    alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema. Detalle técnico: " + error.message);
+  }
+
+  saveName(name);
+  state.cart = [];
+  state.userLocationUrl = null;
+  saveCart();
+  updateBadge();
+  localStorage.setItem('ff_current_order_code', code);
+
+  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+  toast("Pedido enviado con éxito");
+  
+  go('tracking');
+}
+
+async function renderTracking() {
+  var trackDiv = $("#trackDynamic");
+  var code = localStorage.getItem('ff_current_order_code');
+  
+  if (!code) { 
+    trackDiv.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No tienes pedidos recientes.</p></div>`; 
+    return; 
+  }
+
+  if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
+  if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
+
+  let lastStatus = null;
+
+  function updateTrackingUI(order) {
+    var stages = CONFIG.stages[order.type];
+    var currentStageIndex = stages.findIndex(s => s.key === order.status);
+    if (currentStageIndex === -1) currentStageIndex = 0;
+
+    var currentStage = stages[currentStageIndex];
+    var progress = (currentStageIndex / (stages.length - 1)) * 100;
+
+    let rateBtnHtml = "";
+    const isRated = localStorage.getItem('rated_' + order.code);
+    if (order.status === 'entregado' && !order.rating && !isRated) {
+      rateBtnHtml = `<button class="btn btn-primary" onclick="openRatingModal('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`;
+    }
+
+    trackDiv.innerHTML = `
+      <div class="track-card">
+        <div class="tc-code">Pedido</div>
+        <div class="tc-num">${esc(order.code)}</div>
+        <div class="tc-status"><span class="tc-dot"></span> ${currentStage.label}</div>
+        <div class="bar"><i style="width:${progress}%"></i></div>
+        <div class="steps">
+          ${stages.map((s, i) => `
+            <div class="step ${i < currentStageIndex ? 'done' : i === currentStageIndex ? 'current' : ''}">
+              <div class="dot">${s.icon}</div>
+              <div><h5>${s.label}</h5><p>${s.desc}</p></div>
+            </div>
+          `).join("")}
+        </div>
+        ${rateBtnHtml}
+      </div>`;
+  }
+
+  async function fetchOrderAndUpdate() {
+    const { data: order, error } = await supabaseClient.from('orders').select('*').eq('code', code).single();
+    if (error || !order) { 
+      trackDiv.innerHTML = `<div class="empty"><div class="big">❌</div><p>Pedido no encontrado.</p></div>`; 
+      return false; 
+    }
+    
+    if (lastStatus !== order.status) {
+      updateTrackingUI(order);
+      if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado");
+      lastStatus = order.status;
+    }
+    return true;
+  }
+
+  const ok = await fetchOrderAndUpdate();
+  if (!ok) return;
+
+  window.clientOrderChannel = supabaseClient.channel('client-order-' + code)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
+      fetchOrderAndUpdate();
+    })
+    .subscribe();
+
+  window.trackingInterval = setInterval(() => {
+    fetchOrderAndUpdate();
+  }, 5000);
+}
+
+function lookupOrder() {
+  var code = $("#lookupInput").value.trim().toUpperCase();
+  if (!code) return;
+  localStorage.setItem('ff_current_order_code', code);
+  renderTracking();
+}
+
+/* =========================================================
+   LÓGICA DEL SISTEMA DE CALIFICACIÓN
+   ========================================================= */
+let currentRating = 0;
+let currentOrderCodeToRate = null;
+
+function openRatingModal(orderCode) {
+  currentOrderCodeToRate = orderCode;
+  currentRating = 0;
+  document.getElementById('ratingComment').value = '';
+  updateStarsUI(0);
+  document.getElementById('ratingModal').classList.add('show');
+}
+
+function closeRatingModal() {
+  document.getElementById('ratingModal').classList.remove('show');
+  currentOrderCodeToRate = null;
+  // LIMPIAR PEDIDO ACTUAL Y CERRAR VENTANA DE PEDIDOS
+  localStorage.removeItem('ff_current_order_code');
+  go('menu');
+}
+
+function hoverRating(val) {
+  updateStarsUI(val);
+}
+
+function setRating(val) {
+  currentRating = val;
+  updateStarsUI(val);
+  const stars = document.querySelectorAll('.star');
+  const star = stars[val - 1];
+  star.classList.add('bounce');
+  setTimeout(() => star.classList.remove('bounce'), 400);
+}
+
+function updateStarsUI(val) {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach((star, index) => {
+    if (index < val) {
+      star.classList.add('active');
+    } else {
+      star.classList.remove('active');
+    }
+  });
+}
+
+async function submitRating() {
+  if (currentRating === 0) {
+    toast("Por favor, selecciona al menos 1 estrella ⭐");
+    return;
+  }
+
+  const comment = document.getElementById('ratingComment').value.trim();
+  const btn = document.querySelector('.btn-rate-submit');
+  btn.disabled = true; btn.textContent = "Enviando...";
+
+  try {
+    const { error } = await supabaseClient.from('orders')
+      .update({ rating: currentRating, review_text: comment })
+      .eq('code', currentOrderCodeToRate);
+
+    if (error) throw error;
+
+    localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
+    toast("¡Gracias por tu calificación! ⭐");
+    closeRatingModal(); // Cierra la ventana y vuelve al menú
+    
+  } catch (err) {
+    console.error(err);
+    toast("Error al guardar la calificación. Intenta de nuevo.");
+    btn.disabled = false; btn.textContent = "Enviar calificación";
+  }
+}
+
+document.getElementById('ratingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRatingModal();
+});
+
+function go(view){
+  state.view = view;
+  $$(".view").forEach(v => v.classList.add("hidden"));
+  const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
+  $("#searchWrap").style.display = view === "menu" ? "" : "none"; $("#chips").style.display = view === "menu" ? "" : "none";
+  $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  
+  if (view !== "tracking") {
+    if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
+    if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
+  }
+
+  if (view === "menu") renderMenu(); 
+  if (view === "cart") renderCart(); 
+  if (view === "checkout") renderCheckout();
+  if (view === "tracking") renderTracking();
+  window.scrollTo(0, 0);
+}
+
+(function wireBotWelcome(){
+  var nameInput = document.getElementById("botNameInput");
+  var startBtn  = document.getElementById("botStartBtn");
+  if (!nameInput || !startBtn) return;
+  
+  function syncBtn(){ startBtn.disabled = nameInput.value.trim().length === 0; }
+  nameInput.addEventListener("input", syncBtn);
+  nameInput.addEventListener("keydown", function(e){ if (e.key === "Enter" && !startBtn.disabled) startBtn.click(); });
+  syncBtn();
+
+  startBtn.addEventListener("click", function(){
+    var name = nameInput.value.trim();
+    if (!name) return;
+    saveName(name);
+    document.getElementById("botWelcome").classList.add("hidden");
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          state.userLocationUrl = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+        },
+        (error) => { console.log("Permiso de ubicación no otorgado al inicio."); },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    go("menu");
+  });
+})();
+
+async function init(){
+  loadLocal();
+  await loadSharedData();
+  
+  // Verificar horario apenas carga la página
+  checkStoreStatus();
+  // Volver a verificar cada minuto (por si cambia de abierto a cerrado mientras navega)
+  setInterval(checkStoreStatus, 60000);
+
+  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
+  
+  $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
+  $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
+  $("#btnHelp").onclick = () => go("help");
+
+  if (state.clientName) {
+    document.getElementById("botWelcome").classList.add("hidden");
+    document.getElementById("botNameInput").value = state.clientName;
+    
+    if (localStorage.getItem('ff_current_order_code')) {
+      go('tracking');
+    } else {
+      go('menu');
+    }
+  } else {
+    document.getElementById('botWelcome').classList.remove('hidden');
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
