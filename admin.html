@@ -154,14 +154,18 @@ textarea{resize:vertical;min-height:80px}
 .cat-info h4{font-size:14px;font-weight:700;}
 .cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
+/* ESTILOS DE PEDIDOS Y DESTACADO */
 .order-list{display:flex;flex-direction:column;gap:10px}
-.order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;}
+.order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
+/* ESTA ES LA CLASE CLAVE PARA LOS PEDIDOS PENDIENTES */
+.order-card.pending { background: #FFF7F3; border: 1px solid #FFE0D0; border-left: 4px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.08); }
 .order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .order-code{font-size:18px;font-weight:900;color:var(--brand);}
 .order-status{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;}
 .order-date{margin-left:auto;font-size:11.5px;color:var(--muted);}
 .order-customer{font-size:13px;line-height:1.6;margin-bottom:10px;}
 .order-items{background:var(--surface-2);border-radius:10px;padding:12px;font-size:12.5px;}
+.order-card.pending .order-items { background: #FFFFFF; }
 .order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);}
@@ -186,7 +190,6 @@ textarea{resize:vertical;min-height:80px}
 </head>
 <body>
 
-<!-- Banner para desbloquear audio -->
 <div id="notifBanner" class="notif-banner hidden" onclick="unlockNotifications()">
   🔔 Haz clic aquí para activar las notificaciones y sonidos de nuevos pedidos
 </div>
@@ -256,97 +259,61 @@ function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("
 let audioCtx;
 let notificationsEnabled = false;
 
-// 1. Reproducir sonido nativo (sin archivos externos)
 function playNotificationSound() {
   try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    // Generar "Ding-Dong" (dos tonos)
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Tono A5
-    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15); // Tono C6
-    
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15);
     gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.6);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.6);
   } catch(e) { console.log("Audio error:", e); }
 }
 
-// 2. Función llamada por el banner cuando el admin hace clic
 function unlockNotifications() {
-  // Desbloquear audio
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
-  playNotificationSound(); // Reproducir sonido de prueba
-  
-  // Pedir permiso de notificaciones
+  playNotificationSound();
   if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        notificationsEnabled = true;
-        toast("✅ Notificaciones activadas");
-      } else {
-        toast("⚠️ Permiso de notificaciones denegado");
-      }
+      if (permission === "granted") { notificationsEnabled = true; toast("✅ Notificaciones activadas"); } 
+      else { toast("⚠️ Permiso de notificaciones denegado"); }
     });
   }
-  
-  // Ocultar banner
   document.getElementById("notifBanner").classList.add("hidden");
   localStorage.setItem('admin_notif_unlocked', 'true');
 }
 
-// 3. Verificar estado al cargar
 function checkNotificationState() {
   const isUnlocked = localStorage.getItem('admin_notif_unlocked') === 'true';
   const hasPermission = "Notification" in window && Notification.permission === "granted";
-  
   if (isUnlocked && hasPermission) {
     notificationsEnabled = true;
     document.getElementById("notifBanner").classList.add("hidden");
-    // Inicializar audio en segundo plano
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   } else {
     document.getElementById("notifBanner").classList.remove("hidden");
   }
 }
 
-// 4. Actualizar Badge e ícono de la App
 function updateAppBadge() {
   const pendingOrders = DB.orders.filter(o => o.status === 'recibido' || !o.status).length;
-  
   if ("setAppBadge" in navigator) {
     if (pendingOrders > 0) navigator.setAppBadge(pendingOrders).catch(console.error);
     else navigator.clearAppBadge().catch(console.error);
   }
-
-  if (pendingOrders > 0 && document.hidden) {
-    document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
-  } else {
-    document.title = `Panel Admin — Burguer Express`;
-  }
-
+  if (pendingOrders > 0 && document.hidden) document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
+  else document.title = `Panel Admin — Burguer Express`;
+  
   const orderCountEl = $("#cnt-orders");
   if (orderCountEl) {
-    if (pendingOrders > 0) {
-      orderCountEl.textContent = pendingOrders;
-      orderCountEl.classList.add("new");
-    } else {
-      orderCountEl.classList.remove("new");
-      orderCountEl.textContent = DB.orders.length;
-    }
+    if (pendingOrders > 0) { orderCountEl.textContent = pendingOrders; orderCountEl.classList.add("new"); } 
+    else { orderCountEl.classList.remove("new"); orderCountEl.textContent = DB.orders.length; }
   }
 }
 
@@ -358,9 +325,7 @@ async function checkAuth() {
   if (session && session.user) {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
-    
     checkNotificationState();
-
     try {
       await dbLoad(); render(); setupNav(); setupOrderListener();
       window.currentAdminUser = session.user.email; 
@@ -456,17 +421,10 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
    ========================================================= */
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
-  
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
-      
-      // 1. Reproducir Sonido
-      if (notificationsEnabled) {
-        playNotificationSound();
-      }
-      
-      // 2. Notificación Push del Sistema
+      if (notificationsEnabled) playNotificationSound();
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("🔔 ¡Nuevo Pedido!", {
           body: `Pedido ${newOrder.code} de ${newOrder.customer.name}\nTotal: $${newOrder.total}`,
@@ -474,11 +432,7 @@ function setupOrderListener() {
           vibrate: [200, 100, 200]
         });
       }
-
-      // 3. Alerta visual
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
-      
-      // 4. Recargar datos
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders') renderOrders(document.getElementById('main'));
@@ -534,19 +488,30 @@ function renderOrders(m) {
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
     ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
-    `<div class="order-list">${DB.orders.map(o => `
-      <div class="order-card">
+    `<div class="order-list">${DB.orders.map(o => {
+      
+      // LÓGICA DE COLOR: Si no está entregado, tiene la clase "pending"
+      const isPending = o.status !== 'entregado';
+      const cardClass = isPending ? 'order-card pending' : 'order-card';
+      
+      // Color de la etiqueta del estado
+      const badgeStyle = o.status === 'entregado' 
+        ? 'background:var(--ok-soft); color:var(--ok);' 
+        : 'background:var(--brand); color:#fff;';
+
+      return `
+      <div class="${cardClass}">
         <div class="order-head">
           <span class="order-code">${esc(o.code)}</span>
-          <span class="order-status" style="background: ${o.status === 'entregado' ? 'var(--ok-soft); color:var(--ok)' : 'var(--brand-soft); color:var(--brand)'}">${esc((o.status||'recibido').toUpperCase())}</span>
+          <span class="order-status" style="${badgeStyle}">${esc((o.status||'recibido').toUpperCase())}</span>
           <span class="order-date">${new Date(o.created_at).toLocaleString()}</span>
         </div>
         <div class="order-customer"><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}</div>
         <div class="order-items">${o.items.map(it=>`<div>${it.qty}x ${esc(it.name)} - ${money(it.unit * it.qty)}</div>`).join("")}<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div></div>
         
         <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
-          <span style="font-size:12px; font-weight:600; color:var(--muted)">Estado:</span>
-          <select onchange="dbUpdateOrderStatus('${o.id}', this.value)" style="padding:6px 10px; border-radius:8px; font-size:12px; width:auto; font-weight:700; color:var(--brand);">
+          <span style="font-size:12px; font-weight:600; color:var(--muted)">Cambiar Estado:</span>
+          <select onchange="dbUpdateOrderStatus('${o.id}', this.value)" style="padding:6px 10px; border-radius:8px; font-size:12px; width:auto; font-weight:700; color:var(--brand); border-color: ${isPending ? 'var(--brand)' : 'var(--line)'}">
             <option value="recibido" ${o.status === 'recibido' ? 'selected' : ''}>Pedido Recibido</option>
             <option value="pagado" ${o.status === 'pagado' ? 'selected' : ''}>Pago Recibido</option>
             <option value="preparando" ${o.status === 'preparando' ? 'selected' : ''}>En Preparación</option>
@@ -554,7 +519,8 @@ function renderOrders(m) {
             <option value="entregado" ${o.status === 'entregado' ? 'selected' : ''}>${o.type === 'delivery' ? 'Entregado' : 'Retirado'}</option>
           </select>
         </div>
-      </div>`).join("")}</div>`}
+      </div>`;
+    }).join("")}</div>`}
   `;
 }
 
