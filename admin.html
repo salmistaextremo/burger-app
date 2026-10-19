@@ -1167,16 +1167,24 @@ function duplicateProduct(id) {
   render();
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
   var p = DB.menu.find(function(x){ return x.id === id; });
   if (!p) return;
   if (!confirm('¿Eliminar "' + p.name + '"?\n\nEsta acción no se puede deshacer.')) return;
-  DB.menu = DB.menu.filter(function(x){ return x.id !== id; });
-  dbSaveMenu();
-  toast("Producto eliminado");
-  render();
-}
 
+  // 1. Borrar directamente de Supabase usando el ID específico
+  const { error } = await supabaseClient.from('products').delete().eq('id', id);
+  
+  if (error) {
+    alert("Error al eliminar el producto: " + error.message);
+    return;
+  }
+
+  // 2. Actualizar la memoria local y la pantalla
+  DB.menu = DB.menu.filter(function(x){ return x.id !== id; });
+  render();
+  toast("Producto eliminado");
+}
 function renderCategories(m) {
   var html =
     '<div class="page-head">' +
@@ -1277,21 +1285,35 @@ function openCatEditor(id) {
   };
 }
 
-function deleteCategory(id) {
+async function deleteCategory(id) {
   var c = DB.cats.find(function(x){ return x.id === id; });
   if (!c) return;
+  
   var count = DB.menu.filter(function(p){ return p.cat === id; }).length;
   var msg = '¿Eliminar la categoría "' + c.name + '"?';
   if (count > 0) msg += '\n\n⚠️ Hay ' + count + ' producto(s) en esta categoría. También se eliminarán.';
   if (!confirm(msg)) return;
 
+  // 1. Borrar la categoría de Supabase
+  const { error: catError } = await supabaseClient.from('categories').delete().eq('id', id);
+  if (catError) {
+    alert("Error al eliminar la categoría: " + catError.message);
+    return;
+  }
+
+  // 2. Borrar todos los productos que pertenecían a esa categoría
+  const { error: prodError } = await supabaseClient.from('products').delete().eq('category_id', id);
+  if (prodError) {
+    alert("Error al eliminar los productos de la categoría: " + prodError.message);
+    return;
+  }
+
+  // 3. Actualizar la memoria local y la pantalla
   DB.cats = DB.cats.filter(function(x){ return x.id !== id; });
   DB.menu = DB.menu.filter(function(p){ return p.cat !== id; });
-  dbSaveCats(); dbSaveMenu();
-  toast("Categoría eliminada");
   render();
+  toast("Categoría y sus productos eliminados");
 }
-
 function renderBusiness(m) {
   var c = DB.config;
   var html =
