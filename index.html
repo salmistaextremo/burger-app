@@ -1374,6 +1374,38 @@ async function init(){
       loadSharedData().then(() => { $("#brandName").textContent = CONFIG.brand; renderChips(); renderMenu(); renderCheckout(); updateStoreStatus(); if (!$("#botGuided").classList.contains("hidden")) guidedRender(); toast("🔄 Menú actualizado"); });
     }
   });
+    // ==========================================
+  // ESCUCHAR CAMBIOS EN TIEMPO REAL (SUPABASE)
+  // ==========================================
+  supabaseClient.channel('realtime-menu')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+      console.log('Cambio detectado en productos:', payload);
+      loadSharedData().then(() => {
+        renderMenu();
+        renderChips();
+        if (!$("#botGuided").classList.contains("hidden")) guidedRender();
+        toast("🔄 Menú actualizado");
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
+      console.log('Cambio detectado en categorías:', payload);
+      loadSharedData().then(() => {
+        renderChips();
+        renderMenu();
+        if (!$("#botGuided").classList.contains("hidden")) guidedRender();
+        toast("🔄 Categorías actualizadas");
+      });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'config' }, payload => {
+      console.log('Cambio detectado en configuración:', payload);
+      loadSharedData().then(() => {
+        $("#brandName").textContent = CONFIG.brand;
+        renderCheckout(); // Para actualizar datos de pago si cambiaste algo
+        applyBrandLogo();
+        toast("🔄 Datos del negocio actualizados");
+      });
+    })
+    .subscribe();
 }
 
 document.addEventListener("DOMContentLoaded", init);
