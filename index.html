@@ -33,7 +33,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .price-ves{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
 .price-ves strong{color:var(--brand-d);font-weight:700}
 
-/* CORRECCIÓN: Color del Bs. dentro de botones */
 .btn .price-ves, .btn .price-ves strong {
   color: #FFFFFF !important;
 }
@@ -152,7 +151,6 @@ main{padding:18px}
 }
 .copy-btn:active{background:var(--brand);color:#FFFFFF;border-color:var(--brand);transform:scale(.92)}
 
-/* BOTÓN DE COPIAR TODO */
 .copy-all-btn {
   width: 100%; padding: 12px; margin-bottom: 12px;
   background: #FFFFFF; border: 1.5px dashed var(--brand); color: var(--brand-d);
@@ -662,19 +660,16 @@ function updatePayDetails(){
   var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
   if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
 
-  // 1. Generar el texto completo para el botón "Copiar Todo"
   let textoCompleto = `Datos de ${p.label}:\n`;
   keys.forEach(k => {
     textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`;
   });
 
-  // 2. Construir el HTML del botón general (solo si es Pago Móvil o Transferencia)
   var btnCopiarTodo = "";
   if (p.type === 'pagomovil' || p.type === 'transferencia') {
     btnCopiarTodo = `<button class="copy-all-btn" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">📋 Copiar todos los datos (Banco, Cédula, Teléfono)</button>`;
   }
 
-  // 3. Construir las filas individuales (por si quieren copiar uno solo)
   var rows = keys.map(k => `
     <div class="pay-details-row">
       <span class="lbl">${esc(DETAIL_LABELS[k] || k)}</span>
@@ -753,7 +748,16 @@ function addToCart(){
   saveCart(); updateBadge(); closeModal(); toast("Agregado");
 }
 
-function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("#navBadge"); b.textContent = n; b.classList.toggle("hidden", n === 0); }
+/* FIX: también sincroniza el contador del chat guiado (bgCartCount) */
+function updateBadge(){
+  var n = state.cart.reduce((a,i)=>a+i.qty,0);
+  var b = $("#navBadge");
+  if (b) { b.textContent = n; b.classList.toggle("hidden", n === 0); }
+  var bg = document.getElementById("bgCartCount");
+  var bgBtn = document.getElementById("bgCartBtn");
+  if (bg) bg.textContent = n;
+  if (bgBtn) bgBtn.classList.toggle("empty", n === 0);
+}
 
 function renderCart(){
   var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
@@ -791,6 +795,78 @@ function go(view){
   if (view === "menu") renderMenu(); if (view === "cart") renderCart(); if (view === "checkout") renderCheckout();
   window.scrollTo(0, 0);
 }
+
+/* ============================================================
+   FIX PRINCIPAL: habilitar botón de inicio al escribir el nombre
+   + handler de click para entrar al chat guiado
+   + handlers de navegación del chat (back y cart)
+   ============================================================ */
+(function wireBotWelcome(){
+  var nameInput = document.getElementById("botNameInput");
+  var startBtn  = document.getElementById("botStartBtn");
+  if (!nameInput || !startBtn) return;
+
+  function syncBtn(){
+    // Deshabilitado si está vacío o solo contiene espacios
+    startBtn.disabled = nameInput.value.trim().length === 0;
+  }
+
+  nameInput.addEventListener("input", syncBtn);
+  nameInput.addEventListener("change", syncBtn);
+  nameInput.addEventListener("keydown", function(e){
+    if (e.key === "Enter" && !startBtn.disabled) startBtn.click();
+  });
+
+  // Estado inicial correcto (por si el navegador autocompleta)
+  syncBtn();
+
+  // Al pulsar "Comenzar pedido"
+  startBtn.addEventListener("click", function(){
+    var name = nameInput.value.trim();
+    if (!name) return;
+    saveName(name);
+
+    document.getElementById("botWelcome").classList.add("hidden");
+    document.getElementById("botGuided").classList.remove("hidden");
+
+    var chat = document.getElementById("bgChat");
+    var footer = document.getElementById("bgFooter");
+
+    // Mensaje de bienvenida (solo si el chat está vacío)
+    if (chat && !chat.dataset.init) {
+      chat.innerHTML =
+        '<div class="bg-msg">' +
+          '<div class="b-av">🍔</div>' +
+          '<div class="bubble">¡Hola <b>' + esc(name) + '</b>! 👋 Bienvenido a <b>' + esc(CONFIG.brand) + '</b>.</div>' +
+        '</div>';
+      chat.dataset.init = "1";
+    }
+
+    // Botón de escape (solo si el footer está vacío)
+    if (footer && !footer.innerHTML.trim()) {
+      footer.innerHTML =
+        '<button class="btn btn-primary" onclick="document.getElementById(\'botGuided\').classList.add(\'hidden\'); go(\'menu\');">🍔 Ir al menú</button>';
+    }
+  });
+
+  // Botón "atrás" dentro del chat guiado
+  var bgBack = document.getElementById("bgBack");
+  if (bgBack) {
+    bgBack.addEventListener("click", function(){
+      document.getElementById("botGuided").classList.add("hidden");
+      go("menu");
+    });
+  }
+
+  // Botón carrito dentro del chat guiado
+  var bgCartBtn = document.getElementById("bgCartBtn");
+  if (bgCartBtn) {
+    bgCartBtn.addEventListener("click", function(){
+      document.getElementById("botGuided").classList.add("hidden");
+      go("cart");
+    });
+  }
+})();
 
 /* INIT */
 async function init(){
