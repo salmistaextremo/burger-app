@@ -107,7 +107,7 @@ textarea{resize:vertical;min-height:80px}
 .report-table td{padding:12px;border-bottom:1px solid var(--line);color:var(--ink-2)}
 .report-table tr:hover td{background:var(--surface-2)}
 
-/* PRODUCTOS, FORM, MODAL etc (Mantenidos igual) */
+/* PRODUCTOS, FORM, MODAL etc */
 .p-toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .p-toolbar input{flex:1;min-width:200px}
 .cat-section{margin-bottom:28px}
@@ -263,7 +263,7 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
       <button data-tab="categories"><span class="ico">📁</span>Categorías<span class="count" id="cnt-categories">0</span></button>
       <button data-tab="orders"><span class="ico">🧾</span>Pedidos<span class="count" id="cnt-orders">0</span></button>
-      <button data-tab="reports"><span class="ico">📈</span>Reportes</button> <!-- NUEVA PESTAÑA -->
+      <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
       <button data-tab="data"><span class="ico">💾</span>Datos</button>
     </nav>
@@ -290,7 +290,6 @@ textarea{resize:vertical;min-height:80px}
 /* =========================================================
    1. AUTENTICACIÓN Y DATOS GLOBALES
    ========================================================= */
-let currentTenantId = null; // Si usas multi-tenant, aquí iría el ID. Por ahora usamos el flujo simple.
 var DB = { config: null, cats: [], menu: [], orders: [] };
 
 var DEFAULT_CONFIG = {
@@ -309,6 +308,10 @@ async function checkAuth() {
       render();
       setupNav();
       window.currentAdminUser = session.user.email; 
+      if (DB.config) {
+        document.getElementById("sbBrandName").textContent = DB.config.brand;
+        document.getElementById("sbLogo").innerHTML = DB.config.logo ? `<img src="${esc(DB.config.logo)}">` : "⚙️";
+      }
     } catch(error) {
       console.error("Error cargando datos:", error);
     }
@@ -371,14 +374,27 @@ async function dbLoad() {
 
 async function dbSaveConfig() { await supabaseClient.from('config').upsert({ id: 1, ...DB.config, phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText }); }
 async function dbSaveCats() { await supabaseClient.from('categories').upsert(DB.cats); }
+
 async function dbSaveMenu() {
+  // Eliminar todos y reinsertar (funciona porque los pedidos guardan nombre y precio, no ID de producto)
   await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   if (!DB.menu.length) return;
   const dbProducts = DB.menu.map(p => ({ category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji, badge: p.badge || null, img: p.img || null, description: p.desc, extras: p.extras }));
-  const { data } = await supabaseClient.from('products').insert(dbProducts).select();
+  const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
+  if (error) throw error;
   if (data) DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
 }
-async function dbSaveOrders() { if(DB.orders[0]) await supabaseClient.from('orders').upsert([DB.orders[0]]); }
+
+async function dbUpdateOrderStatus(orderId, newStatus) {
+  const { error } = await supabaseClient.from('orders').update({ status: newStatus }).eq('id', orderId);
+  if (!error) {
+    const order = DB.orders.find(o => o.id === orderId);
+    if (order) order.status = newStatus;
+    render();
+  } else {
+    toast("Error al actualizar estado", "error");
+  }
+}
 
 /* =========================================================
    3. UI Y RENDERIZADO
@@ -388,7 +404,13 @@ function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
-function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
+function toast(msg, type){ 
+  var t = $("#toast"); 
+  t.textContent = msg; 
+  t.style.background = type === 'error' ? 'var(--danger)' : 'var(--ink)';
+  t.classList.add("show"); 
+  setTimeout(()=>t.classList.remove("show"), 2500); 
+}
 
 function setupNav() {
   $$(".sb-nav button").forEach(b => { b.onclick = () => { state.tab = b.dataset.tab; $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); render(); window.scrollTo(0,0); }; });
@@ -400,7 +422,7 @@ function render() {
   else if (state.tab === "products") renderProducts(m);
   else if (state.tab === "categories") renderCategories(m);
   else if (state.tab === "orders") renderOrders(m);
-  else if (state.tab === "reports") renderReports(m); // NUEVA SECCIÓN
+  else if (state.tab === "reports") renderReports(m);
   else if (state.tab === "business") renderBusiness(m);
   else if (state.tab === "data") renderData(m);
   updateCounts();
@@ -413,7 +435,7 @@ function updateCounts() {
 }
 
 /* =========================================================
-   4. RENDER: HOME Y PRODUCTOS (Mantenidos)
+   4. RENDER: HOME Y PRODUCTOS
    ========================================================= */
 function renderHome(m) {
   var adminName = window.currentAdminUser || "Admin";
@@ -454,15 +476,197 @@ function renderProducts(m) {
 
 async function deleteProduct(id) {
   if (!confirm("¿Eliminar producto?")) return;
-  await supabaseClient.from('products').delete().eq('id', id);
-  DB.menu = DB.menu.filter(x => x.id !== id); render();
+  DB.menu = DB.menu.filter(x => x.id !== id);
+  try {
+    await dbSaveMenu();
+    toast("Producto eliminado");
+    render();
+  } catch(err) {
+    toast("Error al eliminar", "error");
+  }
 }
 
 /* =========================================================
-   5. NUEVA SECCIÓN: REPORTES
+   5. EDITOR DE PRODUCTOS COMPLETO
+   ========================================================= */
+let editingProductId = null;
+let tempImgData = null;
+
+function openProductEditor(id) {
+  editingProductId = id;
+  const isEdit = !!id;
+  const product = isEdit ? DB.menu.find(p => p.id === id) : {
+    name: "", desc: "", price: "", cat: "", emoji: "🍔", badge: "", img: null, extras: []
+  };
+  if (!product) return toast("Producto no encontrado", "error");
+  tempImgData = product.img || null;
+
+  const catsOptions = DB.cats.map(c => 
+    `<option value="${c.id}" ${product.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`
+  ).join("");
+
+  document.getElementById("modal").innerHTML = `
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>${isEdit ? 'Editar' : 'Nuevo'} Producto</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Nombre *</label>
+            <input type="text" id="p-name" value="${esc(product.name)}" placeholder="Ej: Hamburguesa Clásica">
+          </div>
+          <div class="field full">
+            <label>Descripción</label>
+            <textarea id="p-desc" placeholder="Ingredientes, tamaño...">${esc(product.desc)}</textarea>
+          </div>
+          <div class="field">
+            <label>Precio ($) *</label>
+            <input type="number" id="p-price" step="0.01" min="0" value="${product.price}">
+          </div>
+          <div class="field">
+            <label>Categoría *</label>
+            <select id="p-cat">
+              <option value="">Selecciona...</option>
+              ${catsOptions}
+            </select>
+          </div>
+          <div class="field">
+            <label>Emoji</label>
+            <input type="text" id="p-emoji" value="${esc(product.emoji || '🍔')}" maxlength="5" style="text-align:center;font-size:20px">
+          </div>
+          <div class="field">
+            <label>Etiqueta (Badge)</label>
+            <input type="text" id="p-badge" value="${esc(product.badge || '')}" placeholder="Ej: Nuevo, Popular">
+          </div>
+          <div class="field full">
+            <label>Imagen (opcional, máx 2MB)</label>
+            <div class="img-picker" onclick="document.getElementById('p-img-file').click()">
+              <input type="file" id="p-img-file" accept="image/*" style="display:none" onchange="handleImgUpload(event)">
+              <div id="p-img-preview">${tempImgData ? `<img src="${esc(tempImgData)}">` : '<div class="placeholder"><div style="font-size:30px">📷</div><div>Subir imagen</div></div>'}</div>
+            </div>
+            <div class="img-actions">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('p-img-file').click()">📂 Subir</button>
+              <button class="btn btn-ghost btn-sm" type="button" onclick="clearImg()">🗑️ Eliminar</button>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Extras / Adicionales</label>
+            <div id="p-extras-list" class="extras-list"></div>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="addExtraRow()" style="margin-top:8px">＋ Añadir extra</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Guardar producto</button>
+      </div>
+    </div>`;
+  
+  document.getElementById("modal").classList.remove("hidden");
+  
+  if (product.extras && product.extras.length) {
+    product.extras.forEach(e => addExtraRow(e.name, e.price));
+  } else {
+    addExtraRow();
+  }
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.add("hidden");
+  document.getElementById("modal").innerHTML = "";
+  editingProductId = null;
+  tempImgData = null;
+}
+
+function handleImgUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast("La imagen debe pesar menos de 2MB", "error"); return; }
+  
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    tempImgData = ev.target.result;
+    document.getElementById("p-img-preview").innerHTML = `<img src="${tempImgData}">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImg() {
+  tempImgData = null;
+  document.getElementById("p-img-preview").innerHTML = '<div class="placeholder"><div style="font-size:30px">📷</div><div>Subir imagen</div></div>';
+  document.getElementById("p-img-file").value = "";
+}
+
+function addExtraRow(name = "", price = "") {
+  const container = document.getElementById("p-extras-list");
+  if (!container) return;
+  const row = document.createElement("div");
+  row.className = "extra-row";
+  row.innerHTML = `
+    <input type="text" class="ex-name" value="${esc(name)}" placeholder="Nombre del extra (ej: Queso)">
+    <input type="number" class="ex-price" value="${price}" step="0.01" min="0" placeholder="Precio">
+    <button type="button" onclick="this.parentElement.remove()">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+async function saveProduct() {
+  const name = document.getElementById("p-name").value.trim();
+  const desc = document.getElementById("p-desc").value.trim();
+  const price = parseFloat(document.getElementById("p-price").value);
+  const cat = document.getElementById("p-cat").value;
+  const emoji = document.getElementById("p-emoji").value.trim() || "🍔";
+  const badge = document.getElementById("p-badge").value.trim() || null;
+
+  if (!name || !price || isNaN(price) || price <= 0 || !cat) {
+    return toast("Completa los campos obligatorios (*)", "error");
+  }
+
+  const extras = [];
+  document.querySelectorAll("#p-extras-list .extra-row").forEach(row => {
+    const exName = row.querySelector(".ex-name").value.trim();
+    const exPrice = parseFloat(row.querySelector(".ex-price").value);
+    if (exName && !isNaN(exPrice) && exPrice > 0) {
+      extras.push({ name: exName, price: exPrice });
+    }
+  });
+
+  const productData = {
+    name, desc, price, cat, emoji, badge,
+    img: tempImgData,
+    extras
+  };
+
+  if (editingProductId) {
+    const idx = DB.menu.findIndex(p => p.id === editingProductId);
+    if (idx > -1) {
+      DB.menu[idx] = { ...DB.menu[idx], ...productData };
+    }
+  } else {
+    DB.menu.push({ id: 'temp-' + Date.now(), ...productData });
+  }
+
+  const btn = document.querySelector(".modal-foot .btn-primary");
+  btn.disabled = true; btn.textContent = "Guardando...";
+
+  try {
+    await dbSaveMenu();
+    toast("✅ Producto guardado");
+    closeModal();
+    render();
+  } catch(err) {
+    console.error(err);
+    toast("❌ Error al guardar", "error");
+    btn.disabled = false; btn.textContent = "Guardar producto";
+  }
+}
+
+/* =========================================================
+   6. REPORTES
    ========================================================= */
 function renderReports(m) {
-  // Por defecto, mostrar el mes actual
   const hoy = new Date();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
   const ultimoDia = hoy.toISOString().split('T')[0];
@@ -505,13 +709,11 @@ function generarReporte() {
     toast("Rango de fechas inválido", "error"); return;
   }
 
-  // 1. Filtrar pedidos
   const filtered = DB.orders.filter(o => {
     const d = new Date(o.created_at || o.createdAt);
     return d >= start && d <= end;
   });
 
-  // 2. Calcular métricas
   let totalIngresos = 0;
   let clientesSet = new Set();
   let productosVendidos = {};
@@ -529,7 +731,6 @@ function generarReporte() {
     }
   });
 
-  // 3. Renderizar el reporte
   document.getElementById("rep-actions").style.display = "flex";
   const cont = document.getElementById("report-content");
 
@@ -579,7 +780,7 @@ function generarReporte() {
     </div>
   `;
 
-  window.currentReportData = filtered; // Guardamos para exportar
+  window.currentReportData = filtered;
 }
 
 function exportarCSV() {
@@ -587,16 +788,13 @@ function exportarCSV() {
     toast("No hay datos para exportar", "error"); return;
   }
 
-  // Encabezados
   let csv = "Codigo,Fecha,Cliente,Telefono,Metodo de Pago,Total\n";
 
-  // Filas
   window.currentReportData.forEach(o => {
     const date = new Date(o.created_at || o.createdAt).toLocaleString();
     csv += `"${o.code}","${date}","${o.customer.name}","${o.customer.phone}","${o.payment}",${o.total}\n`;
   });
 
-  // Crear archivo
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -609,7 +807,7 @@ function exportarCSV() {
 }
 
 /* =========================================================
-   6. RESTO DE FUNCIONES (Pedidos, Negocio, etc.)
+   7. PEDIDOS, NEGOCIO, CATEGORÍAS Y DATOS
    ========================================================= */
 function renderOrders(m) {
   m.innerHTML = `
@@ -617,9 +815,21 @@ function renderOrders(m) {
     ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
     `<div class="order-list">${DB.orders.map(o => `
       <div class="order-card">
-        <div class="order-head"><span class="order-code">${esc(o.code)}</span><span class="order-status">${esc(o.status)}</span><span class="order-date">${new Date(o.created_at).toLocaleString()}</span></div>
+        <div class="order-head">
+          <span class="order-code">${esc(o.code)}</span>
+          <span class="order-status" style="background: ${o.status === 'Entregado' ? 'var(--ok-soft); color:var(--ok)' : 'var(--brand-soft); color:var(--brand)'}">${esc(o.status)}</span>
+          <span class="order-date">${new Date(o.created_at).toLocaleString()}</span>
+        </div>
         <div class="order-customer"><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}</div>
         <div class="order-items">${o.items.map(it=>`<div>${it.qty}x ${esc(it.name)} - ${money(it.unit * it.qty)}</div>`).join("")}<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div></div>
+        <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+          <select onchange="dbUpdateOrderStatus('${o.id}', this.value)" style="padding:6px 10px; border-radius:8px; font-size:12px; width:auto;">
+            <option value="Recibido" ${o.status === 'Recibido' ? 'selected' : ''}>Recibido</option>
+            <option value="En preparación" ${o.status === 'En preparación' ? 'selected' : ''}>En preparación</option>
+            <option value="En camino" ${o.status === 'En camino' ? 'selected' : ''}>En camino</option>
+            <option value="Entregado" ${o.status === 'Entregado' ? 'selected' : ''}>Entregado</option>
+          </select>
+        </div>
       </div>`).join("")}</div>`}
   `;
 }
@@ -630,21 +840,99 @@ function renderBusiness(m) {
     <div class="card"><div class="card-body">
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
-        <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        <div class="field full"><label>WhatsApp (con código de país, ej: 584121234567)</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        <div class="field full"><label>Link de Google Maps (opcional)</label><input type="text" id="bMaps" value="${esc(DB.config.mapsUrl || '')}" placeholder="https://maps.google.com/..."></div>
       </div>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="DB.config.brand=document.getElementById('bBrand').value; DB.config.whatsapp=document.getElementById('bWhatsapp').value; dbSaveConfig(); toast('Guardado');">Guardar cambios</button>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar cambios</button>
     </div></div>`;
 }
 
-function renderCategories(m) {
-  m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Categorías</h1></div></div><div class="cat-list">${DB.cats.map(c=>`<div class="cat-row"><div class="cat-icon">${c.icon}</div><div class="cat-info"><h4>${esc(c.name)}</h4></div></div>`).join("")}</div>`;
+async function saveBusiness() {
+  DB.config.brand = document.getElementById('bBrand').value;
+  DB.config.whatsapp = document.getElementById('bWhatsapp').value;
+  DB.config.mapsUrl = document.getElementById('bMaps').value;
+  await dbSaveConfig();
+  document.getElementById("sbBrandName").textContent = DB.config.brand;
+  toast('✅ Negocio actualizado');
 }
 
-function renderData(m) { m.innerHTML = `<h1 class="page-title">Datos</h1>`; } // Placeholder
-function openProductEditor(id) { toast("Editor de producto (mantenido de versión anterior)"); } // Placeholder simplificado para el ejemplo
+function renderCategories(m) {
+  m.innerHTML = `
+    <div class="page-head">
+      <div><h1 class="page-title">Categorías</h1></div>
+      <button class="btn btn-primary" onclick="addCategory()">＋ Nueva categoría</button>
+    </div>
+    <div class="cat-list">${DB.cats.map(c=>`
+      <div class="cat-row">
+        <div class="cat-icon">${c.icon || '📁'}</div>
+        <div class="cat-info"><h4>${esc(c.name)}</h4></div>
+        <div class="cat-actions">
+          <button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button>
+        </div>
+      </div>
+    `).join("")}</div>`;
+}
+
+function addCategory() {
+  const name = prompt("Nombre de la nueva categoría:");
+  if (!name) return;
+  const icon = prompt("Emoji para la categoría (ej: 🍔, 🥤, 🍟):", "📁") || "📁";
+  
+  const newCat = { id: 'temp-' + Date.now(), name, icon };
+  DB.cats.push(newCat);
+  
+  supabaseClient.from('categories').insert([{ name, icon }]).select().then(({data, error}) => {
+    if (!error && data) {
+      DB.cats = DB.cats.filter(c => c.id !== newCat.id).concat(data);
+      render();
+      toast("✅ Categoría creada");
+    } else {
+      toast("Error al crear categoría", "error");
+    }
+  });
+}
+
+async function deleteCategory(id) {
+  if (!confirm("¿Eliminar esta categoría? (Los productos asociados podrían quedar sin categoría)")) return;
+  await supabaseClient.from('categories').delete().eq('id', id);
+  DB.cats = DB.cats.filter(c => c.id !== id);
+  render();
+  toast("Categoría eliminada");
+}
+
+function renderData(m) {
+  m.innerHTML = `
+    <div class="page-head"><div><h1 class="page-title">Datos y Respaldo</h1></div></div>
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-body">
+        <div class="card-title">Exportar Respaldo</div>
+        <div class="card-desc">Descarga un archivo JSON con toda la información de tu negocio (productos, categorías, configuración y pedidos).</div>
+        <button class="btn btn-primary" onclick="exportData()">📥 Descargar Respaldo JSON</button>
+      </div>
+    </div>
+  `;
+}
+
+function exportData() {
+  const backup = {
+    config: DB.config,
+    categories: DB.cats,
+    products: DB.menu,
+    orders: DB.orders
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `respaldo_burguer_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast("✅ Respaldo descargado");
+}
 
 /* =========================================================
-   7. INICIALIZACIÓN
+   8. INICIALIZACIÓN
    ========================================================= */
 document.addEventListener("DOMContentLoaded", function() {
   checkAuth();
