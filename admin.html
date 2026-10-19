@@ -260,6 +260,34 @@ function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("
 let audioCtx;
 let notificationsEnabled = false;
 
+// 1. Configuración del Service Worker y Permisos
+async function setupPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+    console.warn('Este navegador no soporta notificaciones push.');
+    return;
+  }
+
+  try {
+    // Registrar el Service Worker
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    console.log('Service Worker registrado:', registration.scope);
+
+    // Solicitar permiso si no se ha concedido
+    if (Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        notificationsEnabled = true;
+        toast("✅ Notificaciones activadas");
+      }
+    } else {
+      notificationsEnabled = true;
+    }
+  } catch (error) {
+    console.error('Error al registrar el Service Worker:', error);
+  }
+}
+
+// 2. Reproducir sonido
 function playNotificationSound() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -276,16 +304,14 @@ function playNotificationSound() {
   } catch(e) { console.log("Audio error:", e); }
 }
 
+// 3. Banner de desbloqueo manual (necesario en navegadores modernos)
 function unlockNotifications() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
   playNotificationSound();
-  if ("Notification" in window) {
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") { notificationsEnabled = true; toast("✅ Notificaciones activadas"); } 
-      else { toast("⚠️ Permiso de notificaciones denegado"); }
-    });
-  }
+  
+  setupPushNotifications(); // Vuelve a pedir permiso y registra el SW
+  
   document.getElementById("notifBanner").classList.add("hidden");
   localStorage.setItem('admin_notif_unlocked', 'true');
 }
@@ -293,6 +319,7 @@ function unlockNotifications() {
 function checkNotificationState() {
   const isUnlocked = localStorage.getItem('admin_notif_unlocked') === 'true';
   const hasPermission = "Notification" in window && Notification.permission === "granted";
+  
   if (isUnlocked && hasPermission) {
     notificationsEnabled = true;
     document.getElementById("notifBanner").classList.add("hidden");
@@ -326,7 +353,10 @@ async function checkAuth() {
   if (session && session.user) {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
+    
     checkNotificationState();
+    setupPushNotifications(); // Registra el SW al entrar
+
     try {
       await dbLoad(); render(); setupNav(); setupOrderListener();
       window.currentAdminUser = session.user.email; 
@@ -335,58 +365,11 @@ async function checkAuth() {
         document.getElementById("sbLogo").innerHTML = DB.config.logo ? `<img src="${esc(DB.config.logo)}">` : "⚙️";
       }
     } catch(error) { console.error("Error cargando datos:", error); }
+
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
   }
-
-  // --- Configuración de Notificaciones Push ---
-async function setupPushNotifications() {
-  // 1. Verificar si el navegador soporta Service Workers y Notificaciones
-  if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-    console.warn('Este navegador no soporta notificaciones push.');
-    return;
-  }
-
-  // 2. Solicitar permiso al usuario
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
-    console.warn('Permiso de notificaciones denegado.');
-    return;
-  }
-
-  // 3. Registrar el Service Worker
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker registrado con éxito:', registration.scope);
-    
-    // (Opcional) Aquí podrías suscribir al usuario a un servidor Push real
-    // const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array('TU_PUBLIC_VAPID_KEY') });
-    
-  } catch (error) {
-    console.error('Error al registrar el Service Worker:', error);
-  }
-}
-
-async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session && session.user) {
-    document.getElementById("authScreen").classList.add("hidden");
-    document.getElementById("appContainer").classList.remove("hidden");
-    
-    // Iniciar notificaciones
-    setupPushNotifications(); 
-    
-    checkNotificationState(); // Tu función existente
-
-    try {
-      // ... tu código existente ...
-    } catch(error) { console.error("Error cargando datos:", error); }
-  } else {
-    // ...
-  }
-}
-  
 }
 
 function doLogin() {
@@ -441,8 +424,7 @@ async function dbSaveConfig() {
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
-    hours: DB.config.hours,
-    payments: DB.config.payments 
+    hours: DB.config.hours, payments: DB.config.payments 
   }); 
 }
 async function dbSaveMenu() {
@@ -476,7 +458,7 @@ function setupOrderListener() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
       
-      // 1. Reproducir sonido (tu código existente)
+      // 1. Reproducir sonido
       if (notificationsEnabled) playNotificationSound();
       
       // 2. Mostrar Notificación Push a través del Service Worker
@@ -490,12 +472,12 @@ function setupOrderListener() {
             requireInteraction: true,
             renotify: true,
             silent: false,
-            tag: 'nuevo-pedido' // Esto hace que las notificaciones se agrupen
+            tag: 'nuevo-pedido'
           });
         });
       }
       
-      // 3. Alerta visual interna (toast)
+      // 3. Alerta visual
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
       
       // 4. Recargar datos
@@ -508,7 +490,7 @@ function setupOrderListener() {
 }
 
 /* =========================================================
-   RENDERIZADO DE INTERFAZ
+   RENDERIZADO
    ========================================================= */
 function setupNav() {
   $$(".sb-nav button").forEach(b => { 
@@ -585,10 +567,8 @@ function renderOrders(m) {
 }
 
 function renderBusiness(m) {
-  // Valores por defecto en caso de que no existan
   let openTime = "11:00";
   let closeTime = "23:00";
-  
   if (DB.config.hours) {
     openTime = DB.config.hours.open || "11:00";
     closeTime = DB.config.hours.close || "23:00";
@@ -631,15 +611,11 @@ function renderBusiness(m) {
 async function saveBusiness() {
   DB.config.brand = document.getElementById('bBrand').value;
   DB.config.whatsapp = document.getElementById('bWhatsapp').value;
-  
-  // Guardar los nuevos horarios
   const openTime = document.getElementById('bOpenTime').value;
   const closeTime = document.getElementById('bCloseTime').value;
   const helpText = document.getElementById('bHelpHours').value;
-
   DB.config.hours = { open: openTime, close: closeTime };
   DB.config.helpHoursText = helpText;
-
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   toast('✅ Negocio actualizado');
