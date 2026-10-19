@@ -311,7 +311,8 @@ main{padding:18px}
           <label>Dirección de entrega *</label>
           <textarea id="f-addr" placeholder="Calle, número, sector…"></textarea>
           <div class="err">Ingresa la dirección de entrega</div>
-          <!-- BOTÓN DE GEOLOCALIZACIÓN (ESTADO DINÁMICO) -->
+          
+          <!-- BOTÓN DE GEOLOCALIZACIÓN -->
           <button type="button" id="btnLocation" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">
             📍 Compartir ubicación exacta (Google Maps)
           </button>
@@ -491,7 +492,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&
 function money(n){ var usd = CONFIG.currency + Number(n).toFixed(2); if (EXCHANGE_RATE) return usd + '<span class="price-ves">≈ <strong>Bs. ' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; return usd; }
 function findProduct(id){ return MENU.find(p => p.id === id); }
 
-function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
+function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
 
 function copyToClipboard(text) {
@@ -514,40 +515,51 @@ function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_nam
 
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
 
-/* NUEVA FUNCIÓN DE GEOLOCALIZACIÓN */
+/* GEOLOCALIZACIÓN MEJORADA */
 function getLocation() {
+  const btn = document.getElementById("btnLocation");
+  const statusEl = document.getElementById("locationStatus");
+
   if (!navigator.geolocation) {
     toast("Tu navegador no soporta geolocalización");
     return;
   }
-  const btn = document.getElementById("btnLocation");
-  const statusEl = document.getElementById("locationStatus");
-  
+
   btn.innerHTML = "⏳ Obteniendo ubicación...";
   btn.disabled = true;
+  statusEl.style.display = "block";
+  statusEl.style.color = "var(--muted)";
+  statusEl.innerHTML = "Esperando permiso de ubicación...";
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      state.userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       
       btn.innerHTML = "✅ Ubicación capturada";
       btn.style.borderColor = "var(--ok)";
       btn.style.color = "var(--ok)";
       btn.disabled = false;
       
-      statusEl.style.display = "block";
-      statusEl.innerHTML = `<a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
       toast("Ubicación capturada con éxito");
     },
     (error) => {
-      btn.innerHTML = "📍 Compartir ubicación exacta";
+      btn.innerHTML = "📍 Reintentar compartir ubicación";
       btn.disabled = false;
-      toast("No se pudo obtener la ubicación. Revisa los permisos.");
-      console.error(error);
+      statusEl.style.color = "var(--danger)";
+      
+      let msg = "Error al obtener ubicación.";
+      if (error.code === 1) msg = "Permiso denegado. Habilita la ubicación en tu navegador.";
+      if (error.code === 2) msg = "Ubicación no disponible. Verifica tu GPS.";
+      if (error.code === 3) msg = "Tiempo de espera agotado. Intenta de nuevo.";
+      
+      statusEl.innerHTML = msg;
+      toast(msg);
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
 }
 
@@ -713,7 +725,6 @@ function renderCheckout(){
   renderPayments();
   if (state.clientName) $("#f-name").value = state.clientName;
   
-  // Si ya capturamos la ubicación al entrar, actualizamos el botón visualmente
   if (state.userLocationUrl) {
     const btn = document.getElementById("btnLocation");
     const statusEl = document.getElementById("locationStatus");
@@ -722,7 +733,8 @@ function renderCheckout(){
       btn.style.borderColor = "var(--ok)";
       btn.style.color = "var(--ok)";
       statusEl.style.display = "block";
-      statusEl.innerHTML = `<a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
     }
   }
 
@@ -782,7 +794,7 @@ async function submitOrder() {
 
   saveName(name);
   state.cart = [];
-  state.userLocationUrl = null; // Limpiar ubicación para el próximo pedido
+  state.userLocationUrl = null;
   saveCart();
   updateBadge();
   localStorage.setItem('ff_current_order_code', code);
@@ -793,6 +805,7 @@ async function submitOrder() {
   go('tracking');
 }
 
+/* RASTREO EN TIEMPO REAL CON POLLING DE RESPALDO */
 async function renderTracking() {
   var trackDiv = $("#trackDynamic");
   var code = localStorage.getItem('ff_current_order_code');
@@ -802,10 +815,11 @@ async function renderTracking() {
     return; 
   }
 
-  if (window.clientOrderChannel) {
-    supabaseClient.removeChannel(window.clientOrderChannel);
-    window.clientOrderChannel = null;
-  }
+  // Limpiar cualquier canal o intervalo previo
+  if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
+  if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
+
+  let lastStatus = null;
 
   function updateTrackingUI(order) {
     var stages = CONFIG.stages[order.type];
@@ -832,21 +846,36 @@ async function renderTracking() {
       </div>`;
   }
 
-  const { data: order, error } = await supabaseClient.from('orders').select('*').eq('code', code).single();
-  if (error || !order) { 
-    trackDiv.innerHTML = `<div class="empty"><div class="big">❌</div><p>Pedido no encontrado.</p></div>`; 
-    return; 
+  async function fetchOrderAndUpdate() {
+    const { data: order, error } = await supabaseClient.from('orders').select('*').eq('code', code).single();
+    if (error || !order) { 
+      trackDiv.innerHTML = `<div class="empty"><div class="big">❌</div><p>Pedido no encontrado.</p></div>`; 
+      return false; 
+    }
+    
+    if (lastStatus !== order.status) {
+      updateTrackingUI(order);
+      if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado");
+      lastStatus = order.status;
+    }
+    return true;
   }
-  updateTrackingUI(order);
 
+  // 1. Carga inicial
+  const ok = await fetchOrderAndUpdate();
+  if (!ok) return;
+
+  // 2. Suscripción Realtime (WebSocket)
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
-      if (payload.new.code === code) {
-        updateTrackingUI(payload.new);
-        toast("🔄 El estado de tu pedido ha cambiado");
-      }
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
+      fetchOrderAndUpdate();
     })
     .subscribe();
+
+  // 3. Polling de respaldo (cada 5 segundos) para garantizar actualización
+  window.trackingInterval = setInterval(() => {
+    fetchOrderAndUpdate();
+  }, 5000);
 }
 
 function lookupOrder() {
@@ -886,18 +915,12 @@ function go(view){
     saveName(name);
     document.getElementById("botWelcome").classList.add("hidden");
     
-    // SOLICITAR PERMISO DE UBICACIÓN AQUÍ
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          state.userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
-          console.log("Ubicación capturada automáticamente al iniciar");
+          state.userLocationUrl = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
         },
-        (error) => {
-          console.log("Permiso de ubicación denegado o error:", error);
-        },
+        (error) => { console.log("Permiso de ubicación no otorgado al inicio."); },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
