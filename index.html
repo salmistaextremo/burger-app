@@ -33,7 +33,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .price-ves{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
 .price-ves strong{color:var(--brand-d);font-weight:700}
 
-/* Corrección del color del Bs. dentro de botones */
+/* CORRECCIÓN: Color del Bs. dentro de botones */
 .btn .price-ves, .btn .price-ves strong {
   color: #FFFFFF !important;
 }
@@ -152,6 +152,7 @@ main{padding:18px}
 }
 .copy-btn:active{background:var(--brand);color:#FFFFFF;border-color:var(--brand);transform:scale(.92)}
 
+/* BOTÓN DE COPIAR TODO */
 .copy-all-btn {
   width: 100%; padding: 12px; margin-bottom: 12px;
   background: #FFFFFF; border: 1.5px dashed var(--brand); color: var(--brand-d);
@@ -524,12 +525,17 @@ main{padding:18px}
 </script>
 
 <script>
-/* CONFIGURACIÓN */
+/* CONFIGURACIÓN Y DATOS POR DEFECTO */
 var CONFIG = {
   brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, hours: { open: 11, close: 23 }, helpHoursText: "11:00 a 23:00",
-  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
+  payments: [
+    { id:"efectivo",      type:"efectivo",      label:"Efectivo",              icon:"💵", details:{} },
+    { id:"pagomovil",     type:"pagomovil",     label:"Pago Móvil",            icon:"📱", details:{} },
+    { id:"transferencia", type:"transferencia", label:"Transferencia bancaria",icon:"🏦", details:{} },
+    { id:"zelle",         type:"zelle",         label:"Zelle",                 icon:"🌐", details:{} }
+  ],
   stages: {
     delivery: [
       { key:"recibido",   label:"Pedido recibido",  desc:"Confirmamos tu pedido",       icon:"🧾", after:0   },
@@ -553,6 +559,7 @@ var CATS = [ { id:"todos", name:"Todo", icon:"✨" } ];
 var MENU = [];
 var EXCHANGE_RATE = null;
 
+/* CARGA DE DATOS (SUPABASE) */
 async function loadSharedData(){
   try {
     const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
@@ -563,4 +570,239 @@ async function loadSharedData(){
       CONFIG.phoneCall = config.phonecall || CONFIG.phoneCall;
       CONFIG.mapsUrl = config.mapsurl || CONFIG.mapsUrl;
       CONFIG.currency = config.currency || CONFIG.currency;
-      CONFIG.deliveryFee = config.delivery
+      CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
+      CONFIG.freeDeliveryFrom = config.freedeliveryfrom || CONFIG.freeDeliveryFrom;
+      CONFIG.hours = config.hours || CONFIG.hours;
+      CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
+      CONFIG.payments = config.payments || CONFIG.payments;
+    }
+    const { data: cats } = await supabaseClient.from('categories').select('*');
+    if (cats) {
+      CATS.length = 0;
+      CATS.push({ id:"todos", name:"Todo", icon:"✨" });
+      cats.forEach(x => CATS.push(x));
+    }
+    const { data: products } = await supabaseClient.from('products').select('*');
+    if (products) {
+      MENU.length = 0;
+      products.forEach(p => {
+        MENU.push({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] });
+      });
+    }
+    document.getElementById("botBrand").textContent = CONFIG.brand;
+    applyBrandLogo();
+  } catch(e) { console.warn("Error Supabase:", e); }
+}
+
+function applyBrandLogo(){
+  var logoEl = document.getElementById("brandLogo"); var avatarEl = document.getElementById("botAvatar");
+  if (logoEl) {
+    if (CONFIG.logo) { logoEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; logoEl.style.background = "transparent"; logoEl.style.boxShadow = "none"; }
+    else { logoEl.innerHTML = "🍔"; logoEl.style.background = ""; logoEl.style.boxShadow = ""; }
+  }
+  if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
+}
+
+function fetchExchangeRate(){
+  fetch("https://ve.dolarapi.com/v1/dolares/oficial").then(r => r.json()).then(data => {
+    var rate = data.promedio || data.venta || data.compra;
+    if (rate > 0) { EXCHANGE_RATE = rate; updateRateBadge(); refreshCurrentView(); }
+  }).catch(() => {
+    EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView();
+  });
+}
+function updateRateBadge(){
+  var badge = document.getElementById("rateBadge");
+  if (badge && EXCHANGE_RATE) badge.innerHTML = '1 USD = Bs. ' + EXCHANGE_RATE.toFixed(2);
+}
+
+function $(s, r){ r = r || document; return r.querySelector(s); }
+function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function money(n){ var usd = CONFIG.currency + Number(n).toFixed(2); if (EXCHANGE_RATE) return usd + '<span class="price-ves">≈ <strong>Bs. ' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; return usd; }
+function moneyPlain(n){ return CONFIG.currency + Number(n).toFixed(2); }
+function findProduct(id){ return MENU.find(p => p.id === id); }
+
+/* COPIA AL PORTAPAPELES */
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  t.remove();
+}
+
+/* ESTADO LOCAL */
+var state = { view: "menu", category: "todos", query: "", cart: [], orders: [], clientName: "", proofImage: null };
+function loadLocal() {
+  try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
+  try { state.orders = JSON.parse(localStorage.getItem('ff_orders_client')) || []; } catch(e){}
+  try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
+}
+function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(state.cart)); }
+function saveOrders() { localStorage.setItem('ff_orders_client', JSON.stringify(state.orders.slice(0,30))); }
+function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
+
+/* LÓGICA DE PAGOS */
+function renderPayments(){
+  var sel = $("#paySelect"); if (!sel) return;
+  sel.innerHTML = CONFIG.payments.map((p, i) => `<option value="${esc(p.id)}" ${i === 0 ? 'selected' : ''}>${p.icon} ${esc(p.label)}</option>`).join("");
+  sel.onchange = () => { updatePayDetails(); updateProofField(); };
+  updatePayDetails(); updateProofField();
+}
+
+function updatePayDetails(){
+  var box = $("#payDetails"); var sel = $("#paySelect");
+  var p = CONFIG.payments.find(x => x.id === sel.value);
+  if (!p || NO_DETAILS_TYPES.includes(p.type)) { box.classList.remove("show"); box.innerHTML = ""; return; }
+  
+  var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
+  if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
+
+  // 1. Generar el texto completo para el botón "Copiar Todo"
+  let textoCompleto = `Datos de ${p.label}:\n`;
+  keys.forEach(k => {
+    textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`;
+  });
+
+  // 2. Construir el HTML del botón general (solo si es Pago Móvil o Transferencia)
+  var btnCopiarTodo = "";
+  if (p.type === 'pagomovil' || p.type === 'transferencia') {
+    btnCopiarTodo = `<button class="copy-all-btn" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">📋 Copiar todos los datos (Banco, Cédula, Teléfono)</button>`;
+  }
+
+  // 3. Construir las filas individuales (por si quieren copiar uno solo)
+  var rows = keys.map(k => `
+    <div class="pay-details-row">
+      <span class="lbl">${esc(DETAIL_LABELS[k] || k)}</span>
+      <div class="val-wrap">
+        <span class="val">${esc(details[k])}</span>
+        <button class="copy-btn" onclick="copyToClipboard('${esc(details[k])}')">📋</button>
+      </div>
+    </div>`).join("");
+
+  box.innerHTML = `<div class="pay-details-title">📋 Datos para realizar el pago</div>${btnCopiarTodo}${rows}`;
+  box.classList.add("show");
+}
+
+function updateProofField(){
+  var field = $("#proofField"); var sel = $("#paySelect");
+  var p = CONFIG.payments.find(x => x.id === sel.value);
+  if (!p || NO_PROOF_TYPES.includes(p.type)) { field.classList.remove("show"); if (state.proofImage) clearProof(true); }
+  else { field.classList.add("show"); }
+}
+
+/* RESTO DE FUNCIONES (Menú, Carrito, Checkout, etc.) */
+function renderChips(){
+  var wrap = $("#chips");
+  wrap.innerHTML = CATS.map(c => `<button class="chip ${state.category === c.id ? 'active' : ''}" onclick="state.category='${c.id}'; renderChips(); renderMenu();">${c.icon} ${esc(c.name)}</button>`).join("");
+}
+
+function renderMenu(){
+  var q = state.query.trim().toLowerCase();
+  var items = MENU.filter(p => (state.category === "todos" || p.cat === state.category) && (!q || p.name.toLowerCase().includes(q)));
+  var list = $("#menuList");
+  if (!items.length) { list.innerHTML = `<div class="empty"><div class="big">🔍</div><p>No hay productos.</p></div>`; return; }
+  
+  list.innerHTML = items.map(p => `
+    <article class="card" onclick="openProduct('${p.id}')">
+      <div class="card-img"><span class="card-emoji">${p.emoji}</span>${p.img ? `<img src="${esc(p.img)}">` : ''}${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}</div>
+      <div class="card-body"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="card-foot"><span class="price">${money(p.price)}</span><button class="add-btn" onclick="event.stopPropagation(); openProduct('${p.id}')">+</button></div></div>
+    </article>`).join("");
+}
+
+function openProduct(id){
+  var p = findProduct(id); if (!p) return;
+  state.modal = { product: p, qty: 1, extras: [], notes: "" };
+  renderModal(); $("#modal").classList.remove("hidden");
+}
+function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; }
+
+function renderModal(){
+  var m = state.modal; var p = m.product;
+  var extrasHtml = p.extras.map(e => `<label class="opt"><span>${esc(e.name)} +${money(e.price)}</span><span style="display:flex;gap:10px"><input type="checkbox" onchange="toggleExtra('${esc(e.name)}', this.checked)"><span class="box">✓</span></span></label>`).join("");
+  
+  $("#modal").innerHTML = `
+    <div class="sheet">
+      <div class="sheet-hero"><span class="sheet-hero-emoji">${p.emoji}</span>${p.img ? `<img src="${esc(p.img)}">` : ''}<button class="sheet-close" onclick="closeModal()">✕</button></div>
+      <div class="sheet-body">
+        <h2>${esc(p.name)}</h2><p class="desc">${esc(p.desc)}</p>
+        ${extrasHtml}
+        <div class="field"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla"></div>
+        <div class="qty-row">
+          <div class="qty"><button onclick="state.modal.qty=Math.max(1,state.modal.qty-1); renderModal()">−</button><span>${m.qty}</span><button onclick="state.modal.qty++; renderModal()">+</button></div>
+          <div style="font-size:24px;font-weight:900;color:var(--brand)" id="mUnit">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
+        </div>
+        <button class="btn btn-primary" onclick="addToCart()">Agregar al carrito</button>
+      </div>
+    </div>`;
+}
+
+function toggleExtra(name, on){ if(on) state.modal.extras.push(name); else state.modal.extras = state.modal.extras.filter(x=>x!==name); renderModal(); }
+
+function addToCart(){
+  var m = state.modal; var p = m.product;
+  var key = p.id + "|" + m.extras.sort().join(",") + "|" + m.notes;
+  var unit = p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0);
+  var found = state.cart.find(i => i.key === key);
+  if (found) found.qty += m.qty;
+  else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
+  saveCart(); updateBadge(); closeModal(); toast("Agregado");
+}
+
+function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("#navBadge"); b.textContent = n; b.classList.toggle("hidden", n === 0); }
+
+function renderCart(){
+  var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
+  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="go('menu')">Ver menú</button>`; return; }
+  
+  list.innerHTML = state.cart.map(i => `
+    <div class="cart-item">
+      <div class="ci-emoji">${i.emoji}</div>
+      <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
+      <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQty('${i.key}',-1)">−</button><span>${i.qty}</span><button onclick="changeQty('${i.key}',1)">+</button></div></div>
+    </div>`).join("");
+
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
+  totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
+  actions.innerHTML = `<button class="btn btn-primary" onclick="go('checkout')">Continuar con el pedido →</button>`;
+}
+
+function changeQty(key, d){
+  var it = state.cart.find(i => i.key === key); if(!it) return;
+  it.qty += d; if(it.qty <= 0) state.cart = state.cart.filter(i=>i.key!==key);
+  saveCart(); updateBadge(); renderCart();
+}
+
+function renderCheckout(){
+  renderPayments();
+  $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow total"><span>Total</span><span>${money(state.cart.reduce((a,i)=>a+i.unit*i.qty,0) + CONFIG.deliveryFee)}</span></div></div>`;
+}
+
+function go(view){
+  state.view = view;
+  $$(".view").forEach(v => v.classList.add("hidden"));
+  const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
+  $("#searchWrap").style.display = view === "menu" ? "" : "none"; $("#chips").style.display = view === "menu" ? "" : "none";
+  $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  if (view === "menu") renderMenu(); if (view === "cart") renderCart(); if (view === "checkout") renderCheckout();
+  window.scrollTo(0, 0);
+}
+
+/* INIT */
+async function init(){
+  loadLocal();
+  await loadSharedData();
+  $("#brandName").textContent = CONFIG.brand;
+  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
+  $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
+  $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
