@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
-<title>Burguer Express — Pide y rastrea en tiempo real</title>
+<title>Julio Burguer — Pide y rastrea en tiempo real</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,6 +16,7 @@
   --ink:#1A1D21; --ink-2:#4A5058; --muted:#8A9099; --muted-2:#B8BEC5;
   --brand:#FF6B2C; --brand-2:#FF8A4C; --brand-d:#E85A1F; --brand-soft:#FFF2EC; --brand-glow:rgba(255,107,44,0.28);
   --ok:#22C55E; --ok-soft:#E8F9EE; --danger:#EF4444; --danger-soft:#FEF2F2; --wa:#25D366;
+  --star:#FFC107; --star-empty:#E5E7EB;
   --r:16px; --r-lg:24px; --r-sm:12px;
   --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
   --shadow:0 4px 16px rgba(0,0,0,0.06);
@@ -241,19 +242,29 @@ main{padding:18px}
 .toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);z-index:80;background:var(--ink);color:#FFFFFF;padding:15px 24px;border-radius:14px;font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transition:.3s;max-width:88%;text-align:center;box-shadow:var(--shadow-md)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.bot-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 28px;text-align:center;animation:fade .4s}
-.bot-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg, var(--brand-2), var(--brand));display:grid;place-items:center;font-size:48px;margin-bottom:24px;box-shadow:0 16px 40px var(--brand-glow);animation:bounceIn .6s cubic-bezier(.2,.9,.3,1);overflow:hidden;position:relative}
-.bot-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-@keyframes bounceIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-.bot-title{font-size:26px;font-weight:800;letter-spacing:-.8px;margin:0 0 10px;color:var(--ink);line-height:1.2}
-.bot-sub{font-size:14px;color:var(--muted);line-height:1.7;margin:0 0 32px;max-width:340px;font-weight:400}
-.bot-input-wrap{width:100%;max-width:340px}
-.bot-input{width:100%;padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);font-size:16px;font-family:inherit;outline:none;color:var(--ink);text-align:center;font-weight:600;transition:.2s}
-.bot-input::placeholder{color:var(--muted-2);font-weight:400}
-.bot-input:focus{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--brand-soft)}
-.bot-btn{width:100%;margin-top:14px;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px var(--brand-glow);transition:.2s;letter-spacing:.2px}
-.bot-btn:active{transform:scale(.98)}
-.bot-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+/* =========================================================
+   SISTEMA DE CALIFICACIÓN Y ANIMACIONES
+   ========================================================= */
+.rating-modal { position: fixed; inset: 0; z-index: 200; background: rgba(26,29,33,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+.rating-modal.show { opacity: 1; visibility: visible; }
+.rating-box { background: var(--surface); width: 100%; max-width: 380px; border-radius: 24px; padding: 32px 24px; text-align: center; box-shadow: var(--shadow-lg); transform: translateY(30px) scale(0.9); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.rating-modal.show .rating-box { transform: translateY(0) scale(1); }
+.rating-icon { font-size: 48px; margin-bottom: 12px; animation: float 2s ease-in-out infinite; display: inline-block; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.rating-box h3 { margin: 0 0 8px; font-size: 22px; font-weight: 800; color: var(--ink); }
+.rating-box p { margin: 0 0 20px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.stars-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.star { font-size: 42px; color: var(--star-empty); cursor: pointer; transition: all 0.2s ease; user-select: none; line-height: 1; }
+.star:hover { transform: scale(1.15); }
+.star.active { color: var(--star); text-shadow: 0 0 16px rgba(255, 193, 7, 0.6); }
+.star.bounce { animation: starBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes starBounce { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1.1); } }
+.rating-box textarea { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); font-family: inherit; font-size: 14px; color: var(--ink); resize: none; margin-bottom: 20px; outline: none; transition: .2s; }
+.rating-box textarea:focus { border-color: var(--star); background: var(--surface); box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.15); }
+.btn-rate-submit { width: 100%; padding: 16px; border-radius: 16px; border: none; background: linear-gradient(135deg, #FFC107, #FF9800); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4); transition: .2s; }
+.btn-rate-submit:active { transform: scale(0.98); box-shadow: 0 4px 14px rgba(255, 152, 0, 0.4); }
+.btn-rate-close { width: 100%; padding: 14px; margin-top: 10px; border-radius: 16px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: .2s; }
+.btn-rate-close:hover { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -394,6 +405,29 @@ main{padding:18px}
   </nav>
 
   <button class="fab" id="fabWa" onclick="openWhatsApp()">💬</button>
+  
+  <!-- Modal de Calificación -->
+  <div id="ratingModal" class="rating-modal">
+    <div class="rating-box">
+      <div class="rating-icon">🌟</div>
+      <h3>¡Buen provecho!</h3>
+      <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
+      
+      <div class="stars-container" id="starsContainer">
+        <span class="star" onclick="setRating(1)" onmouseover="hoverRating(1)">★</span>
+        <span class="star" onclick="setRating(2)" onmouseover="hoverRating(2)">★</span>
+        <span class="star" onclick="setRating(3)" onmouseover="hoverRating(3)">★</span>
+        <span class="star" onclick="setRating(4)" onmouseover="hoverRating(4)">★</span>
+        <span class="star" onclick="setRating(5)" onmouseover="hoverRating(5)">★</span>
+      </div>
+      
+      <textarea id="ratingComment" rows="3" placeholder="Déjanos un comentario (opcional)..."></textarea>
+      
+      <button class="btn-rate-submit" onclick="submitRating()">Enviar calificación</button>
+      <button class="btn-rate-close" onclick="closeRatingModal()">Ahora no</button>
+    </div>
+  </div>
+
   <div id="modal" class="modal hidden"></div>
   <div id="toast" class="toast"></div>
 </div>
@@ -477,30 +511,7 @@ function applyBrandLogo(){
 /* 
   TASA DE CAMBIO CON TRIPLE RESPALDO (BLINDADO)
 */
-/*
-  TASA DE CAMBIO CON RESPALDO OFICIAL
-*/
 async function fetchExchangeRate() {
-  // 1. Intentar con AllRatesToday (Es CORS-Open y extrae directo del BCV)
-  try {
-    let res = await fetch("https://allratestoday.com/api/open/central-bank/bcv?source=USD&target=VES");
-    if (res.ok) {
-      let data = await res.json();
-      // En esta API, el valor viene en data.rate
-      let rate = parseFloat(data.rate);
-      if (rate > 0) {
-        EXCHANGE_RATE = rate;
-        updateRateBadge();
-        refreshCurrentView();
-        console.log("Tasa obtenida de AllRatesToday:", EXCHANGE_RATE);
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn("Falló AllRatesToday, intentando PyDolarVe...");
-  }
-
-  // 2. Intentar con PyDolarVe (Muy estable, extrae del BCV)
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
@@ -509,15 +520,32 @@ async function fetchExchangeRate() {
         EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
         updateRateBadge();
         refreshCurrentView();
-        console.log("Tasa obtenida de PyDolarVe:", EXCHANGE_RATE);
         return;
       }
     }
-  } catch (e) {
-    console.warn("Falló PyDolarVe, intentando DolarAPI...");
-  }
+  } catch (e) {}
 
-  // 3. Último recurso: DolarAPI
+  try {
+    let proxyUrl = "https://corsproxy.io/?" + encodeURIComponent("https://www.bcv.org.ve/");
+    let res = await fetch(proxyUrl);
+    let html = await res.text();
+    let doc = new DOMParser().parseFromString(html, 'text/html');
+    let dolarDiv = doc.getElementById('dolar');
+    if (dolarDiv) {
+      let strong = dolarDiv.querySelector('strong');
+      if (strong) {
+        let val = strong.textContent.trim().replace(/\./g, '').replace(',', '.');
+        let rate = parseFloat(val);
+        if (rate > 0) {
+          EXCHANGE_RATE = rate;
+          updateRateBadge();
+          refreshCurrentView();
+          return;
+        }
+      }
+    }
+  } catch (e) {}
+
   try {
     let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     let data = await res.json();
@@ -525,25 +553,20 @@ async function fetchExchangeRate() {
       EXCHANGE_RATE = parseFloat(data.promedio);
       updateRateBadge();
       refreshCurrentView();
-      console.log("Tasa obtenida de DolarAPI:", EXCHANGE_RATE);
       return;
     }
-  } catch (e2) {
-    console.error("Todas las opciones fallaron. Usando valor de emergencia.");
-  }
+  } catch (e) {}
 
-  // 4. Fallback de emergencia (Solo si no hay internet o todas las APIs fallan)
   if (!EXCHANGE_RATE) {
     EXCHANGE_RATE = 36.50;
     updateRateBadge();
     refreshCurrentView();
   }
 }
-  
+
 function updateRateBadge(){
   var badge = document.getElementById("rateBadge");
   if (badge && EXCHANGE_RATE) {
-    // Mostrar 4 decimales exactos como en el BCV (ej: 881.0664)
     var formattedRate = EXCHANGE_RATE.toFixed(4).replace(/\.?0+$/, '');
     badge.innerHTML = '1 USD = Bs. ' + formattedRate;
   }
@@ -884,7 +907,6 @@ async function submitOrder() {
   go('tracking');
 }
 
-/* RASTREO EN TIEMPO REAL CON POLLING DE RESPALDO */
 async function renderTracking() {
   var trackDiv = $("#trackDynamic");
   var code = localStorage.getItem('ff_current_order_code');
@@ -907,6 +929,13 @@ async function renderTracking() {
     var currentStage = stages[currentStageIndex];
     var progress = (currentStageIndex / (stages.length - 1)) * 100;
 
+    // Verificar si el pedido está entregado y NO ha sido calificado
+    let rateBtnHtml = "";
+    const isRated = localStorage.getItem('rated_' + order.code);
+    if (order.status === 'entregado' && !order.rating && !isRated) {
+      rateBtnHtml = `<button class="btn btn-primary" onclick="openRatingModal('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`;
+    }
+
     trackDiv.innerHTML = `
       <div class="track-card">
         <div class="tc-code">Pedido</div>
@@ -921,6 +950,7 @@ async function renderTracking() {
             </div>
           `).join("")}
         </div>
+        ${rateBtnHtml}
       </div>`;
   }
 
@@ -959,6 +989,88 @@ function lookupOrder() {
   localStorage.setItem('ff_current_order_code', code);
   renderTracking();
 }
+
+/* =========================================================
+   LÓGICA DEL SISTEMA DE CALIFICACIÓN
+   ========================================================= */
+let currentRating = 0;
+let currentOrderCodeToRate = null;
+
+function openRatingModal(orderCode) {
+  currentOrderCodeToRate = orderCode;
+  currentRating = 0;
+  document.getElementById('ratingComment').value = '';
+  updateStarsUI(0);
+  document.getElementById('ratingModal').classList.add('show');
+}
+
+function closeRatingModal() {
+  document.getElementById('ratingModal').classList.remove('show');
+  currentOrderCodeToRate = null;
+}
+
+function hoverRating(val) {
+  updateStarsUI(val);
+}
+
+function setRating(val) {
+  currentRating = val;
+  updateStarsUI(val);
+  // Animación de rebote en la estrella seleccionada
+  const stars = document.querySelectorAll('.star');
+  const star = stars[val - 1];
+  star.classList.add('bounce');
+  setTimeout(() => star.classList.remove('bounce'), 400);
+}
+
+function updateStarsUI(val) {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach((star, index) => {
+    if (index < val) {
+      star.classList.add('active');
+    } else {
+      star.classList.remove('active');
+    }
+  });
+}
+
+async function submitRating() {
+  if (currentRating === 0) {
+    toast("Por favor, selecciona al menos 1 estrella ⭐");
+    return;
+  }
+
+  const comment = document.getElementById('ratingComment').value.trim();
+  const btn = document.querySelector('.btn-rate-submit');
+  btn.disabled = true; btn.textContent = "Enviando...";
+
+  try {
+    // Guardar en Supabase
+    const { error } = await supabaseClient.from('orders')
+      .update({ rating: currentRating, review_text: comment })
+      .eq('code', currentOrderCodeToRate);
+
+    if (error) throw error;
+
+    // Guardar en localStorage para no volver a preguntar
+    localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
+    
+    toast("¡Gracias por tu calificación! ⭐");
+    closeRatingModal();
+    renderTracking(); // Recargar la vista para ocultar el botón
+    
+  } catch (err) {
+    console.error(err);
+    toast("Error al guardar la calificación. Intenta de nuevo.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Enviar calificación";
+  }
+}
+
+// Cerrar modal si se hace clic fuera del recuadro
+document.getElementById('ratingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRatingModal();
+});
 
 function go(view){
   state.view = view;
@@ -1015,7 +1127,6 @@ async function init(){
   
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
   
-  // Actualizar la tasa cada 30 minutos para mantenerla fresca
   setInterval(fetchExchangeRate, 30 * 60 * 1000);
   
   $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
