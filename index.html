@@ -511,10 +511,17 @@ var MENU = [];
 var EXCHANGE_RATE = null;
 var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 
+// ⚡ OPTIMIZACIÓN: Promesas en paralelo
 async function loadSharedData(){
   try {
-    const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
-    if (config) {
+    const [configRes, catsRes, productsRes] = await Promise.all([
+      supabaseClient.from('config').select('*').eq('id', 1).single(),
+      supabaseClient.from('categories').select('*'),
+      supabaseClient.from('products').select('*')
+    ]);
+
+    if (configRes.data) {
+      const config = configRes.data;
       CONFIG.brand = config.brand || CONFIG.brand;
       CONFIG.logo = config.logo || "";
       CONFIG.whatsapp = config.whatsapp || CONFIG.whatsapp;
@@ -523,20 +530,21 @@ async function loadSharedData(){
       CONFIG.currency = config.currency || CONFIG.currency;
       CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
       CONFIG.payments = config.payments || [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }];
-      CONFIG.hours = config.hours || { open: "11:00", close: "23:00" };
-      CONFIG.days = config.days || [1, 2, 3, 4, 5, 6, 0];
+      CONFIG.hours = config.hours || CONFIG.hours;
+      CONFIG.days = config.days || CONFIG.days;
       CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
     }
-    const { data: cats } = await supabaseClient.from('categories').select('*');
-    if (cats) {
+
+    if (catsRes.data) {
       CATS.length = 0; CATS.push({ id:"todos", name:"Todo", icon:"✨" });
-      cats.forEach(x => CATS.push(x));
+      catsRes.data.forEach(x => CATS.push(x));
     }
-    const { data: products } = await supabaseClient.from('products').select('*');
-    if (products) {
+
+    if (productsRes.data) {
       MENU.length = 0;
-      products.forEach(p => MENU.push({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+      productsRes.data.forEach(p => MENU.push({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
     }
+
     document.getElementById("botBrand").textContent = CONFIG.brand;
     document.getElementById("brandName").textContent = CONFIG.brand;
     document.getElementById("helpHours").textContent = CONFIG.helpHoursText;
@@ -553,7 +561,6 @@ function applyBrandLogo(){
   if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
 }
 
-// GENERAR EL TEXTO DEL HORARIO DINÁMICAMENTE
 function getScheduleHTML() {
   const activeDays = CONFIG.days || [1,2,3,4,5,6,0];
   if (activeDays.length === 0) return `<div class="row"><span>Sin horario definido</span><b>--</b></div>`;
@@ -562,27 +569,16 @@ function getScheduleHTML() {
   const sortedDays = [...activeDays].sort((a,b) => a - b);
 
   let label = "";
-  if (sortedDays.length === 7) {
-    label = "Todos los días";
-  } else if (sortedDays.join(',') === '1,2,3,4,5') {
-    label = "Lunes a Viernes";
-  } else if (sortedDays.join(',') === '1,2,3,4,5,6') {
-    label = "Lunes a Sábado";
-  } else {
-    label = sortedDays.map(d => dayNames[d]).join(', ');
-  }
+  if (sortedDays.length === 7) label = "Todos los días";
+  else if (sortedDays.join(',') === '1,2,3,4,5') label = "Lunes a Viernes";
+  else if (sortedDays.join(',') === '1,2,3,4,5,6') label = "Lunes a Sábado";
+  else label = sortedDays.map(d => dayNames[d]).join(', ');
 
-  // Si el admin escribió un texto personalizado, usarlo. Si no, generarlo con las horas.
   let finalText = CONFIG.helpHoursText;
-  if (!finalText || finalText.trim() === '') {
-    finalText = `${CONFIG.hours.open} a ${CONFIG.hours.close}`;
-  }
-
-  // Si el texto tiene saltos de línea, renderizarlos como <br>
+  if (!finalText || finalText.trim() === '') finalText = `${CONFIG.hours.open} a ${CONFIG.hours.close}`;
+  
   finalText = finalText.replace(/\n/g, '<br>');
 
-  // Si el texto personalizado contiene varias líneas, lo mostramos tal cual.
-  // Si es una sola línea, lo mostramos al lado de los días.
   if (finalText.includes('<br>')) {
     return `<div style="font-size:13.5px; color:var(--muted); line-height:1.6;">${finalText}</div>`;
   } else {
@@ -590,19 +586,16 @@ function getScheduleHTML() {
   }
 }
 
-// VERIFICAR SI LA TIENDA ESTÁ ABIERTA
 function checkStoreStatus() {
   if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return;
   
   let now = new Date();
-  let currentDay = now.getDay(); // 0 = Domingo
+  let currentDay = now.getDay();
   let currentMins = now.getHours() * 60 + now.getMinutes();
   
-  // 1. Verificar si hoy es un día laborable
   const activeDays = CONFIG.days || [1,2,3,4,5,6,0];
   const isWorkingDay = activeDays.includes(currentDay);
 
-  // 2. Verificar si estamos dentro del horario
   let [openH, openM] = CONFIG.hours.open.split(':').map(Number);
   let [closeH, closeM] = CONFIG.hours.close.split(':').map(Number);
   let openMins = openH * 60 + openM;
@@ -630,7 +623,6 @@ function checkStoreStatus() {
     closedOverlay.classList.remove("hidden");
   }
 
-  // Actualizar textos de horarios
   const scheduleHtml = getScheduleHTML();
   document.getElementById("closedScheduleBox").innerHTML = `<h4>Nuestros horarios:</h4>${scheduleHtml}`;
   document.getElementById("helpScheduleBox").innerHTML = scheduleHtml;
@@ -643,6 +635,7 @@ function exitApp() {
   }, 100);
 }
 
+// ⚡ OPTIMIZACIÓN: Carga no bloqueante
 async function fetchExchangeRate() {
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
@@ -1217,12 +1210,16 @@ function go(view){
 
 async function init(){
   loadLocal();
-  await loadSharedData();
+  await loadSharedData(); // Espera los datos base
   
   checkStoreStatus();
   setInterval(checkStoreStatus, 60000);
 
-  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); fetchExchangeRate();
+  // Renderizamos la interfaz de inmediato
+  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
+  
+  // ⚡ Llamada no bloqueante para la tasa de cambio
+  fetchExchangeRate();
   
   $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
