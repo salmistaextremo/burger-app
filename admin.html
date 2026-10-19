@@ -134,6 +134,12 @@ textarea{resize:vertical;min-height:80px}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
 
+.day-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.day-picker label { flex: 1; text-align: center; padding: 10px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); transition: 0.2s; margin: 0; }
+.day-picker input { display: none; }
+.day-picker input:checked + span { color: var(--brand-d); }
+.day-picker label:has(input:checked) { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-d); }
+
 .img-picker{position:relative;width:100%;height:200px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:var(--r);display:grid;place-items:center;overflow:hidden;cursor:pointer;}
 .img-picker input{display:none}
 .img-picker img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -247,6 +253,7 @@ var DEFAULT_CONFIG = {
   brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
   hours: { open: "11:00", close: "23:00" }, 
+  days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00",
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
 };
@@ -258,9 +265,6 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
-/* =========================================================
-   SISTEMA DE AUDIO Y NOTIFICACIONES
-   ========================================================= */
 let audioCtx;
 let notificationsEnabled = false;
 
@@ -328,9 +332,6 @@ function updateAppBadge() {
   }
 }
 
-/* =========================================================
-   AUTENTICACIÓN Y CARGA DE DATOS
-   ========================================================= */
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
@@ -385,6 +386,7 @@ async function dbLoad() {
       DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
+      if (!DB.config.days) DB.config.days = DEFAULT_CONFIG.days;
     } else {
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ id: 1, brand: DB.config.brand }]);
@@ -404,7 +406,7 @@ async function dbSaveConfig() {
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
-    hours: DB.config.hours, payments: DB.config.payments 
+    hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days
   }); 
 }
 async function dbSaveMenu() {
@@ -454,9 +456,6 @@ function setupOrderListener() {
     }).subscribe();
 }
 
-/* =========================================================
-   RENDERIZADO
-   ========================================================= */
 function setupNav() {
   $$(".sb-nav button").forEach(b => { 
     b.onclick = () => { 
@@ -557,12 +556,27 @@ function renderBusiness(m) {
     closeTime = DB.config.hours.close || "23:00";
   }
 
+  const days = DB.config.days || [1,2,3,4,5,6,0];
+  const dayNames = [
+    { id: 1, name: 'Lun' }, { id: 2, name: 'Mar' }, { id: 3, name: 'Mié' }, 
+    { id: 4, name: 'Jue' }, { id: 5, name: 'Vie' }, { id: 6, name: 'Sáb' }, { id: 0, name: 'Dom' }
+  ];
+
+  let dayPickerHtml = dayNames.map(d => `
+    <label>
+      <input type="checkbox" class="day-check" value="${d.id}" ${days.includes(d.id) ? 'checked' : ''}>
+      <span>${d.name}</span>
+    </label>
+  `).join('');
+
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        
+        <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
         
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
@@ -597,8 +611,14 @@ async function saveBusiness() {
   const openTime = document.getElementById('bOpenTime').value;
   const closeTime = document.getElementById('bCloseTime').value;
   const helpText = document.getElementById('bHelpHours').value;
+  
+  const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
+  if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
+
   DB.config.hours = { open: openTime, close: closeTime };
   DB.config.helpHoursText = helpText;
+  DB.config.days = checkedDays;
+
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   toast('✅ Negocio actualizado');
@@ -742,13 +762,13 @@ function renderProducts(m) {
 async function toggleAvailability(id) {
   const p = DB.menu.find(x => x.id === id);
   if (!p) return;
-  p.available = !(p.available !== false); // Alternar
+  p.available = !(p.available !== false);
   try {
     await dbSaveMenu();
     toast(`Producto marcado como ${p.available ? 'Disponible' : 'Agotado'}`);
     renderProducts(document.getElementById('main'));
   } catch (err) {
-    p.available = !p.available; // Revertir si falla
+    p.available = !p.available;
     toast("Error al cambiar disponibilidad", "error");
   }
 }
