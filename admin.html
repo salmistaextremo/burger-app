@@ -157,7 +157,6 @@ textarea{resize:vertical;min-height:80px}
 /* ESTILOS DE PEDIDOS Y DESTACADO */
 .order-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
-/* ESTA ES LA CLASE CLAVE PARA LOS PEDIDOS PENDIENTES */
 .order-card.pending { background: #FFF7F3; border: 1px solid #FFE0D0; border-left: 4px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.08); }
 .order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .order-code{font-size:18px;font-weight:900;color:var(--brand);}
@@ -242,7 +241,9 @@ textarea{resize:vertical;min-height:80px}
 var DB = { config: null, cats: [], menu: [], orders: [] };
 var DEFAULT_CONFIG = {
   brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
-  mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, hours: { open: 11, close: 23 }, helpHoursText: "11:00 a 23:00",
+  mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
+  hours: { open: "11:00", close: "23:00" }, 
+  helpHoursText: "11:00 a 23:00",
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
 };
 
@@ -372,6 +373,7 @@ async function dbLoad() {
     if (config) {
       DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
+      if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
     } else {
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ id: 1, brand: DB.config.brand }]);
@@ -391,6 +393,7 @@ async function dbSaveConfig() {
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
+    hours: DB.config.hours,
     payments: DB.config.payments 
   }); 
 }
@@ -489,15 +492,9 @@ function renderOrders(m) {
     <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
     ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
     `<div class="order-list">${DB.orders.map(o => {
-      
-      // LÓGICA DE COLOR: Si no está entregado, tiene la clase "pending"
       const isPending = o.status !== 'entregado';
       const cardClass = isPending ? 'order-card pending' : 'order-card';
-      
-      // Color de la etiqueta del estado
-      const badgeStyle = o.status === 'entregado' 
-        ? 'background:var(--ok-soft); color:var(--ok);' 
-        : 'background:var(--brand); color:#fff;';
+      const badgeStyle = o.status === 'entregado' ? 'background:var(--ok-soft); color:var(--ok);' : 'background:var(--brand); color:#fff;';
 
       return `
       <div class="${cardClass}">
@@ -525,12 +522,25 @@ function renderOrders(m) {
 }
 
 function renderBusiness(m) {
+  // Valores por defecto en caso de que no existan
+  let openTime = "11:00";
+  let closeTime = "23:00";
+  
+  if (DB.config.hours) {
+    openTime = DB.config.hours.open || "11:00";
+    closeTime = DB.config.hours.close || "23:00";
+  }
+
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        
+        <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
+        <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
+        <div class="field full"><label>Texto de horario para el cliente (Ej: 11:00 a 23:00)</label><input type="text" id="bHelpHours" value="${esc(DB.config.helpHoursText || '11:00 a 23:00')}"></div>
       </div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar cambios</button>
     </div></div>
@@ -558,6 +568,15 @@ function renderBusiness(m) {
 async function saveBusiness() {
   DB.config.brand = document.getElementById('bBrand').value;
   DB.config.whatsapp = document.getElementById('bWhatsapp').value;
+  
+  // Guardar los nuevos horarios
+  const openTime = document.getElementById('bOpenTime').value;
+  const closeTime = document.getElementById('bCloseTime').value;
+  const helpText = document.getElementById('bHelpHours').value;
+
+  DB.config.hours = { open: openTime, close: closeTime };
+  DB.config.helpHoursText = helpText;
+
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   toast('✅ Negocio actualizado');
