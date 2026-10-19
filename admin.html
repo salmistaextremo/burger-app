@@ -265,7 +265,6 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
-/* SISTEMA DE AUDIO Y NOTIFICACIONES */
 let audioCtx;
 let notificationsEnabled = false;
 
@@ -333,11 +332,9 @@ function updateAppBadge() {
   }
 }
 
-/* AUTENTICACIÓN Y CARGA DE DATOS (SIN RESTRICCIÓN DE HORARIO) */
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
-    // Entra directo al panel sin importar la hora
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
     checkNotificationState();
@@ -382,10 +379,18 @@ function doLogout() {
   });
 }
 
+// ⚡ OPTIMIZACIÓN: Promesas en paralelo para el Admin
 async function dbLoad() {
   try {
-    const { data: config } = await supabaseClient.from('config').select('*').eq('id', 1).single();
-    if (config) {
+    const [configRes, catsRes, productsRes, ordersRes] = await Promise.all([
+      supabaseClient.from('config').select('*').eq('id', 1).single(),
+      supabaseClient.from('categories').select('*'),
+      supabaseClient.from('products').select('*'),
+      supabaseClient.from('orders').select('*').order('created_at', { ascending: false })
+    ]);
+
+    if (configRes.data) {
+      const config = configRes.data;
       DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
@@ -394,12 +399,15 @@ async function dbLoad() {
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ id: 1, brand: DB.config.brand }]);
     }
-    const { data: cats } = await supabaseClient.from('categories').select('*');
-    DB.cats = cats || [];
-    const { data: products } = await supabaseClient.from('products').select('*');
-    DB.menu = products ? products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false })) : [];
-    const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
-    DB.orders = orders || [];
+
+    if (catsRes.data) DB.cats = catsRes.data;
+    
+    if (productsRes.data) {
+      DB.menu = productsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+    }
+
+    if (ordersRes.data) DB.orders = ordersRes.data;
+    
     updateAppBadge();
   } catch(e) { console.error(e); }
 }
