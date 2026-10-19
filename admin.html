@@ -11,6 +11,7 @@
 <link rel="manifest" href="/manifest-admin.json">
 <meta name="theme-color" content="#FF6B2C">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Admin Burger">
 <link rel="apple-touch-icon" href="/icon-admin-192.png">
@@ -47,7 +48,6 @@ textarea{resize:vertical;min-height:80px}
 .auth-box p{margin:0 0 24px;font-size:13.5px;color:var(--muted);line-height:1.5}
 .auth-box .field{margin-bottom:16px;text-align:left}
 .auth-box .btn{width:100%;margin-bottom:12px}
-.auth-link{font-size:13px;color:var(--brand-d);font-weight:600;cursor:pointer;text-decoration:underline}
 .auth-error{background:var(--danger-soft);color:var(--danger);padding:10px;border-radius:8px;font-size:12.5px;font-weight:600;margin-bottom:16px;display:none}
 
 /* ===== LAYOUT PRINCIPAL ===== */
@@ -86,7 +86,6 @@ textarea{resize:vertical;min-height:80px}
 .btn-danger{background:var(--danger-soft);color:var(--danger);border:1px solid #FECACA}
 .btn-danger:hover{background:#FEE2E2}
 .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:9px}
-.btn-icon{width:36px;height:36px;padding:0;border-radius:9px}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
 .card-body{padding:20px}
@@ -146,8 +145,6 @@ textarea{resize:vertical;min-height:80px}
 .field:last-child{margin-bottom:0}
 .field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
 .field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
-.field .row{display:flex;gap:10px}
-.field .row input{flex:1}
 
 .emoji-field{position:relative}
 .emoji-field input{padding-right:52px;font-size:16px;text-align:center}
@@ -288,50 +285,26 @@ textarea{resize:vertical;min-height:80px}
 </head>
 <body>
 
-<!-- ===== PANTALLA DE LOGIN / REGISTRO ===== -->
+<!-- ===== PANTALLA DE LOGIN ===== -->
 <div id="authScreen" class="auth-screen">
-  <!-- Login -->
   <div id="loginBox" class="auth-box">
     <div class="auth-logo">🍔</div>
     <h2>Admin Panel</h2>
-    <p>Inicia sesión para administrar tu negocio.</p>
+    <p>Inicia sesión con tu cuenta de administrador.</p>
     
-    <div class="auth-error" id="loginError">Usuario o contraseña incorrectos.</div>
+    <div class="auth-error" id="loginError">Correo o contraseña incorrectos.</div>
     
     <div class="field">
-  <label>Correo Electrónico</label>
-  <input type="email" id="loginUser" placeholder="admin@tuburguer.com" autocomplete="username">
-</div>
+      <label>Correo Electrónico</label>
+      <input type="email" id="loginUser" placeholder="admin@tuburguer.com" autocomplete="username">
+    </div>
     <div class="field">
       <label>Contraseña</label>
       <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
     </div>
     <button class="btn btn-primary" onclick="doLogin()">Entrar al panel</button>
-    </div>
-
-  <!-- Registro -->
-  
-    <div class="auth-logo">🍔</div>
-    <h2>Crear Cuenta</h2>
-    <p>Registra tu usuario para empezar a configurar tu tienda.</p>
-    
-    <div class="auth-error" id="registerError">El usuario ya existe o las contraseñas no coinciden.</div>
-    
-    <div class="field">
-      <label>Nombre de usuario</label>
-      <input type="text" id="regUser" placeholder="Ej: admin" autocomplete="username">
-    </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="regPass" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
-    </div>
-    <div class="field">
-      <label>Confirmar contraseña</label>
-      <input type="password" id="regPass2" placeholder="Repite la contraseña" autocomplete="new-password">
-    </div>
-    <button class="btn btn-primary" onclick="doRegister()">Crear cuenta y entrar</button>
-    <p style="margin-top:16px;margin-bottom:0;font-size:13px;color:var(--muted)">
-      ¿Ya tienes cuenta? <span class="auth-link" onclick="showLogin()">Inicia sesión</span>
+    <p style="margin-top:16px;margin-bottom:0;font-size:12.5px;color:var(--muted)">
+      * Los usuarios se gestionan directamente en el panel de Supabase.
     </p>
   </div>
 </div>
@@ -369,33 +342,19 @@ textarea{resize:vertical;min-height:80px}
 <!-- Cargar Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Corrección 1: URL limpia (sin /rest/v1/)
   const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
+
 <script>
-// ... aquí empieza tu código original ...
-
 /* =========================================================
-   1. AUTENTICACIÓN (Local)
+   1. AUTENTICACIÓN CON SUPABASE AUTH
    ========================================================= */
-var LS_USERS = "ff_admin_users";
-var LS_SESSION = "ff_admin_session";
-
-function getUsers() {
-  try { return JSON.parse(localStorage.getItem(LS_USERS)) || []; } catch(e){ return []; }
-}
-function saveUsers(users) {
-  localStorage.setItem(LS_USERS, JSON.stringify(users));
-}
-
 async function checkAuth() {
-  // Verificamos si hay una sesión activa en Supabase
   const { data: { session }, error } = await supabaseClient.auth.getSession();
   
   if (session && session.user) {
-    // Usuario autenticado
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
     
@@ -403,28 +362,15 @@ async function checkAuth() {
       await dbLoad(); 
       render();
       setupNav();
-      window.currentAdminUser = session.user.email; // Guardamos el email para el Dashboard
+      window.currentAdminUser = session.user.email; 
     } catch(error) {
-      console.error("Error cargando datos:", error);
+      console.error("Error cargando datos de Supabase:", error);
       toast("Error de conexión con la base de datos", "error");
     }
   } else {
-    // No hay sesión
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
-    showLogin();
   }
-}
-  function showLogin() {
-  document.getElementById("loginBox").classList.remove("hidden");
-  document.getElementById("registerBox").classList.add("hidden");
-  document.getElementById("loginError").style.display = "none";
-}
-
-function showRegister() {
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("registerBox").classList.remove("hidden");
-  document.getElementById("registerError").style.display = "none";
 }
 
 function doLogin() {
@@ -441,8 +387,8 @@ function doLogin() {
 
   btn.disabled = true;
   btn.textContent = "Entrando...";
+  err.style.display = "none";
 
-  // Llamada a Supabase Auth
   supabaseClient.auth.signInWithPassword({ email, password })
     .then(({ data, error }) => {
       btn.disabled = false;
@@ -452,52 +398,17 @@ function doLogin() {
         err.textContent = "Correo o contraseña incorrectos.";
         err.style.display = "block";
       } else {
-        // El evento onAuthStateChange se disparará y llamará a checkAuth()
         toast("✅ Bienvenido, " + data.user.email);
       }
     });
-}
-function doRegister() {
-  var user = document.getElementById("regUser").value.trim();
-  var pass = document.getElementById("regPass").value;
-  var pass2 = document.getElementById("regPass2").value;
-  var err = document.getElementById("registerError");
-
-  if (!user || !pass) {
-    err.textContent = "Por favor, llena todos los campos.";
-    err.style.display = "block";
-    return;
-  }
-  if (pass.length < 4) {
-    err.textContent = "La contraseña debe tener al menos 4 caracteres.";
-    err.style.display = "block";
-    return;
-  }
-  if (pass !== pass2) {
-    err.textContent = "Las contraseñas no coinciden.";
-    err.style.display = "block";
-    return;
-  }
-
-  var users = getUsers();
-  if (users.find(function(u){ return u.username === user; })) {
-    err.textContent = "Este usuario ya está registrado.";
-    err.style.display = "block";
-    return;
-  }
-
-  users.push({ username: user, password: pass });
-  saveUsers(users);
-  localStorage.setItem(LS_SESSION, JSON.stringify({ user: user }));
-  checkAuth();
-  toast("✅ Cuenta creada y sesión iniciada");
 }
 
 function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
   supabaseClient.auth.signOut().then(() => {
     toast("Sesión cerrada");
-    // El evento onAuthStateChange se disparará y mostrará el login
+    document.getElementById("loginUser").value = "";
+    document.getElementById("loginPass").value = "";
   });
 }
 
@@ -594,13 +505,13 @@ function migratePayments(payments){
   });
 }
 
+/* =========================================================
+   3. STORAGE LAYER (SUPABASE)
+   ========================================================= */
 async function dbLoad() {
   try {
-    // 1. CONFIGURACIÓN
-    const { data: config, error: errConfig } = await supabaseClient.from('config').select('*').eq('id', 1);
-    if (errConfig) throw errConfig;
-
-    if (config && config.length > 0) {
+    const { data: config, error: err1 } = await supabaseClient.from('config').select('*').eq('id', 1);
+    if (!err1 && config && config.length > 0) {
       const c = config[0];
       DB.config = { 
         ...DEFAULT_CONFIG, ...c,
@@ -608,7 +519,6 @@ async function dbLoad() {
         freeDeliveryFrom: c.freedeliveryfrom, helpHoursText: c.helphourstext
       };
     } else {
-      // Solo si la tabla está vacía, creamos la configuración inicial
       DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       await supabaseClient.from('config').insert([{ 
         id: 1, brand: DB.config.brand, whatsapp: DB.config.whatsapp, currency: DB.config.currency,
@@ -617,37 +527,23 @@ async function dbLoad() {
       }]);
     }
 
-    // 2. CATEGORÍAS
-    const { data: cats, error: errCats } = await supabaseClient.from('categories').select('*');
-    if (errCats) throw errCats;
-    DB.cats = cats || []; // Si está vacío, se queda vacío (no carga defaults)
+    const { data: cats, error: err2 } = await supabaseClient.from('categories').select('*');
+    if (!err2) DB.cats = cats || [];
 
-    // 3. PRODUCTOS
-    const { data: products, error: errProducts } = await supabaseClient.from('products').select('*');
-    if (errProducts) throw errProducts;
-    
-    if (products) {
-      DB.menu = products.map(p => ({ 
-        ...p, 
-        cat: p.category_id, 
-        desc: p.description, 
-        extras: p.extras || [] 
-      }));
-    } else {
-      DB.menu = []; // Si no hay productos, el array queda vacío
-    }
+    const { data: products, error: err3 } = await supabaseClient.from('products').select('*');
+    if (!err3) {
+      DB.menu = products.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
+    } else { DB.menu = []; }
 
-    // 4. PEDIDOS
-    const { data: orders, error: errOrders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
-    if (errOrders) throw errOrders;
-    DB.orders = orders || [];
+    const { data: orders, error: err4 } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+    if (!err4) DB.orders = orders || [];
 
   } catch(e) {
     console.error("Error cargando de Supabase:", e);
-    alert("Error conectando con la base de datos. Revisa la consola. Detalle: " + e.message);
-    // IMPORTANTE: Si falla, NO sobrescribimos con defaults, dejamos que la app se detenga.
+    throw e;
   }
 }
+
 async function dbSaveConfig() { 
   const { error } = await supabaseClient.from('config').upsert({ 
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
@@ -664,13 +560,12 @@ async function dbSaveCats() {
 }
 
 async function dbSaveMenu() { 
-  // Borramos todos los productos de la BD
+  // Borramos todos los productos y volvemos a insertar para mantener el orden exacto
   const { error: delError } = await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   if (delError) { alert("Error limpiando productos: " + delError.message); return; }
 
-  if (DB.menu.length === 0) return; // Si borraste todo, no insertamos nada.
+  if (DB.menu.length === 0) return;
 
-  // Insertamos los actuales (sin enviar el ID para que Supabase genere el UUID)
   const dbProducts = DB.menu.map(p => ({
     category_id: p.cat,
     name: p.name,
@@ -686,13 +581,12 @@ async function dbSaveMenu() {
   
   if (error) {
     alert("Error al guardar productos: " + error.message);
-    console.error(error);
   } else if (data) {
-    // Sincronizamos la memoria con los nuevos IDs de Supabase
     DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [] }));
   }
-}  
-  async function dbSaveOrders() { 
+}
+
+async function dbSaveOrders() { 
   const lastOrder = DB.orders[0];
   if(lastOrder) {
     await supabaseClient.from('orders').upsert([{
@@ -713,6 +607,9 @@ async function dbSaveMenu() {
   }
 }
 
+/* =========================================================
+   4. HELPERS
+   ========================================================= */
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -783,6 +680,9 @@ function handleImageFile(file, callback) {
   reader.readAsDataURL(file);
 }
 
+/* =========================================================
+   5. NAVIGATION
+   ========================================================= */
 var state = { tab: "home" };
 
 function setupNav() {
@@ -825,6 +725,9 @@ function updateCounts() {
   }
 }
 
+/* =========================================================
+   6. TAB: HOME (DASHBOARD)
+   ========================================================= */
 function renderHome(m) {
   var adminName = window.currentAdminUser || "Admin";
   var html =
@@ -871,6 +774,9 @@ function renderHome(m) {
   m.innerHTML = html;
 }
 
+/* =========================================================
+   7. TAB: PRODUCTOS
+   ========================================================= */
 var pFilters = { q: "", cat: "" };
 
 function renderProducts(m) {
@@ -1001,11 +907,11 @@ function openProductEditor(id) {
       '</div>' +
       '<div class="form-grid">' +
         '<div class="field"><label>Categoría</label><select id="fCat">' + catOptions + '</select></div>' +
-        '<div class="field"><label>Emoji (fallback)</label><div class="emoji-field" id="emojiField" data-emoji="' + esc(temp.emoji) + '"><input type="text" id="fEmoji" value="' + esc(temp.emoji) + '" maxlength="4" placeholder="🍔"></div><div class="hint" id="emojiHint">Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.</div></div>' +
+        '<div class="field"><label>Emoji (fallback)</label><div class="emoji-field" id="emojiField" data-emoji="' + esc(temp.emoji) + '"><input type="text" id="fEmoji" value="' + esc(temp.emoji) + '" maxlength="4" placeholder="🍔"></div><div class="hint" id="emojiHint">Se sincroniza con el ícono de la categoría.</div></div>' +
         '<div class="field full"><label>Nombre *</label><input type="text" id="fName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesa Clásica"></div>' +
         '<div class="field full"><label>Descripción</label><textarea id="fDesc" placeholder="Ingredientes, tamaño, etc.">' + esc(temp.desc) + '</textarea></div>' +
         '<div class="field"><label>Precio *</label><input type="number" id="fPrice" value="' + Number(temp.price) + '" step="0.01" min="0" placeholder="0.00"></div>' +
-        '<div class="field"><label>Badge (opcional)</label><input type="text" id="fBadge" value="' + esc(temp.badge || "") + '" placeholder="Ej: Nuevo, Top, Chef" maxlength="15"></div>' +
+        '<div class="field"><label>Badge (opcional)</label><input type="text" id="fBadge" value="' + esc(temp.badge || "") + '" placeholder="Ej: Nuevo, Top" maxlength="15"></div>' +
         '<div class="field full"><label>Extras / Opciones personalizables</label><div class="extras-list" id="extrasList"></div><button class="btn btn-ghost btn-sm" id="btnAddExtra">＋ Agregar extra</button></div>' +
       '</div>' +
     '</div>' +
@@ -1028,27 +934,15 @@ function openProductEditor(id) {
     var icon = opt.dataset.icon || "🍽️";
     emojiInput.value = icon;
     syncEmojiPreview();
-    if (animate) {
-      emojiField.style.transition = "transform .25s cubic-bezier(.2,.9,.3,1)";
-      emojiField.style.transform = "scale(1.08)";
-      setTimeout(function(){ emojiField.style.transform = "scale(1)"; }, 220);
-    }
   }
   emojiInput.addEventListener("input", function(){
     emojiTouched = true;
-    emojiHint.textContent = "Emoji personalizado. No se sincronizará con la categoría.";
+    emojiHint.textContent = "Emoji personalizado.";
     emojiHint.style.color = "var(--brand-d)";
     syncEmojiPreview();
   });
   catSelect.addEventListener("change", function(){
-    if (!emojiTouched) {
-      updateEmojiFromCategory(true);
-      emojiHint.textContent = "Se sincroniza con el ícono de la categoría. Edítalo si quieres uno distinto.";
-      emojiHint.style.color = "var(--muted)";
-    } else {
-      emojiHint.textContent = "Emoji personalizado. No se sincronizará con la categoría.";
-      emojiHint.style.color = "var(--brand-d)";
-    }
+    if (!emojiTouched) updateEmojiFromCategory(true);
   });
   syncEmojiPreview();
 
@@ -1078,7 +972,7 @@ function openProductEditor(id) {
     btn.onclick = function(){
       temp.img = "";
       picker.classList.remove("has-image");
-      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>';
+      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto</p></div>';
       fileInput = $("#imgFile");
       bindFileInput();
       btn.remove();
@@ -1104,7 +998,7 @@ function openProductEditor(id) {
     clearBtnInit.onclick = function(){
       temp.img = "";
       picker.classList.remove("has-image");
-      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto del plato</p><small>JPG, PNG o WEBP · máx 15MB</small></div>';
+      picker.innerHTML = '<input type="file" accept="image/*" id="imgFile"><div class="placeholder"><span class="emoji">📷</span><p>Sube una foto</p></div>';
       fileInput = $("#imgFile");
       bindFileInput();
       clearBtnInit.remove();
@@ -1114,11 +1008,11 @@ function openProductEditor(id) {
   function renderExtras() {
     var list = $("#extrasList");
     if (!temp.extras.length) {
-      list.innerHTML = '<div style="padding:12px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);text-align:center">Sin extras. Agrega queso, tocineta, etc.</div>';
+      list.innerHTML = '<div style="padding:12px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);text-align:center">Sin extras.</div>';
       return;
     }
     list.innerHTML = temp.extras.map(function(e, i){
-      return '<div class="extra-row"><input type="text" value="' + esc(e.name) + '" placeholder="Nombre del extra" data-ext-name="' + i + '"><input type="number" value="' + Number(e.price) + '" step="0.01" min="-10" placeholder="0.00" data-ext-price="' + i + '"><button data-ext-del="' + i + '" title="Eliminar">✕</button></div>';
+      return '<div class="extra-row"><input type="text" value="' + esc(e.name) + '" placeholder="Nombre" data-ext-name="' + i + '"><input type="number" value="' + Number(e.price) + '" step="0.01" placeholder="0.00" data-ext-price="' + i + '"><button data-ext-del="' + i + '">✕</button></div>';
     }).join("");
     list.querySelectorAll("[data-ext-name]").forEach(function(inp){ inp.oninput = function(){ temp.extras[Number(inp.dataset.extName)].name = inp.value; }; });
     list.querySelectorAll("[data-ext-price]").forEach(function(inp){ inp.oninput = function(){ temp.extras[Number(inp.dataset.extPrice)].price = parseFloat(inp.value) || 0; }; });
@@ -1142,7 +1036,6 @@ function openProductEditor(id) {
     temp.badge = $("#fBadge").value.trim();
 
     if (!temp.name){ toast("El nombre es obligatorio", "error"); return; }
-    if (!temp.cat){ toast("Selecciona una categoría", "error"); return; }
 
     temp.extras = temp.extras.filter(function(e){ return e.name.trim(); });
 
@@ -1175,25 +1068,23 @@ async function deleteProduct(id) {
   if (!p) return;
   if (!confirm('¿Eliminar "' + p.name + '"?\n\nEsta acción no se puede deshacer.')) return;
 
-  // 1. Borrar directamente de Supabase usando el ID específico
   const { error } = await supabaseClient.from('products').delete().eq('id', id);
-  
-  if (error) {
-    alert("Error al eliminar el producto: " + error.message);
-    return;
-  }
+  if (error) { alert("Error al eliminar: " + error.message); return; }
 
-  // 2. Actualizar la memoria local y la pantalla
   DB.menu = DB.menu.filter(function(x){ return x.id !== id; });
   render();
   toast("Producto eliminado");
 }
+
+/* =========================================================
+   8. TAB: CATEGORÍAS
+   ========================================================= */
 function renderCategories(m) {
   var html =
     '<div class="page-head">' +
       '<div>' +
         '<h1 class="page-title">Categorías</h1>' +
-        '<p class="page-sub">Organiza los productos en grupos que se muestran en la app del cliente.</p>' +
+        '<p class="page-sub">Organiza los productos en grupos.</p>' +
       '</div>' +
       '<button class="btn btn-primary" id="btnNewCat">＋ Nueva categoría</button>' +
     '</div>' +
@@ -1240,12 +1131,12 @@ function openCatEditor(id) {
           '<div class="icon-select-grid" id="iconGrid">' + iconGrid + '</div>' +
         '</div>' +
         '<div class="field"><label>Nombre *</label><input type="text" id="cName" value="' + esc(temp.name) + '" placeholder="Ej: Hamburguesas"></div>' +
-        '<div class="field"><label>ID (identificador interno)</label><input type="text" id="cId" value="' + esc(temp.id) + '" placeholder="burgers" ' + (!isNew ? 'disabled style="background:var(--surface-2);color:var(--muted)"' : '') + '><div class="hint">Solo minúsculas, números y guiones. No se puede cambiar después.</div></div>' +
+        '<div class="field"><label>ID interno</label><input type="text" id="cId" value="' + esc(temp.id) + '" placeholder="burgers" ' + (!isNew ? 'disabled style="background:var(--surface-2);color:var(--muted)"' : '') + '></div>' +
       '</div>' +
     '</div>' +
     '<div class="modal-foot">' +
       '<button class="btn btn-ghost" id="btnCancelCat">Cancelar</button>' +
-      '<button class="btn btn-primary" id="btnSaveCat">' + (isNew ? "Crear categoría" : "Guardar cambios") + '</button>' +
+      '<button class="btn btn-primary" id="btnSaveCat">' + (isNew ? "Crear" : "Guardar") + '</button>' +
     '</div>';
 
   openModal(html);
@@ -1291,56 +1182,50 @@ function openCatEditor(id) {
 async function deleteCategory(id) {
   var c = DB.cats.find(function(x){ return x.id === id; });
   if (!c) return;
-  
   var count = DB.menu.filter(function(p){ return p.cat === id; }).length;
   var msg = '¿Eliminar la categoría "' + c.name + '"?';
   if (count > 0) msg += '\n\n⚠️ Hay ' + count + ' producto(s) en esta categoría. También se eliminarán.';
   if (!confirm(msg)) return;
 
-  // 1. Borrar la categoría de Supabase
   const { error: catError } = await supabaseClient.from('categories').delete().eq('id', id);
-  if (catError) {
-    alert("Error al eliminar la categoría: " + catError.message);
-    return;
-  }
+  if (catError) { alert("Error al eliminar categoría: " + catError.message); return; }
 
-  // 2. Borrar todos los productos que pertenecían a esa categoría
   const { error: prodError } = await supabaseClient.from('products').delete().eq('category_id', id);
-  if (prodError) {
-    alert("Error al eliminar los productos de la categoría: " + prodError.message);
-    return;
-  }
+  if (prodError) { alert("Error al eliminar productos: " + prodError.message); return; }
 
-  // 3. Actualizar la memoria local y la pantalla
   DB.cats = DB.cats.filter(function(x){ return x.id !== id; });
   DB.menu = DB.menu.filter(function(p){ return p.cat !== id; });
   render();
-  toast("Categoría y sus productos eliminados");
+  toast("Categoría y productos eliminados");
 }
+
+/* =========================================================
+   9. TAB: NEGOCIO
+   ========================================================= */
 function renderBusiness(m) {
   var c = DB.config;
   var html =
     '<div class="page-head">' +
       '<div>' +
         '<h1 class="page-title">Negocio</h1>' +
-        '<p class="page-sub">Configura los datos generales que verá el cliente en la app.</p>' +
+        '<p class="page-sub">Configura los datos generales que verá el cliente.</p>' +
       '</div>' +
     '</div>' +
 
     '<div class="card" style="margin-bottom:20px"><div class="card-body">' +
       '<div class="card-title">Logo de la empresa</div>' +
-      '<div class="card-desc">Aparece en el header de la app del cliente. Si no subes uno, se usa el ícono por defecto 🍔.</div>' +
+      '<div class="card-desc">Aparece en el header de la app del cliente.</div>' +
       '<div class="logo-block">' +
         '<div class="logo-picker' + (c.logo ? ' has-image' : '') + '" id="logoPicker">' +
           '<input type="file" accept="image/*" id="logoFile">' +
           (c.logo ? '<img src="' + esc(c.logo) + '" id="logoPreview"><div class="overlay">Cambiar</div>' : '<div class="placeholder"><span class="emoji">🖼️</span><p>Sube tu logo</p></div>') +
         '</div>' +
         '<div class="logo-info">' +
-          '<h4>Tu marca, tu identidad</h4>' +
-          '<p>Recomendado: imagen cuadrada, mínimo 200×200px, PNG con fondo transparente o color plano. Se optimizará automáticamente.</p>' +
+          '<h4>Tu marca</h4>' +
+          '<p>Recomendado: imagen cuadrada, mínimo 200×200px.</p>' +
           '<div class="logo-btns">' +
-            '<button class="btn btn-ghost btn-sm" id="btnLogoUpload">📁 Subir imagen</button>' +
-            '<button class="btn btn-ghost btn-sm" id="btnLogoUrl">🔗 Usar URL</button>' +
+            '<button class="btn btn-ghost btn-sm" id="btnLogoUpload">📁 Subir</button>' +
+            '<button class="btn btn-ghost btn-sm" id="btnLogoUrl">🔗 URL</button>' +
             (c.logo ? '<button class="btn btn-danger btn-sm" id="btnLogoClear">🗑️ Quitar</button>' : '') +
           '</div>' +
         '</div>' +
@@ -1349,14 +1234,14 @@ function renderBusiness(m) {
 
     '<div class="card"><div class="card-body">' +
       '<div class="card-title">Información de la tienda</div>' +
-      '<div class="card-desc">Estos datos aparecen en el header, WhatsApp y página de ayuda.</div>' +
+      '<div class="card-desc">Estos datos aparecen en el header y página de ayuda.</div>' +
       '<div class="form-grid">' +
         '<div class="field full"><label>Nombre del negocio *</label><input type="text" id="bBrand" value="' + esc(c.brand) + '"></div>' +
-        '<div class="field"><label>WhatsApp (sin +, con código país) *</label><input type="text" id="bWhatsapp" value="' + esc(c.whatsapp) + '" placeholder="584121234567"><div class="hint">Ej: 58 (Venezuela) + 4121234567</div></div>' +
+        '<div class="field"><label>WhatsApp (sin +, con código país) *</label><input type="text" id="bWhatsapp" value="' + esc(c.whatsapp) + '" placeholder="584121234567"></div>' +
         '<div class="field"><label>Teléfono para llamar</label><input type="text" id="bPhone" value="' + esc(c.phoneCall) + '" placeholder="+584121234567"></div>' +
         '<div class="field full"><label>URL de Google Maps</label><input type="text" id="bMaps" value="' + esc(c.mapsUrl) + '"></div>' +
         '<div class="field"><label>Símbolo de moneda</label><input type="text" id="bCurrency" value="' + esc(c.currency) + '" maxlength="3" placeholder="$"></div>' +
-        '<div class="field"><label>Texto de horario (ayuda)</label><input type="text" id="bHoursText" value="' + esc(c.helpHoursText) + '"></div>' +
+        '<div class="field"><label>Texto de horario</label><input type="text" id="bHoursText" value="' + esc(c.helpHoursText) + '"></div>' +
       '</div>' +
     '</div></div>' +
 
@@ -1373,9 +1258,9 @@ function renderBusiness(m) {
 
     '<div class="card" style="margin-top:20px"><div class="card-body">' +
       '<div class="card-title">Métodos de pago</div>' +
-      '<div class="card-desc">Los clientes verán estos métodos al finalizar el pedido, con los datos que configures aquí.</div>' +
+      '<div class="card-desc">Los clientes verán estos métodos al finalizar el pedido.</div>' +
       '<div class="pay-list" id="payList"></div>' +
-      '<button class="btn btn-ghost btn-sm" id="btnAddPay" style="margin-top:14px">＋ Agregar método de pago</button>' +
+      '<button class="btn btn-ghost btn-sm" id="btnAddPay" style="margin-top:14px">＋ Agregar método</button>' +
     '</div></div>' +
 
     '<div style="margin-top:24px;display:flex;gap:10px;justify-content:flex-end">' +
@@ -1459,7 +1344,7 @@ function renderBusiness(m) {
   function renderPaymentsList() {
     var list = $("#payList");
     if (!DB.config.payments.length) {
-      list.innerHTML = '<div style="padding:16px;background:var(--surface-2);border-radius:12px;font-size:13px;color:var(--muted);text-align:center">Sin métodos de pago configurados. Agrega uno para que tus clientes puedan pagar.</div>';
+      list.innerHTML = '<div style="padding:16px;background:var(--surface-2);border-radius:12px;font-size:13px;color:var(--muted);text-align:center">Sin métodos configurados.</div>';
       return;
     }
     list.innerHTML = DB.config.payments.map(function(p){
@@ -1497,9 +1382,9 @@ function renderBusiness(m) {
     function detailsHTML(type, details){
       var t = PAYMENT_TYPES[type];
       if (!t || !t.details.length){
-        return '<div class="pay-detail-section"><h4>Sin información adicional</h4><div class="hint">Este método de pago no requiere datos extra. El cliente coordinará directamente contigo.</div></div>';
+        return '<div class="pay-detail-section"><h4>Sin información adicional</h4><div class="hint">Este método no requiere datos extra.</div></div>';
       }
-      return '<div class="pay-detail-section"><h4>Datos para el cliente</h4><div class="hint">Esta información se mostrará al cliente cuando seleccione este método de pago.</div><div class="form-grid">' +
+      return '<div class="pay-detail-section"><h4>Datos para el cliente</h4><div class="hint">Se mostrarán al seleccionar este método.</div><div class="form-grid">' +
           t.details.map(function(f){
             var val = (details && details[f.key]) || "";
             if (f.type === "textarea") return '<div class="field full"><label>' + esc(f.label) + '</label><textarea data-detail-key="' + esc(f.key) + '" placeholder="' + esc(f.placeholder) + '">' + esc(val) + '</textarea></div>';
@@ -1508,7 +1393,7 @@ function renderBusiness(m) {
     }
 
     var html =
-      '<div class="modal-head"><h2>' + (isNew ? "Nuevo método de pago" : "Editar método de pago") + '</h2><button class="modal-close">✕</button></div>' +
+      '<div class="modal-head"><h2>' + (isNew ? "Nuevo método" : "Editar método") + '</h2><button class="modal-close">✕</button></div>' +
       '<div class="modal-body">' +
         '<div class="field"><label>Tipo de pago</label><div class="pay-type-grid" id="payTypeGrid">' + typeButtonsHTML(selectedType) + '</div></div>' +
         '<div class="form-grid">' +
@@ -1517,7 +1402,7 @@ function renderBusiness(m) {
         '</div>' +
         '<div id="payDetailsContainer">' + detailsHTML(selectedType, temp.details) + '</div>' +
       '</div>' +
-      '<div class="modal-foot"><button class="btn btn-ghost" id="btnPayCancel">Cancelar</button><button class="btn btn-primary" id="btnPaySave">' + (isNew ? "Agregar método" : "Guardar cambios") + '</button></div>';
+      '<div class="modal-foot"><button class="btn btn-ghost" id="btnPayCancel">Cancelar</button><button class="btn btn-primary" id="btnPaySave">' + (isNew ? "Agregar" : "Guardar") + '</button></div>';
 
     openModal(html);
 
@@ -1538,7 +1423,7 @@ function renderBusiness(m) {
     $("#btnPaySave").onclick = function(){
       var label = $("#payLabel").value.trim();
       var icon = $("#payIcon").value.trim() || "💳";
-      if (!label){ toast("El nombre visible es obligatorio", "error"); return; }
+      if (!label){ toast("El nombre es obligatorio", "error"); return; }
 
       var details = {};
       $$("#payDetailsContainer [data-detail-key]").forEach(function(inp){
@@ -1571,7 +1456,7 @@ function renderBusiness(m) {
   }
 
   $("#btnResetBusiness").onclick = function(){
-    if (!confirm("¿Restaurar los valores de configuración a los predeterminados? (El logo también se eliminará)")) return;
+    if (!confirm("¿Restaurar los valores por defecto? (El logo también se eliminará)")) return;
     DB.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     dbSaveConfig();
     toast("Configuración restaurada");
@@ -1598,15 +1483,18 @@ function renderBusiness(m) {
   };
 }
 
+/* =========================================================
+   10. TAB: PEDIDOS
+   ========================================================= */
 function renderOrders(m) {
   var html =
     '<div class="page-head">' +
-      '<div><h1 class="page-title">Pedidos</h1><p class="page-sub">Todos los pedidos que han llegado por la app del cliente.</p></div>' +
+      '<div><h1 class="page-title">Pedidos</h1><p class="page-sub">Pedidos recibidos.</p></div>' +
       (DB.orders.length ? '<button class="btn btn-danger" id="btnClearOrders">🗑️ Borrar historial</button>' : '') +
     '</div>';
 
   if (!DB.orders.length) {
-    html += '<div class="empty"><div class="big">🧾</div><h3>Sin pedidos todavía</h3><p>Cuando un cliente confirme un pedido desde la app, aparecerá aquí automáticamente.</p></div>';
+    html += '<div class="empty"><div class="big">🧾</div><h3>Sin pedidos todavía</h3><p>Cuando un cliente confirme un pedido, aparecerá aquí.</p></div>';
     m.innerHTML = html;
     return;
   }
@@ -1648,6 +1536,9 @@ function orderCard(o) {
   '</div>';
 }
 
+/* =========================================================
+   11. TAB: DATOS
+   ========================================================= */
 function renderData(m) {
   var totalBytes = 0;
   [KEYS.config, KEYS.cats, KEYS.menu, KEYS.orders].forEach(function(k){
@@ -1659,10 +1550,10 @@ function renderData(m) {
   var pct = Math.min(100, (totalBytes / 1024 / maxKB) * 100);
 
   var html =
-    '<div class="page-head"><div><h1 class="page-title">Datos</h1><p class="page-sub">Exporta, importa o restaura la configuración completa de la app.</p></div></div>' +
+    '<div class="page-head"><div><h1 class="page-title">Datos</h1><p class="page-sub">Exporta, importa o restaura la configuración.</p></div></div>' +
     '<div class="card"><div class="card-body">' +
       '<div class="card-title">Uso de almacenamiento</div>' +
-      '<div class="card-desc">Las imágenes se guardan comprimidas en el navegador. Si llegas al límite, exporta un respaldo y limpia imágenes.</div>' +
+      '<div class="card-desc">Las imágenes se guardan comprimidas en el navegador.</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--muted)">' + usedKB + ' KB usados</span><span style="color:var(--muted)">de ~' + maxKB + ' KB</span></div>' +
       '<div class="storage-bar"><i style="width:' + pct + '%"></i></div>' +
     '</div></div>' +
@@ -1698,7 +1589,7 @@ function renderData(m) {
     reader.onload = function(ev){
       try {
         var data = JSON.parse(ev.target.result);
-        if (!data.config || !data.menu || !data.cats){ toast("Archivo inválido: faltan campos", "error"); return; }
+        if (!data.config || !data.menu || !data.cats){ toast("Archivo inválido", "error"); return; }
         if (!confirm("Esto reemplazará TODOS los datos actuales.\n\n¿Continuar?")) return;
         DB.config = data.config;
         if (!DB.config.payments) DB.config.payments = JSON.parse(JSON.stringify(DEFAULT_CONFIG.payments));
@@ -1740,29 +1631,26 @@ function renderData(m) {
   };
 }
 
+/* =========================================================
+   12. INIT
+   ========================================================= */
 document.addEventListener("DOMContentLoaded", function() {
   checkAuth();
-
-  // Escuchar cambios en el estado de autenticación
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-    checkAuth();
-  } else if (event === 'SIGNED_OUT') {
-    checkAuth();
-  }
-});
 
   document.getElementById("loginPass").addEventListener("keydown", function(e) {
     if (e.key === "Enter") doLogin();
   });
-  document.getElementById("regPass2").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") doRegister();
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+      checkAuth();
+    }
   });
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw-admin.js').catch(function(err) {
-        console.warn('El Service Worker no se registró:', err);
+        console.warn('SW no registrado:', err);
       });
     });
   }
