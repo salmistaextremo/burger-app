@@ -299,9 +299,9 @@ textarea{resize:vertical;min-height:80px}
     <div class="auth-error" id="loginError">Usuario o contraseña incorrectos.</div>
     
     <div class="field">
-      <label>Usuario</label>
-      <input type="text" id="loginUser" placeholder="Ej: admin" autocomplete="username">
-    </div>
+  <label>Correo Electrónico</label>
+  <input type="email" id="loginUser" placeholder="admin@tuburguer.com" autocomplete="username">
+</div>
     <div class="field">
       <label>Contraseña</label>
       <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
@@ -393,11 +393,12 @@ function saveUsers(users) {
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 }
 
-// Corrección 2: Envolver el dbLoad en un try/catch para que no quede en blanco si falla
 async function checkAuth() {
-  var session = localStorage.getItem(LS_SESSION);
-  if (session) {
-    var data = JSON.parse(session);
+  // Verificamos si hay una sesión activa en Supabase
+  const { data: { session }, error } = await supabaseClient.auth.getSession();
+  
+  if (session && session.user) {
+    // Usuario autenticado
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
     
@@ -405,19 +406,19 @@ async function checkAuth() {
       await dbLoad(); 
       render();
       setupNav();
-      window.currentAdminUser = data.user;
+      window.currentAdminUser = session.user.email; // Guardamos el email para el Dashboard
     } catch(error) {
-      console.error("Error cargando los datos de Supabase:", error);
+      console.error("Error cargando datos:", error);
       toast("Error de conexión con la base de datos", "error");
     }
-    
   } else {
+    // No hay sesión
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
     showLogin();
   }
 }
-function showLogin() {
+  function showLogin() {
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("registerBox").classList.add("hidden");
   document.getElementById("loginError").style.display = "none";
@@ -430,29 +431,35 @@ function showRegister() {
 }
 
 function doLogin() {
-  var user = document.getElementById("loginUser").value.trim();
-  var pass = document.getElementById("loginPass").value;
-  var err = document.getElementById("loginError");
+  const email = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+  const err = document.getElementById("loginError");
+  const btn = document.querySelector("#loginBox .btn-primary");
 
-  if (!user || !pass) {
+  if (!email || !password) {
     err.textContent = "Por favor, llena todos los campos.";
     err.style.display = "block";
     return;
   }
 
-  var users = getUsers();
-  var found = users.find(function(u){ return u.username === user && u.password === pass; });
+  btn.disabled = true;
+  btn.textContent = "Entrando...";
 
-  if (found) {
-    localStorage.setItem(LS_SESSION, JSON.stringify({ user: user }));
-    checkAuth();
-    toast("✅ Bienvenido, " + user);
-  } else {
-    err.textContent = "Usuario o contraseña incorrectos.";
-    err.style.display = "block";
-  }
+  // Llamada a Supabase Auth
+  supabaseClient.auth.signInWithPassword({ email, password })
+    .then(({ data, error }) => {
+      btn.disabled = false;
+      btn.textContent = "Entrar al panel";
+
+      if (error) {
+        err.textContent = "Correo o contraseña incorrectos.";
+        err.style.display = "block";
+      } else {
+        // El evento onAuthStateChange se disparará y llamará a checkAuth()
+        toast("✅ Bienvenido, " + data.user.email);
+      }
+    });
 }
-
 function doRegister() {
   var user = document.getElementById("regUser").value.trim();
   var pass = document.getElementById("regPass").value;
@@ -491,11 +498,10 @@ function doRegister() {
 
 function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
-  localStorage.removeItem(LS_SESSION);
-  document.getElementById("loginUser").value = "";
-  document.getElementById("loginPass").value = "";
-  checkAuth();
-  toast("Sesión cerrada");
+  supabaseClient.auth.signOut().then(() => {
+    toast("Sesión cerrada");
+    // El evento onAuthStateChange se disparará y mostrará el login
+  });
 }
 
 
@@ -1739,6 +1745,15 @@ function renderData(m) {
 
 document.addEventListener("DOMContentLoaded", function() {
   checkAuth();
+
+  // Escuchar cambios en el estado de autenticación
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+    checkAuth();
+  } else if (event === 'SIGNED_OUT') {
+    checkAuth();
+  }
+});
 
   document.getElementById("loginPass").addEventListener("keydown", function(e) {
     if (e.key === "Enter") doLogin();
