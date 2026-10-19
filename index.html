@@ -674,12 +674,11 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm");
   btn.disabled = true; btn.innerHTML = "Enviando...";
 
-  const { error } = await supabaseClient.from('orders').insert([orderData]);
+   const { error } = await supabaseClient.from('orders').insert([orderData]);
   if (error) {
-    console.error(error);
-    toast("Error al enviar pedido. Revisa tu conexión.");
-    btn.disabled = false; btn.innerHTML = '<span style="font-size:18px">📲</span> Confirmar y enviar por WhatsApp';
-    return;
+    // Si falla la base de datos, mostramos el error en consola pero NO bloqueamos el pedido
+    console.error("Error de Supabase:", error);
+    toast("Advertencia: No se guardó en el sistema, pero enviando por WhatsApp...");
   }
 
   saveName(name);
