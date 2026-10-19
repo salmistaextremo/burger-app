@@ -727,15 +727,8 @@ async function renderTracking() {
 
   await updateTrackingUI();
 
-  // REALTIME LISTENER
-  if (!window.clientOrderChannel) {
-    window.clientOrderChannel = supabaseClient.channel('client-order')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
-        if (payload.new.code === localStorage.getItem('ff_current_order_code')) updateTrackingUI();
-      })
-      .subscribe();
+  
   }
-}
 
 function lookupOrder() {
   var code = $("#lookupInput").value.trim().toUpperCase();
@@ -781,8 +774,25 @@ async function init(){
   $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
   $("#btnHelp").onclick = () => go("help");
+  setupClientRealtime();
 }
 
+
+function setupClientRealtime() {
+  // Escuchamos cualquier actualización en la tabla orders
+  supabaseClient.channel('client-orders-realtime')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
+      const currentCode = localStorage.getItem('ff_current_order_code');
+      // Si el pedido actualizado es el que el cliente está viendo, actualizamos la pantalla
+      if (payload.new.code === currentCode) {
+        if (state.view === 'tracking') {
+          renderTracking(); // Vuelve a pintar el estado en tiempo real
+        }
+      }
+    })
+    .subscribe();
+}
+  
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
