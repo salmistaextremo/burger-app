@@ -988,11 +988,11 @@ async function submitOrder() {
       const fileName = `proof-${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error } = await supabaseClient.storage
-        .from('productos') // Usamos el mismo bucket
+        .from('comprobantes') // Usamos el mismo bucket
         .upload(fileName, blob, { cacheControl: '3600', upsert: false });
 
       if (!error) {
-        const { data: urlData } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
+        const { data: urlData } = supabaseClient.storage.from('comprobantes').getPublicUrl(fileName);
         proofUrl = urlData.publicUrl;
       } else {
         console.error("Error al subir comprobante:", error);
