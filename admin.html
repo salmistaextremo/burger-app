@@ -265,6 +265,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
+/* SISTEMA DE AUDIO Y NOTIFICACIONES */
 let audioCtx;
 let notificationsEnabled = false;
 
@@ -332,6 +333,7 @@ function updateAppBadge() {
   }
 }
 
+/* AUTENTICACIÓN Y CARGA DE DATOS */
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
@@ -379,7 +381,6 @@ function doLogout() {
   });
 }
 
-// ⚡ OPTIMIZACIÓN: Promesas en paralelo para el Admin
 async function dbLoad() {
   try {
     const [configRes, catsRes, productsRes, ordersRes] = await Promise.all([
@@ -401,11 +402,7 @@ async function dbLoad() {
     }
 
     if (catsRes.data) DB.cats = catsRes.data;
-    
-    if (productsRes.data) {
-      DB.menu = productsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
-    }
-
+    if (productsRes.data) DB.menu = productsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
     if (ordersRes.data) DB.orders = ordersRes.data;
     
     updateAppBadge();
@@ -420,6 +417,7 @@ async function dbSaveConfig() {
     hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days
   }); 
 }
+
 async function dbSaveMenu() {
   await supabaseClient.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   if (!DB.menu.length) return;
@@ -795,14 +793,17 @@ async function deleteProduct(id) {
   try { await dbSaveMenu(); toast("Producto eliminado"); render(); } catch(err) { toast("Error al eliminar", "error"); }
 }
 
+/* =========================================================
+   LÓGICA DE IMÁGENES CON SUPABASE STORAGE
+   ========================================================= */
 let editingProductId = null;
-let tempImgData = null;
+let tempImgFile = null;
 
 function openProductEditor(id) {
   editingProductId = id;
   const isEdit = !!id;
   const product = isEdit ? DB.menu.find(p => p.id === id) : { name: "", desc: "", price: "", cat: "", emoji: "🍔", badge: "", img: null, extras: [] };
-  tempImgData = product.img || null;
+  tempImgFile = null;
   const catsOptions = DB.cats.map(c => `<option value="${c.id}" ${product.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join("");
 
   document.getElementById("modal").innerHTML = `
@@ -819,7 +820,7 @@ function openProductEditor(id) {
           <div class="field full"><label>Imagen (opcional)</label>
             <div class="img-picker" onclick="document.getElementById('p-img-file').click()">
               <input type="file" id="p-img-file" accept="image/*" style="display:none" onchange="handleImgUpload(event)">
-              <div id="p-img-preview">${tempImgData ? `<img src="${esc(tempImgData)}">` : '<div class="placeholder">📷 Subir imagen</div>'}</div>
+              <div id="p-img-preview">${product.img ? `<img src="${esc(product.img)}">` : '<div class="placeholder">📷 Subir imagen</div>'}</div>
             </div>
           </div>
           <div class="field full"><label>Extras</label><div id="p-extras-list"></div><button class="btn btn-ghost btn-sm" onclick="addExtraRow()" style="margin-top:8px">＋ Añadir extra</button></div>
@@ -834,8 +835,12 @@ function openProductEditor(id) {
 function handleImgUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 2 * 1024 * 1024) { toast("La imagen debe pesar menos de 2MB", "error"); return; }
+  
+  tempImgFile = file;
   const reader = new FileReader();
-  reader.onload = (ev) => { tempImgData = ev.target.result; document.getElementById("p-img-preview").innerHTML = `<img src="${tempImgData}">`; };
+  reader.onload = (ev) => { 
+    document.getElementById("p-img-preview").innerHTML = `<img src="${ev.target.result}">`; 
+  };
   reader.readAsDataURL(file);
 }
 
@@ -853,28 +858,76 @@ async function saveProduct() {
   const cat = document.getElementById("p-cat").value;
   const emoji = document.getElementById("p-emoji").value.trim() || "🍔";
   const badge = document.getElementById("p-badge").value.trim() || null;
+  
   if (!name || !price || isNaN(price) || price <= 0 || !cat) return toast("Completa los campos obligatorios (*)", "error");
 
-  const extras = [];
-  document.querySelectorAll("#p-extras-list .extra-row").forEach(row => {
-    const exName = row.querySelector(".ex-name").value.trim();
-    const exPrice = parseFloat(row.querySelector(".ex-price").value);
-    if (exName && !isNaN(exPrice) && exPrice > 0) extras.push({ name: exName, price: exPrice });
-  });
+  const btn = document.querySelector(".modal-foot .btn-primary"); 
+  btn.disabled = true; btn.textContent = "Guardando...";
 
-  let avail = true;
-  if (editingProductId) {
-    const existing = DB.menu.find(p => p.id === editingProductId);
-    avail = existing.available !== false;
+  try {
+    let finalImgUrl = null;
+    let existingImg = null;
+
+    if (editingProductId) {
+      const existing = DB.menu.find(p => p.id === editingProductId);
+      existingImg = existing.img;
+    }
+
+    // 1. Subir a Supabase Storage si hay una foto nueva
+    if (tempImgFile) {
+      const fileExt = tempImgFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabaseClient.storage
+        .from('productos')
+        .upload(fileName, tempImgFile, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabaseClient.storage
+        .from('productos')
+        .getPublicUrl(fileName);
+      
+      finalImgUrl = urlData.publicUrl;
+    }
+
+    const extras = [];
+    document.querySelectorAll("#p-extras-list .extra-row").forEach(row => {
+      const exName = row.querySelector(".ex-name").value.trim();
+      const exPrice = parseFloat(row.querySelector(".ex-price").value);
+      if (exName && !isNaN(exPrice) && exPrice > 0) extras.push({ name: exName, price: exPrice });
+    });
+
+    let avail = true;
+    if (editingProductId) {
+      const existing = DB.menu.find(p => p.id === editingProductId);
+      avail = existing.available !== false;
+    }
+
+    const productData = { 
+      name, desc, price, cat, emoji, badge, 
+      img: finalImgUrl || existingImg,
+      extras, available: avail 
+    };
+
+    if (editingProductId) { 
+      const idx = DB.menu.findIndex(p => p.id === editingProductId); 
+      if (idx > -1) DB.menu[idx] = { ...DB.menu[idx], ...productData }; 
+    } else { 
+      DB.menu.push({ id: 'temp-' + Date.now(), ...productData }); 
+    }
+
+    await dbSaveMenu(); 
+    toast("✅ Producto guardado"); 
+    tempImgFile = null;
+    closeModal(); 
+    render(); 
+
+  } catch(err) { 
+    console.error("Error al guardar:", err);
+    toast("❌ Error al subir la imagen o guardar el producto", "error"); 
+    btn.disabled = false; btn.textContent = "Guardar producto"; 
   }
-
-  const productData = { name, desc, price, cat, emoji, badge, img: tempImgData, extras, available: avail };
-  if (editingProductId) { const idx = DB.menu.findIndex(p => p.id === editingProductId); if (idx > -1) DB.menu[idx] = { ...DB.menu[idx], ...productData }; }
-  else DB.menu.push({ id: 'temp-' + Date.now(), ...productData });
-
-  const btn = document.querySelector(".modal-foot .btn-primary"); btn.disabled = true; btn.textContent = "Guardando...";
-  try { await dbSaveMenu(); toast("✅ Producto guardado"); closeModal(); render(); } 
-  catch(err) { toast("❌ Error al guardar", "error"); btn.disabled = false; btn.textContent = "Guardar producto"; }
 }
 
 function renderCategories(m) {
