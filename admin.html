@@ -87,9 +87,11 @@ textarea{resize:vertical;min-height:80px}
 .card-title{font-size:15px;font-weight:700;margin-bottom:4px}
 .card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55}
 
-.welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:32px;margin-bottom:24px;box-shadow:0 10px 30px rgba(255,107,44,.3)}
-.welcome-card h1{margin:0 0 8px;font-size:28px;font-weight:900;letter-spacing:-.8px}
+/* FIX: Ajuste del welcome card para correos largos */
+.welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:28px;margin-bottom:24px;box-shadow:0 10px 30px rgba(255,107,44,.3); overflow:hidden;}
+.welcome-card h1{margin:0 0 8px;font-size:clamp(20px, 5vw, 26px);font-weight:900;letter-spacing:-.8px; word-break:break-all; overflow-wrap:anywhere; line-height:1.2;}
 .welcome-card p{margin:0;font-size:15px;opacity:.9}
+
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
 .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
 .stat-icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:24px;flex:none}
@@ -134,6 +136,12 @@ textarea{resize:vertical;min-height:80px}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
 
+/* SELECTOR DE EMOJIS */
+.emoji-picker-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-top: 8px; scrollbar-width: thin; }
+.emoji-picker-row button { font-size: 24px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+.emoji-picker-row button:hover { background: var(--brand-soft); border-color: var(--brand); transform: scale(1.1); }
+.emoji-picker-row button.selected { background: var(--brand-soft); border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand); }
+
 .day-picker { display: flex; gap: 6px; flex-wrap: wrap; }
 .day-picker label { flex: 1; text-align: center; padding: 10px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); transition: 0.2s; margin: 0; }
 .day-picker input { display: none; }
@@ -164,9 +172,10 @@ textarea{resize:vertical;min-height:80px}
 .cat-info h4{font-size:14px;font-weight:700;}
 .cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
+/* FIX: Pedidos nuevos con fondo naranja más notorio */
 .order-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
-.order-card.pending { background: #FFF0E6; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.12); }
+.order-card.pending { background: #FFE8D6; border: 1px solid #FFCDB2; border-left: 6px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.15); }
 .order-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .order-code{font-size:18px;font-weight:900;color:var(--brand);}
 .order-status{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;}
@@ -194,6 +203,7 @@ textarea{resize:vertical;min-height:80px}
   .main{padding:20px 16px}
   .form-grid{grid-template-columns:1fr}
   .report-filters{flex-direction:column;align-items:stretch;}
+  .welcome-card{padding:20px;}
 }
 </style>
 </head>
@@ -514,7 +524,10 @@ function renderHome(m) {
   }
 
   m.innerHTML = `
-    <div class="welcome-card"><h1>¡Hola, ${esc(adminName)}!</h1><p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p></div>
+    <div class="welcome-card">
+      <h1>¡Hola, ${esc(adminName)}!</h1>
+      <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
+    </div>
     ${alertHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
@@ -751,7 +764,7 @@ async function deletePayment(index) {
   render();
 }
 
-function closeModal() { document.getElementById("modal").classList.add("hidden"); document.getElementById("modal").innerHTML = ""; editingPaymentIndex = null; }
+function closeModal() { document.getElementById("modal").classList.add("hidden"); document.getElementById("modal").innerHTML = ""; editingPaymentIndex = null; editingCategoryId = null; }
 
 function renderProducts(m) {
   m.innerHTML = `
@@ -793,9 +806,6 @@ async function deleteProduct(id) {
   try { await dbSaveMenu(); toast("Producto eliminado"); render(); } catch(err) { toast("Error al eliminar", "error"); }
 }
 
-/* =========================================================
-   LÓGICA DE IMÁGENES CON SUPABASE STORAGE
-   ========================================================= */
 let editingProductId = null;
 let tempImgFile = null;
 
@@ -806,6 +816,10 @@ function openProductEditor(id) {
   tempImgFile = null;
   const catsOptions = DB.cats.map(c => `<option value="${c.id}" ${product.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join("");
 
+  // Emojis rápidos para productos
+  const quickEmojis = ['🍔','🍟','🌭','🍕','🥤','🍗','🥩','🥓','🧀','🥗','🌮','🍣','🍦','🍰','☕','🍺'];
+  const emojisHtml = quickEmojis.map(e => `<button type="button" onclick="setEmoji('${e}', this)">${e}</button>`).join("");
+
   document.getElementById("modal").innerHTML = `
     <div class="modal-box">
       <div class="modal-head"><h2>${isEdit ? 'Editar' : 'Nuevo'} Producto</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
@@ -815,7 +829,11 @@ function openProductEditor(id) {
           <div class="field full"><label>Descripción</label><textarea id="p-desc">${esc(product.desc)}</textarea></div>
           <div class="field"><label>Precio ($) *</label><input type="number" id="p-price" step="0.01" min="0" value="${product.price}"></div>
           <div class="field"><label>Categoría *</label><select id="p-cat"><option value="">Selecciona...</option>${catsOptions}</select></div>
-          <div class="field"><label>Emoji</label><input type="text" id="p-emoji" value="${esc(product.emoji || '🍔')}" maxlength="5"></div>
+          <div class="field">
+            <label>Emoji</label>
+            <input type="text" id="p-emoji" value="${esc(product.emoji || '🍔')}" maxlength="5" style="text-align:center;font-size:20px">
+            <div class="emoji-picker-row">${emojisHtml}</div>
+          </div>
           <div class="field"><label>Etiqueta (Badge)</label><input type="text" id="p-badge" value="${esc(product.badge || '')}"></div>
           <div class="field full"><label>Imagen (opcional)</label>
             <div class="img-picker" onclick="document.getElementById('p-img-file').click()">
@@ -830,6 +848,14 @@ function openProductEditor(id) {
     </div>`;
   document.getElementById("modal").classList.remove("hidden");
   if (product.extras && product.extras.length) product.extras.forEach(e => addExtraRow(e.name, e.price)); else addExtraRow();
+}
+
+// FIX: Función para setear el emoji desde la fila rápida
+function setEmoji(emoji, btn) {
+  document.getElementById('p-emoji').value = emoji;
+  const container = btn.parentElement;
+  Array.from(container.children).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
 function handleImgUpload(e) {
@@ -873,7 +899,6 @@ async function saveProduct() {
       existingImg = existing.img;
     }
 
-    // 1. Subir a Supabase Storage si hay una foto nueva
     if (tempImgFile) {
       const fileExt = tempImgFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -930,15 +955,81 @@ async function saveProduct() {
   }
 }
 
+/* =========================================================
+   LÓGICA DE CATEGORÍAS CON SELECTOR DE EMOJIS
+   ========================================================= */
 function renderCategories(m) {
-  m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Categorías</h1></div><button class="btn btn-primary" onclick="addCategory()">＋ Nueva categoría</button></div><div class="cat-list">${DB.cats.map(c=>`<div class="cat-row"><div class="cat-icon">${c.icon || '📁'}</div><div class="cat-info"><h4>${esc(c.name)}</h4></div><div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div></div>`).join("")}</div>`;
+  m.innerHTML = `
+    <div class="page-head">
+      <div><h1 class="page-title">Categorías</h1></div>
+      <button class="btn btn-primary" onclick="openCategoryEditor()">＋ Nueva categoría</button>
+    </div>
+    <div class="cat-list">
+      ${DB.cats.map(c=>`
+        <div class="cat-row">
+          <div class="cat-icon">${c.icon || '📁'}</div>
+          <div class="cat-info"><h4>${esc(c.name)}</h4></div>
+          <div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div>
+        </div>
+      `).join("")}
+    </div>`;
 }
 
-function addCategory() {
-  const name = prompt("Nombre de la nueva categoría:"); if (!name) return;
-  const icon = prompt("Emoji para la categoría:", "📁") || "📁";
+let editingCategoryId = null;
+
+function openCategoryEditor() {
+  const quickEmojis = ['🍔','🍕','🌮','🍣','🍟','🌭','🥤','🍗','🥩','🥓','🧀','🥗','🍦','🍰','☕','🍺'];
+  const emojisHtml = quickEmojis.map(e => `<button type="button" onclick="selectCategoryEmoji('${e}', this)">${e}</button>`).join("");
+
+  document.getElementById("modal").innerHTML = `
+    <div class="modal-box">
+      <div class="modal-head"><h2>Nueva Categoría</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Nombre de la categoría *</label>
+          <input type="text" id="cat-name" placeholder="Ej: Hamburguesas">
+        </div>
+        <div class="field">
+          <label>Icono (Emoji)</label>
+          <input type="text" id="cat-emoji" value="🍔" maxlength="5" style="text-align:center;font-size:20px">
+          <div class="emoji-picker-row" id="cat-emoji-picker">${emojisHtml}</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCategory()">Guardar Categoría</button>
+      </div>
+    </div>`;
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+function selectCategoryEmoji(emoji, btn) {
+  document.getElementById('cat-emoji').value = emoji;
+  const container = btn.parentElement;
+  Array.from(container.children).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+async function saveCategory() {
+  const name = document.getElementById("cat-name").value.trim();
+  const icon = document.getElementById("cat-emoji").value.trim() || "📁";
+  
+  if (!name) return toast("Escribe el nombre de la categoría", "error");
+
+  const btn = document.querySelector(".modal-foot .btn-primary"); 
+  btn.disabled = true; btn.textContent = "Guardando...";
+
   supabaseClient.from('categories').insert([{ name, icon }]).select().then(({data, error}) => {
-    if (!error && data) { dbLoad().then(() => { render(); toast("✅ Categoría creada"); }); } else toast("Error al crear", "error");
+    btn.disabled = false; btn.textContent = "Guardar Categoría";
+    if (!error && data) { 
+      dbLoad().then(() => { 
+        closeModal();
+        render(); 
+        toast("✅ Categoría creada"); 
+      }); 
+    } else {
+      toast("Error al crear categoría", "error");
+    }
   });
 }
 
