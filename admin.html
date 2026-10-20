@@ -19,6 +19,7 @@
   --brand:#FF6B2C; --brand-2:#FF8A4C; --brand-d:#E85A1F; --brand-soft:#FFF2EC;
   --ok:#10B981; --ok-soft:#ECFDF5;
   --danger:#EF4444; --danger-soft:#FEF2F2;
+  --star:#F59E0B; --star-bg:#FFFBEB; --star-line:#FEF3C7;
   --r:12px; --r-lg:16px;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --shadow-lg:0 20px 50px rgba(0,0,0,.15);
@@ -176,6 +177,7 @@ textarea{resize:vertical;min-height:80px}
 .cat-info h4{font-size:14px;font-weight:700;}
 .cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
+/* PEDIDOS Y CALIFICACIONES */
 .order-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
 .order-card.pending { background: #FFE8D6; border: 1px solid #FFCDB2; border-left: 6px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.15); }
@@ -187,6 +189,27 @@ textarea{resize:vertical;min-height:80px}
 .order-items{background:var(--surface-2);border-radius:10px;padding:12px;font-size:12.5px;}
 .order-card.pending .order-items { background: #FFFFFF; }
 .order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
+
+/* FIX: Estilo para mostrar la reseña del cliente */
+.order-review {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--star-bg);
+  border: 1px solid var(--star-line);
+  border-radius: 10px;
+}
+.order-review .stars {
+  color: var(--star);
+  font-size: 16px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.order-review .comment {
+  font-size: 13px;
+  color: var(--ink-2);
+  font-style: italic;
+  line-height: 1.4;
+}
 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -456,6 +479,7 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
+    // ESCUCHAR NUEVOS PEDIDOS
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
       if (notificationsEnabled) playNotificationSound();
@@ -475,7 +499,34 @@ function setupOrderListener() {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
       });
-    }).subscribe();
+    })
+    // ESCUCHAR CALIFICACIONES (UPDATES)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
+      const updatedOrder = payload.new;
+      const oldOrder = payload.old;
+      
+      // Si se agregó una calificación que antes no existía
+      if (updatedOrder.rating && (!oldOrder.rating || oldOrder.rating !== updatedOrder.rating)) {
+        if (notificationsEnabled) playNotificationSound();
+        if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification('⭐ ¡Cliente ha calificado!', {
+              body: `Pedido ${updatedOrder.code}: ${updatedOrder.rating} estrellas.\n"${updatedOrder.review_text || 'Sin comentario'}"`,
+              icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+              vibrate: [200, 100, 200],
+              requireInteraction: true, tag: 'nueva-calificacion'
+            });
+          });
+        }
+        toast(`⭐ ¡Pedido ${updatedOrder.code} calificado!`);
+      }
+      
+      // Actualizar la vista
+      dbLoad().then(() => {
+        if (state.tab === 'orders' || state.tab === 'home') render();
+      });
+    })
+    .subscribe();
 }
 
 function setupNav() {
@@ -548,6 +599,18 @@ function renderOrders(m) {
       const cardClass = isPending ? 'order-card pending' : 'order-card';
       const badgeStyle = o.status === 'entregado' ? 'background:var(--ok-soft); color:var(--ok);' : 'background:var(--brand); color:#fff;';
 
+      // Generar HTML de estrellas si existe calificación
+      let reviewHtml = "";
+      if (o.rating) {
+        const stars = '★'.repeat(o.rating) + '☆'.repeat(5 - o.rating);
+        reviewHtml = `
+          <div class="order-review">
+            <div class="stars">${stars}</div>
+            <div class="comment">"${esc(o.review_text || 'Sin comentario')}"</div>
+          </div>
+        `;
+      }
+
       return `
       <div class="${cardClass}">
         <div class="order-head">
@@ -557,6 +620,8 @@ function renderOrders(m) {
         </div>
         <div class="order-customer"><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}</div>
         <div class="order-items">${o.items.map(it=>`<div>${it.qty}x ${esc(it.name)} - ${money(it.unit * it.qty)}</div>`).join("")}<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div></div>
+        
+        ${reviewHtml}
         
         <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
           <span style="font-size:12px; font-weight:600; color:var(--muted)">Cambiar Estado:</span>
@@ -774,9 +839,6 @@ function closeModal() {
   editingCategoryId = null; 
 }
 
-/* =========================================================
-   VENTANA DE SELECCIÓN DE EMOJIS (CORREGIDA)
-   ========================================================= */
 let currentEmojiTargetId = null;
 
 function openEmojiPicker(targetInputId) {
@@ -809,10 +871,8 @@ function selectEmoji(emoji) {
   if (currentEmojiTargetId) {
     const previewDiv = document.getElementById(currentEmojiTargetId);
     if (previewDiv) {
-      // Actualizamos el texto visual de la caja
       previewDiv.innerHTML = emoji;
       
-      // Actualizamos el valor del input oculto correspondiente
       let hiddenInputId = null;
       if (currentEmojiTargetId === 'p-emoji-preview') hiddenInputId = 'p-emoji';
       if (currentEmojiTargetId === 'cat-emoji-preview') hiddenInputId = 'cat-emoji';
