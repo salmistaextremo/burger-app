@@ -304,7 +304,6 @@ main{padding:18px}
     
     <div class="closed-schedule" id="closedScheduleBox">
       <h4>Nuestros horarios:</h4>
-      <!-- Se llena dinámicamente con JS -->
     </div>
 
     <button class="btn-exit" onclick="exitApp()">Cerrar Aplicación</button>
@@ -430,7 +429,6 @@ main{padding:18px}
       <details class="faq"><summary>¿Puedo modificar mi pedido?</summary><div class="ans">Sí, mientras esté en estado <b>Recibido</b>. Escríbenos con tu número de pedido y lo ajustamos.</div></details>
       <div class="sec-title">Horario</div>
       <div class="card" style="display:block;padding:18px;cursor:default" id="helpScheduleBox">
-        <!-- Se llena dinámicamente con JS -->
       </div>
     </section>
   </main>
@@ -445,7 +443,7 @@ main{padding:18px}
   <button class="fab" id="fabWa" onclick="openWhatsApp()">💬</button>
   
   <div id="ratingModal" class="rating-modal">
-    <div class="rating-box">
+    <div class="rating-box" id="ratingBoxContent">
       <div class="rating-icon">🌟</div>
       <h3>¡Buen provecho!</h3>
       <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
@@ -635,7 +633,6 @@ function exitApp() {
   }, 100);
 }
 
-// ⚡ OPTIMIZACIÓN: Carga no bloqueante
 async function fetchExchangeRate() {
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
@@ -868,52 +865,30 @@ function renderModal(){
     </div>`;
 }
 
-// NUEVA FUNCIÓN: Solo actualiza el número y el precio sin re-dibujar
 function updateModalQty(delta) {
   var m = state.modal;
   if (!m) return;
-  
-  // Calculamos la nueva cantidad (mínimo 1)
   m.qty = Math.max(1, m.qty + delta);
-  
-  // Actualizamos el número visualmente
   var qtyDisplay = document.getElementById('mQtyDisplay');
   if (qtyDisplay) qtyDisplay.textContent = m.qty;
-  
-  // Actualizamos el precio total
   updateModalPrice();
 }
 
-// NUEVA FUNCIÓN: Actualiza solo el precio en pantalla
 function updateModalPrice() {
   var m = state.modal;
   if (!m) return;
   var p = m.product;
   var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty;
-  
   var unitDisplay = document.getElementById('mUnit');
   if (unitDisplay) unitDisplay.innerHTML = money(price);
 }
 
-// NUEVA FUNCIÓN: Actualiza solo el precio en pantalla
-function updateModalPrice() {
-  var m = state.modal;
-  if (!m) return;
-  var p = m.product;
-  var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty;
-  
-  var unitDisplay = document.getElementById('mUnit');
-  if (unitDisplay) unitDisplay.innerHTML = money(price);
-}
-
-// MODIFICADA: Quitamos el renderModal() para que no salte la animación
 function toggleExtra(name, on){ 
   if(on) {
     if(!state.modal.extras.includes(name)) state.modal.extras.push(name); 
   } else {
     state.modal.extras = state.modal.extras.filter(x=>x!==name); 
   }
-  // Al no llamar a renderModal(), la ventana no se reinicia
   updateModalPrice(); 
 }
 
@@ -1003,11 +978,10 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm");
   btn.disabled = true; btn.innerHTML = "Enviando...";
 
-  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE (Si existe)
+  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE
   let proofUrl = null;
   if (state.proofImage) {
     try {
-      // Convertir Base64 a Blob
       const res = await fetch(state.proofImage);
       const blob = await res.blob();
       const fileExt = blob.type.split('/')[1] || 'jpg';
@@ -1073,7 +1047,7 @@ async function submitOrder() {
   
   go('tracking');
 }
-  
+
 async function renderTracking() {
   var trackDiv = $("#trackDynamic");
   var code = localStorage.getItem('ff_current_order_code');
@@ -1162,7 +1136,26 @@ let currentOrderCodeToRate = null;
 function openRatingModal(orderCode) {
   currentOrderCodeToRate = orderCode;
   currentRating = 0;
-  document.getElementById('ratingComment').value = '';
+  
+  document.getElementById('ratingBoxContent').innerHTML = `
+    <div class="rating-icon">🌟</div>
+    <h3>¡Buen provecho!</h3>
+    <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
+    
+    <div class="stars-container" id="starsContainer">
+      <span class="star" onclick="setRating(1)" onmouseover="hoverRating(1)">★</span>
+      <span class="star" onclick="setRating(2)" onmouseover="hoverRating(2)">★</span>
+      <span class="star" onclick="setRating(3)" onmouseover="hoverRating(3)">★</span>
+      <span class="star" onclick="setRating(4)" onmouseover="hoverRating(4)">★</span>
+      <span class="star" onclick="setRating(5)" onmouseover="hoverRating(5)">★</span>
+    </div>
+    
+    <textarea id="ratingComment" rows="3" placeholder="Déjanos un comentario (opcional)..."></textarea>
+    
+    <button class="btn-rate-submit" onclick="submitRating()">Enviar calificación</button>
+    <button class="btn-rate-close" onclick="closeRatingModal()">Ahora no</button>
+  `;
+  
   updateStarsUI(0);
   document.getElementById('ratingModal').classList.add('show');
 }
@@ -1183,8 +1176,10 @@ function setRating(val) {
   updateStarsUI(val);
   const stars = document.querySelectorAll('.star');
   const star = stars[val - 1];
-  star.classList.add('bounce');
-  setTimeout(() => star.classList.remove('bounce'), 400);
+  if(star) {
+    star.classList.add('bounce');
+    setTimeout(() => star.classList.remove('bounce'), 400);
+  }
 }
 
 function updateStarsUI(val) {
@@ -1216,8 +1211,20 @@ async function submitRating() {
     if (error) throw error;
 
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
-    toast("¡Gracias por tu calificación! ⭐");
-    closeRatingModal(); 
+    
+    // ✅ ANIMACIÓN DE ÉXITO EN EL MODAL
+    document.getElementById('ratingBoxContent').innerHTML = `
+      <div style="padding: 30px 10px; animation: bounceIn 0.5s ease;">
+        <div style="font-size: 64px; margin-bottom: 12px; animation: float 2s infinite;">🎉</div>
+        <h3 style="color: var(--ok); margin-bottom: 8px;">¡Gracias por tu opinión!</h3>
+        <p style="color: var(--muted); font-size: 14px;">Tu calificación ha sido enviada con éxito.</p>
+      </div>
+    `;
+
+    setTimeout(() => {
+      closeRatingModal(); 
+      toast("⭐ Calificación guardada. ¡Gracias!");
+    }, 2000);
     
   } catch (err) {
     console.error(err);
