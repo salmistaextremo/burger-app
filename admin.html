@@ -650,7 +650,9 @@ function renderOrders(m) {
 
       const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '...';
       // 👈 El botón de comprobante ahora es más visible y dice "Ver Pago"
-      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` : '';
+      const proofBtnHtml = o.proof_url 
+  ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` 
+  : `<span style="font-size:11px; color:var(--muted); margin-left:8px;">Sin comprobante</span>`;
 
       return `
       <div class="${cardClass}">
