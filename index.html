@@ -1210,15 +1210,13 @@ function go(view){
 
 async function init(){
   loadLocal();
-  await loadSharedData(); // Espera los datos base
+  await loadSharedData();
   
   checkStoreStatus();
   setInterval(checkStoreStatus, 60000);
 
-  // Renderizamos la interfaz de inmediato
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
   
-  // ⚡ Llamada no bloqueante para la tasa de cambio
   fetchExchangeRate();
   
   $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
