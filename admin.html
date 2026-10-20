@@ -214,16 +214,17 @@ textarea{resize:vertical;min-height:80px}
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
   background: var(--brand-soft);
   color: var(--brand);
-  font-size: 16px;
+  font-size: 11.5px;
+  font-weight: 700;
   margin-left: 8px;
   transition: 0.2s;
   cursor: pointer;
   border: 1px solid #FFE0D0;
+  text-decoration: none;
 }
 .proof-btn:hover { background: var(--brand); color: #fff; }
 
@@ -310,7 +311,7 @@ var DEFAULT_CONFIG = {
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
 };
 
-var EXCHANGE_RATE = null; // 👈 Variable para la tasa en el admin
+var EXCHANGE_RATE = null;
 
 var state = { tab: "home" };
 function $(s, r){ r = r || document; return r.querySelector(s); }
@@ -319,7 +320,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
-// 👈 NUEVA FUNCIÓN: Obtener tasa de cambio para el Admin
+// Obtener tasa de cambio para el Admin
 async function fetchExchangeRate() {
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
@@ -339,7 +340,7 @@ async function fetchExchangeRate() {
       return;
     }
   } catch (e) {}
-  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50; // Respaldo
+  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
 }
 
 const FOOD_EMOJIS = ['🍔','🍟','🌭','🍕','🥤','🍗','🥩','🥓','🧀','🥗','🌮','🍣','🍦','🍰','☕','🍺','🍳','🥞','🍩','🍪','🥪','🌯','🍝','🍜','🍲','🍱','🍛','🍤','🍚','🍙','🍘','🥟','🍧','🍨','🍮','🍯','🍼','🥛','☕','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧃','🧉','🧊'];
@@ -647,9 +648,9 @@ function renderOrders(m) {
         `;
       }
 
-      // 👈 Calcular monto en Bs y mostrar botón de comprobante
       const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '...';
-      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')" title="Ver comprobante">🧾</div>` : '';
+      // 👈 El botón de comprobante ahora es más visible y dice "Ver Pago"
+      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` : '';
 
       return `
       <div class="${cardClass}">
@@ -658,7 +659,12 @@ function renderOrders(m) {
           <span class="order-status" style="${badgeStyle}">${esc((o.status||'recibido').toUpperCase())}</span>
           <span class="order-date">${new Date(o.created_at).toLocaleString()}</span>
         </div>
-        <div class="order-customer"><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}</div>
+        <div class="order-customer">
+            <b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>
+            ${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}<br>
+            <!-- 👈 Aquí se muestra el método de pago -->
+            <span style="font-weight:600; color:var(--brand);">Pago: ${esc(o.payment_method || 'No especificado')}</span>
+        </div>
         <div class="order-items">
             ${o.items.map(it=>`<div>${it.qty}x ${esc(it.name)} - ${money(it.unit * it.qty)}</div>`).join("")}
             <div class="order-total">
@@ -690,15 +696,15 @@ function renderOrders(m) {
   `;
 }
 
-// 👈 NUEVA FUNCIÓN: Abrir el comprobante en un modal
+// 👈 Abrir el comprobante en un modal
 function openProofModal(url) {
   document.getElementById("modal").innerHTML = `
-    <div class="modal-box" style="max-width: 500px;">
-      <div class="modal-head"><h2>Comprobante de Pago</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body" style="text-align:center; background: #000;">
-        <img src="${url}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto;">
+    <div class="modal-box" style="max-width: 500px; background: #000;">
+      <div class="modal-head" style="background: #fff; border-bottom: 1px solid #ddd;"><h2>Comprobante de Pago</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div class="modal-body" style="text-align:center; padding: 0;">
+        <img src="${url}" style="max-width: 100%; max-height: 75vh; display: block; margin: 0 auto;">
       </div>
-      <div class="modal-foot">
+      <div class="modal-foot" style="background: #fff;">
         <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
       </div>
     </div>`;
