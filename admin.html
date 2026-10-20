@@ -87,7 +87,6 @@ textarea{resize:vertical;min-height:80px}
 .card-title{font-size:15px;font-weight:700;margin-bottom:4px}
 .card-desc{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55}
 
-/* FIX: Ajuste del welcome card para correos largos */
 .welcome-card{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;border-radius:20px;padding:28px;margin-bottom:24px;box-shadow:0 10px 30px rgba(255,107,44,.3); overflow:hidden;}
 .welcome-card h1{margin:0 0 8px;font-size:clamp(20px, 5vw, 26px);font-weight:900;letter-spacing:-.8px; word-break:break-all; overflow-wrap:anywhere; line-height:1.2;}
 .welcome-card p{margin:0;font-size:15px;opacity:.9}
@@ -136,11 +135,9 @@ textarea{resize:vertical;min-height:80px}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink-2)}
 
-/* FIX: Nuevo estilo para el input del emoji (más pequeño y clicable) */
 .emoji-input-box { width: 60px; height: 60px; font-size: 30px; text-align: center; cursor: pointer; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); transition: 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; }
 .emoji-input-box:hover { border-color: var(--brand); background: var(--brand-soft); }
 
-/* FIX: Ventana (Modal) de Emojis */
 .emoji-window { position: fixed; inset: 0; z-index: 200; background: rgba(17,24,39,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
 .emoji-window-box { background: var(--surface); border-radius: 20px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden; }
 .emoji-window-head { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
@@ -179,7 +176,6 @@ textarea{resize:vertical;min-height:80px}
 .cat-info h4{font-size:14px;font-weight:700;}
 .cat-actions button{width:32px;height:32px;border-radius:8px;background:var(--surface-2);color:var(--muted);}
 
-/* FIX: Pedidos nuevos con fondo naranja más notorio */
 .order-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition: all 0.3s ease;}
 .order-card.pending { background: #FFE8D6; border: 1px solid #FFCDB2; border-left: 6px solid var(--brand); box-shadow: 0 4px 12px rgba(255,107,44,0.15); }
@@ -282,10 +278,8 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
-/* ARRAY DE EMOJIS DE COMIDA PARA LA VENTANA */
 const FOOD_EMOJIS = ['🍔','🍟','🌭','🍕','🥤','🍗','🥩','🥓','🧀','🥗','🌮','🍣','🍦','🍰','☕','🍺','🍳','🥞','🍩','🍪','🥪','🌯','🍝','🍜','🍲','🍱','🍛','🍤','🍚','🍙','🍘','🥟','🍧','🍨','🍮','🍯','🍼','🥛','☕','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧃','🧉','🧊'];
 
-/* SISTEMA DE AUDIO Y NOTIFICACIONES */
 let audioCtx;
 let notificationsEnabled = false;
 
@@ -353,7 +347,6 @@ function updateAppBadge() {
   }
 }
 
-/* AUTENTICACIÓN Y CARGA DE DATOS */
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
@@ -781,13 +774,14 @@ function closeModal() {
   editingCategoryId = null; 
 }
 
-/* FIX: VENTANA DE SELECCIÓN DE EMOJIS (Para Productos y Categorías) */
+/* =========================================================
+   VENTANA DE SELECCIÓN DE EMOJIS (CORREGIDA)
+   ========================================================= */
 let currentEmojiTargetId = null;
 
 function openEmojiPicker(targetInputId) {
   currentEmojiTargetId = targetInputId;
   
-  // Crear la ventana
   const pickerHtml = `
     <div id="emojiPickerWindow" class="emoji-window">
       <div class="emoji-window-box">
@@ -802,7 +796,6 @@ function openEmojiPicker(targetInputId) {
     </div>
   `;
   
-  // Insertar en el body
   document.body.insertAdjacentHTML('beforeend', pickerHtml);
 }
 
@@ -814,12 +807,19 @@ function closeEmojiPicker() {
 
 function selectEmoji(emoji) {
   if (currentEmojiTargetId) {
-    const input = document.getElementById(currentEmojiTargetId);
-    if (input) {
-      input.value = emoji;
-      // Si es la caja de previsualización (productos), actualizamos el texto interior
-      if (input.classList.contains("emoji-input-box")) {
-        input.innerHTML = emoji;
+    const previewDiv = document.getElementById(currentEmojiTargetId);
+    if (previewDiv) {
+      // Actualizamos el texto visual de la caja
+      previewDiv.innerHTML = emoji;
+      
+      // Actualizamos el valor del input oculto correspondiente
+      let hiddenInputId = null;
+      if (currentEmojiTargetId === 'p-emoji-preview') hiddenInputId = 'p-emoji';
+      if (currentEmojiTargetId === 'cat-emoji-preview') hiddenInputId = 'cat-emoji';
+      
+      if (hiddenInputId) {
+        const hiddenInput = document.getElementById(hiddenInputId);
+        if (hiddenInput) hiddenInput.value = emoji;
       }
     }
   }
@@ -889,7 +889,7 @@ function openProductEditor(id) {
           <div class="field">
             <label>Icono</label>
             <input type="hidden" id="p-emoji" value="${esc(product.emoji || '🍔')}">
-            <div id="p-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('p-emoji')">
+            <div id="p-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('p-emoji-preview')">
               ${esc(product.emoji || '🍔')}
             </div>
           </div>
@@ -1008,9 +1008,6 @@ async function saveProduct() {
   }
 }
 
-/* =========================================================
-   LÓGICA DE CATEGORÍAS CON SELECTOR DE EMOJIS
-   ========================================================= */
 function renderCategories(m) {
   m.innerHTML = `
     <div class="page-head">
@@ -1042,7 +1039,7 @@ function openCategoryEditor() {
         <div class="field">
           <label>Icono</label>
           <input type="hidden" id="cat-emoji" value="🍔">
-          <div id="cat-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('cat-emoji')">
+          <div id="cat-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('cat-emoji-preview')">
             🍔
           </div>
         </div>
