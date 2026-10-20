@@ -1000,6 +1000,34 @@ async function submitOrder() {
   if (!valid) { toast("Completa los campos obligatorios"); return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
+  var btn = document.getElementById("btnConfirm");
+  btn.disabled = true; btn.innerHTML = "Enviando...";
+
+  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE (Si existe)
+  let proofUrl = null;
+  if (state.proofImage) {
+    try {
+      // Convertir Base64 a Blob
+      const res = await fetch(state.proofImage);
+      const blob = await res.blob();
+      const fileExt = blob.type.split('/')[1] || 'jpg';
+      const fileName = `proof-${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error } = await supabaseClient.storage
+        .from('productos') // Usamos el mismo bucket
+        .upload(fileName, blob, { cacheControl: '3600', upsert: false });
+
+      if (!error) {
+        const { data: urlData } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
+        proofUrl = urlData.publicUrl;
+      } else {
+        console.error("Error al subir comprobante:", error);
+      }
+    } catch (err) {
+      console.error("Error procesando imagen:", err);
+    }
+  }
+
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
   var total = sub + del;
@@ -1022,11 +1050,9 @@ async function submitOrder() {
     customer: { name, phone, address: addr, ref: ref, locationUrl: state.userLocationUrl },
     items: state.cart, total: total,
     type: isDelivery ? 'delivery' : 'pickup',
-    payment_method: payMethod, notes: notes
+    payment_method: payMethod, notes: notes,
+    proof_url: proofUrl // 👈 AQUÍ GUARDAMOS EL LINK DEL COMPROBANTE
   };
-
-  var btn = document.getElementById("btnConfirm");
-  btn.disabled = true; btn.innerHTML = "Enviando...";
 
   const { error } = await supabaseClient.from('orders').insert([orderData]);
   if (error) {
@@ -1037,6 +1063,7 @@ async function submitOrder() {
   saveName(name);
   state.cart = [];
   state.userLocationUrl = null;
+  state.proofImage = null;
   saveCart();
   updateBadge();
   localStorage.setItem('ff_current_order_code', code);
@@ -1046,7 +1073,7 @@ async function submitOrder() {
   
   go('tracking');
 }
-
+  
 async function renderTracking() {
   var trackDiv = $("#trackDynamic");
   var code = localStorage.getItem('ff_current_order_code');
