@@ -854,23 +854,67 @@ function renderModal(){
       <div class="sheet-body">
         <h2>${esc(p.name)}</h2><p class="desc">${esc(p.desc)}</p>
         ${extrasHtml}
-        <div class="field"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla"></div>
+        <div class="field"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla" value="${esc(m.notes)}"></div>
         <div class="qty-row">
-          <div class="qty"><button onclick="state.modal.qty=Math.max(1,state.modal.qty-1); renderModal()">−</button><span>${m.qty}</span><button onclick="state.modal.qty++; renderModal()">+</button></div>
-          <div style="font-size:24px;font-weight:900;color:var(--brand)">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
+          <div class="qty">
+            <button onclick="updateModalQty(-1)">−</button>
+            <span id="mQtyDisplay">${m.qty}</span>
+            <button onclick="updateModalQty(1)">+</button>
+          </div>
+          <div style="font-size:24px;font-weight:900;color:var(--brand)" id="mUnit">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
         </div>
         <button class="btn btn-primary" onclick="addToCart()">Agregar al carrito</button>
       </div>
     </div>`;
 }
 
+// NUEVA FUNCIÓN: Solo actualiza el número y el precio sin re-dibujar
+function updateModalQty(delta) {
+  var m = state.modal;
+  if (!m) return;
+  
+  // Calculamos la nueva cantidad (mínimo 1)
+  m.qty = Math.max(1, m.qty + delta);
+  
+  // Actualizamos el número visualmente
+  var qtyDisplay = document.getElementById('mQtyDisplay');
+  if (qtyDisplay) qtyDisplay.textContent = m.qty;
+  
+  // Actualizamos el precio total
+  updateModalPrice();
+}
+
+// NUEVA FUNCIÓN: Actualiza solo el precio en pantalla
+function updateModalPrice() {
+  var m = state.modal;
+  if (!m) return;
+  var p = m.product;
+  var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty;
+  
+  var unitDisplay = document.getElementById('mUnit');
+  if (unitDisplay) unitDisplay.innerHTML = money(price);
+}
+
+// NUEVA FUNCIÓN: Actualiza solo el precio en pantalla
+function updateModalPrice() {
+  var m = state.modal;
+  if (!m) return;
+  var p = m.product;
+  var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty;
+  
+  var unitDisplay = document.getElementById('mUnit');
+  if (unitDisplay) unitDisplay.innerHTML = money(price);
+}
+
+// MODIFICADA: Quitamos el renderModal() para que no salte la animación
 function toggleExtra(name, on){ 
   if(on) {
     if(!state.modal.extras.includes(name)) state.modal.extras.push(name); 
   } else {
     state.modal.extras = state.modal.extras.filter(x=>x!==name); 
   }
-  renderModal(); 
+  // Al no llamar a renderModal(), la ventana no se reinicia
+  updateModalPrice(); 
 }
 
 function addToCart(){
