@@ -509,7 +509,6 @@ var MENU = [];
 var EXCHANGE_RATE = null;
 var state = { view: "menu", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 
-// ⚡ OPTIMIZACIÓN: Promesas en paralelo
 async function loadSharedData(){
   try {
     const [configRes, catsRes, productsRes] = await Promise.all([
@@ -779,7 +778,10 @@ function updateProofField(){
 function handleProofUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { toast("Imagen muy grande (máx 10MB)"); return; }
+  if (file.size > 10 * 1024 * 1024) { 
+    alert("La imagen es muy grande (máx 10MB). Por favor, elige una más pequeña o toma una foto con menor resolución."); 
+    return; 
+  }
   const reader = new FileReader();
   reader.onload = (ev) => {
     state.proofImage = ev.target.result;
@@ -978,7 +980,7 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm");
   btn.disabled = true; btn.innerHTML = "Enviando...";
 
-  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE
+  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE (BUCKET 'comprobantes')
   let proofUrl = null;
   if (state.proofImage) {
     try {
@@ -988,17 +990,19 @@ async function submitOrder() {
       const fileName = `proof-${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error } = await supabaseClient.storage
-        .from('comprobantes') // Usamos el mismo bucket
+        .from('comprobantes') 
         .upload(fileName, blob, { cacheControl: '3600', upsert: false });
 
-      if (!error) {
+      if (error) {
+        console.error("Error de Supabase Storage:", error);
+        alert("Atención: El pedido se enviará, pero la imagen del comprobante NO se pudo subir. Detalle técnico: " + error.message);
+      } else {
         const { data: urlData } = supabaseClient.storage.from('comprobantes').getPublicUrl(fileName);
         proofUrl = urlData.publicUrl;
-      } else {
-        console.error("Error al subir comprobante:", error);
       }
     } catch (err) {
       console.error("Error procesando imagen:", err);
+      alert("Error de red al procesar la imagen. Revisa tu conexión a internet.");
     }
   }
 
@@ -1025,7 +1029,7 @@ async function submitOrder() {
     items: state.cart, total: total,
     type: isDelivery ? 'delivery' : 'pickup',
     payment_method: payMethod, notes: notes,
-    proof_url: proofUrl // 👈 AQUÍ GUARDAMOS EL LINK DEL COMPROBANTE
+    proof_url: proofUrl 
   };
 
   const { error } = await supabaseClient.from('orders').insert([orderData]);
