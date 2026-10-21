@@ -94,7 +94,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .card-body p{margin:0;font-size:13px;color:var(--muted);line-height:1.5;font-weight:400;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
 .price{font-size:19px;font-weight:900;color:var(--ink);letter-spacing:-.5px}
-.price-ves{display:none;}
+.price-ves{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
+.price-ves strong{color:var(--brand);font-weight:700;}
 .add-btn{border:none;background:var(--brand-soft);color:var(--brand);width:44px;height:44px;border-radius:50%;font-size:24px;font-weight:700;cursor:pointer;display:grid;place-items:center;flex:none;transition:.2s;font-family:inherit;}
 .add-btn:active{transform:scale(.85); background:var(--brand); color:#fff;}
 
@@ -204,10 +205,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .bot-btn{width:100%;margin-top:16px;padding:18px;border-radius:20px;border:none;background:var(--brand);color:#FFFFFF;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px rgba(255,90,31,0.3);transition:.2s;}
 .bot-btn:active{transform:scale(.97)}
 .bot-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;background:var(--muted)}
-
-/* FAB WHATSAPP */
-.fab{position:fixed;bottom:104px;right:20px;z-index:39;width:56px;height:56px;border-radius:50%;background:var(--wa);border:none;color:#FFFFFF;font-size:26px;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 24px rgba(37,211,102,0.3);transition:.2s}
-.fab:active{transform:scale(.9)}
 </style>
 </head>
 <body>
@@ -388,8 +385,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <button class="nav-btn" data-view="tracking"><span class="ni">🛵</span>Pedido</button>
     <button class="nav-btn" data-view="help"><span class="ni">💬</span>Ayuda</button>
   </nav>
-
-  <button class="fab" id="fabWa" onclick="openWhatsApp()">💬</button>
   
   <div id="ratingModal" class="rating-modal">
     <div class="rating-box" id="ratingBoxContent"></div>
@@ -550,15 +545,13 @@ function exitApp() {
   }, 100);
 }
 
-// LÓGICA MEJORADA DE CARGA DE TASA (CON CACHÉ Y TIMEOUT)
+// CARGA DE TASA CON CACHÉ Y TIMEOUT
 async function fetchExchangeRate() {
-  // Si ya hay una tasa en caché, mostrarla de inmediato para no dejar "Cargando..."
   if (EXCHANGE_RATE) {
     updateRateBadge();
     refreshCurrentView();
   }
 
-  // Función auxiliar para el timeout
   const fetchWithTimeout = (url, timeout = 4000) => {
     return Promise.race([
       fetch(url),
@@ -588,7 +581,6 @@ async function fetchExchangeRate() {
     }
   } catch (e) { console.log("Fallo API 2 (DolarAPI):", e.message); }
 
-  // Si todo falla y no hay caché, usar el valor por defecto
   if (!EXCHANGE_RATE) { 
     EXCHANGE_RATE = 36.50; 
     updateRateBadge(); refreshCurrentView(); 
@@ -609,7 +601,6 @@ function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (sta
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
-  // NUEVO: Cargar la tasa de cambio guardada
   try { 
     const cachedRate = localStorage.getItem('ff_exchange_rate');
     if (cachedRate) EXCHANGE_RATE = parseFloat(cachedRate);
@@ -1184,23 +1175,27 @@ function go(view, subview = null){
   startBtn.addEventListener("click", function(){
     var name = nameInput.value.trim(); if (!name) return;
     saveName(name); document.getElementById("botWelcome").classList.add("hidden");
-    startGuidedFlow(); 
+    
+    // Si hay un pedido activo, ir a tracking, si no, al asistente
+    if (localStorage.getItem('ff_current_order_code')) {
+      go('tracking');
+    } else {
+      startGuidedFlow(); 
+    }
   });
 })();
 
 async function init(){
   loadLocal();
   
+  // FORZAR PANTALLA DE BIENVENIDA AL INICIAR
+  document.getElementById("botWelcome").classList.remove("hidden");
   if (state.clientName) {
-    document.getElementById("botWelcome").classList.add("hidden");
     document.getElementById("botNameInput").value = state.clientName;
-    if (localStorage.getItem('ff_current_order_code')) {
-      go('tracking');
-    } else {
-      startGuidedFlow();
-    }
+    document.getElementById("botStartBtn").disabled = false;
   } else {
-    document.getElementById('botWelcome').classList.remove('hidden');
+    document.getElementById("botNameInput").value = "";
+    document.getElementById("botStartBtn").disabled = true;
   }
 
   $$(".nav-btn").forEach(b => {
@@ -1224,7 +1219,7 @@ async function init(){
   checkStoreStatus(); setInterval(checkStoreStatus, 60000);
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
   
-  // Ejecutar la carga de tasa sin bloquear la interfaz
+  // Ejecutar la carga de tasa
   fetchExchangeRate();
   
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
