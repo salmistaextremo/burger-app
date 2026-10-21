@@ -53,7 +53,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .guided-actions-bar {
   position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 12px; z-index: 35; animation: fade .3s ease;
-  pointer-events: none; /* Para que no bloquee si está vacía */
+  pointer-events: none;
 }
 .guided-actions-bar > button { pointer-events: auto; }
 .btn-guided { flex: 1; padding: 16px; border-radius: 16px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; border: none; box-shadow: var(--shadow-md); }
@@ -672,7 +672,6 @@ function renderGuided() {
 
   const currentPhaseCats = getFilteredCategories(guidedState.step);
   
-  // CORRECCIÓN CRÍTICA: Si no hay categorías, NO SALTAR DE FASE. Mostrar mensaje.
   if (currentPhaseCats.length === 0 && !guidedState.viewingCategory) {
     textEl.innerHTML = `Cargando categorías...`;
     actionsEl.innerHTML = `<button class="btn-guided btn-guided-skip" onclick="startGuidedFlow()">Reintentar</button>`;
@@ -1089,7 +1088,6 @@ function go(view, subview = null){
 async function init(){
   loadLocal();
   
-  // 1. Mostrar la interfaz inmediatamente para que no se vea congelada
   if (state.clientName) {
     document.getElementById("botWelcome").classList.add("hidden");
     document.getElementById("botNameInput").value = state.clientName;
@@ -1102,7 +1100,6 @@ async function init(){
     document.getElementById('botWelcome').classList.remove('hidden');
   }
 
-  // 2. Asignar eventos de navegación AQUÍ (antes de cargar datos)
   $$(".nav-btn").forEach(b => {
     b.onclick = () => {
       if (b.dataset.view === 'guided') {
@@ -1115,7 +1112,6 @@ async function init(){
     };
   });
 
-  // 3. Cargar datos en segundo plano
   const loaded = await loadSharedData();
   
   if (!loaded) {
