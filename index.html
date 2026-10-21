@@ -155,6 +155,22 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .location-card.captured::after { background: rgba(236, 253, 245, 0.9); }
 .location-card.captured .location-card-content { color: var(--ok); }
 
+/* SUBIDA DE COMPROBANTE */
+.proof-field{display:none;margin-top:16px}
+.proof-field.show{display:block;animation:fade .25s}
+.proof-picker{position:relative;width:100%;min-height:130px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:14px;display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:.2s;padding:16px}
+.proof-picker:hover{border-color:var(--brand);background:var(--brand-soft)}
+.proof-picker input{display:none}
+.proof-picker .placeholder{text-align:center;color:var(--muted);pointer-events:none}
+.proof-picker .placeholder .emoji{font-size:30px;display:block;margin-bottom:6px;opacity:.6}
+.proof-picker .placeholder p{font-size:13px;font-weight:600;color:var(--ink-2);margin:0}
+.proof-picker .placeholder small{font-size:11px;margin-top:4px;display:block;color:var(--muted)}
+.proof-preview{position:relative;width:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#000;line-height:0}
+.proof-preview img{width:100%;height:auto;max-height:280px;object-fit:contain;display:block}
+.proof-preview .proof-remove{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,0.65);color:#fff;font-size:15px;cursor:pointer;display:grid;place-items:center;font-family:inherit;backdrop-filter:blur(8px);transition:.2s}
+.proof-preview .proof-remove:active{transform:scale(.9);background:var(--danger)}
+.proof-preview .proof-badge{position:absolute;bottom:10px;left:10px;background:rgba(34,197,94,0.9);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;letter-spacing:.3px;backdrop-filter:blur(8px)}
+
 /* MODAL / BOTTOM SHEET */
 .modal{position:fixed;inset:0;z-index:60;background:rgba(17,24,39,0.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
 .sheet{width:100%;max-width:520px;background:var(--surface);border-radius:32px 32px 0 0;max-height:92vh;overflow-y:auto;animation:up .35s cubic-bezier(.2,.9,.3,1);padding-bottom: env(safe-area-inset-bottom);}
@@ -299,6 +315,24 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
           <label>Método de pago *</label>
           <select id="paySelect" style="width:100%;padding:16px;border-radius:16px;border:2px solid transparent;background:var(--surface);font-size:15px;font-family:inherit;outline:none;color:var(--ink);transition:.2s;box-shadow:var(--shadow-sm);font-weight:500;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 16px top 50%;background-size:12px auto;"></select>
           <div class="pay-details" id="payDetails"></div>
+        </div>
+
+        <!-- RESTAURADO: COMPROBANTE DE PAGO -->
+        <div class="proof-field" id="proofField">
+          <label style="margin-top:16px">Comprobante de pago</label>
+          <div id="proofPickerWrap">
+            <div class="proof-picker" id="proofPicker" onclick="document.getElementById('proofFile').click()">
+              <input type="file" accept="image/*" id="proofFile" onchange="handleProofUpload(event)">
+              <div class="placeholder"><span class="emoji">📷</span><p>Toca para subir el comprobante</p></div>
+            </div>
+          </div>
+          <div id="proofPreviewWrap" class="hidden">
+            <div class="proof-preview">
+              <img id="proofImg" alt="Comprobante">
+              <span class="proof-badge">✓ Listo</span>
+              <button class="proof-remove" onclick="clearProof()">✕</button>
+            </div>
+          </div>
         </div>
 
         <div id="checkoutSummary"></div>
@@ -553,6 +587,7 @@ function getLocation() {
   const statusEl = document.getElementById("locationStatus");
 
   if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
+  if (!content || !statusEl) return;
 
   content.innerHTML = `<span class="icon">⏳</span><span>Obteniendo ubicación...</span>`;
   statusEl.style.display = "block";
@@ -642,6 +677,7 @@ function renderGuided() {
   const content = document.getElementById('guidedContent');
   const textEl = document.getElementById('guidedBotText');
   const actionsEl = document.getElementById('guidedActions');
+  if (!content || !textEl || !actionsEl) return;
   
   if (guidedState.step === 'done') {
     if (state.cart.length === 0) {
@@ -773,6 +809,7 @@ function renderPayments(){
 
 function updatePayDetails(){
   var box = $("#payDetails"); var sel = $("#paySelect");
+  if (!box || !sel) return;
   var p = CONFIG.payments.find(x => x.id === sel.value);
   if (!p || NO_DETAILS_TYPES.includes(p.type)) { box.classList.remove("show"); box.innerHTML = ""; return; }
   var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
@@ -797,6 +834,7 @@ function updatePayDetails(){
 
 function updateProofField(){
   var field = $("#proofField"); var sel = $("#paySelect");
+  if (!field || !sel) return;
   var p = CONFIG.payments.find(x => x.id === sel.value);
   if (!p || NO_PROOF_TYPES.includes(p.type)) { field.style.display = 'none'; if (state.proofImage) clearProof(); }
   else { field.style.display = 'block'; }
@@ -815,7 +853,12 @@ function handleProofUpload(e) {
   };
   reader.readAsDataURL(file);
 }
-function clearProof() { state.proofImage = null; $("#proofFile").value = ""; $("#proofPickerWrap").style.display = 'block'; $("#proofPreviewWrap").style.display = 'none'; }
+function clearProof() { 
+  state.proofImage = null; 
+  if($("#proofFile")) $("#proofFile").value = ""; 
+  if($("#proofPickerWrap")) $("#proofPickerWrap").style.display = 'block'; 
+  if($("#proofPreviewWrap")) $("#proofPreviewWrap").style.display = 'none'; 
+}
 
 function renderChips(){
   var wrap = $("#chips");
@@ -827,6 +870,7 @@ function renderMenu(){
   var q = state.query.trim().toLowerCase();
   var items = MENU.filter(p => (state.category === "todos" || p.cat === state.category) && (!q || p.name.toLowerCase().includes(q)));
   var list = $("#menuList");
+  if (!list) return;
   if (!items.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🔍</div><p>No hay productos.</p></div>`; return; }
   list.innerHTML = items.map(p => {
     const isAvail = p.available !== false;
@@ -898,6 +942,7 @@ function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("
 
 function renderCart(){
   var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
+  if (!list || !totals || !actions) return;
   if (!state.cart.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="showAllCategories()">Ver Categorías</button>`; return; }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
@@ -918,30 +963,32 @@ function changeQty(key, d){
 
 function updateOrderType() {
   var isDelivery = $("input[name='otype']:checked").value === 'delivery';
-  $("#addressBlock").style.display = isDelivery ? "block" : "none";
+  if($("#addressBlock")) $("#addressBlock").style.display = isDelivery ? "block" : "none";
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
-  $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
+  if($("#checkoutSummary")) $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
 }
 
 function renderCheckout(){
   renderPayments();
-  if (state.clientName) $("#f-name").value = state.clientName;
+  if (state.clientName && $("#f-name")) $("#f-name").value = state.clientName;
   
   const card = document.getElementById("locationCard");
   const content = document.getElementById("locationCardContent");
   const statusEl = document.getElementById("locationStatus");
 
-  if (state.userLocationUrl) {
-    card.classList.add("captured");
-    content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
-    statusEl.style.display = "block";
-    statusEl.style.color = "var(--ok)";
-    statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
-  } else {
-    card.classList.remove("captured");
-    content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`;
-    statusEl.style.display = "none";
+  if (card && content && statusEl) {
+    if (state.userLocationUrl) {
+      card.classList.add("captured");
+      content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      statusEl.style.display = "block";
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+    } else {
+      card.classList.remove("captured");
+      content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`;
+      statusEl.style.display = "none";
+    }
   }
 
   updateOrderType();
@@ -992,6 +1039,7 @@ async function submitOrder() {
 
 async function renderTracking() {
   var trackDiv = $("#trackDynamic"); var code = localStorage.getItem('ff_current_order_code');
+  if (!trackDiv) return;
   if (!code) { trackDiv.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛵</div><p>No tienes pedidos recientes.</p></div>`; return; }
   if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
   if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
@@ -1058,7 +1106,6 @@ function go(view, subview = null){
   $$(".view").forEach(v => v.classList.add("hidden"));
   const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
   
-  // VALIDACIONES PARA EVITAR QUE EL SCRIPT SE ROMPA
   const searchWrap = document.getElementById("searchWrap");
   if (searchWrap) searchWrap.style.display = view === "menu" ? "" : "none"; 
   
