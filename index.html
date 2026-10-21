@@ -455,9 +455,10 @@ main{padding:0}
     </section>
   </main>
 
+  <!-- MENÚ INFERIOR DE NAVEGACIÓN -->
   <nav class="nav">
-    <button class="nav-btn active" data-view="guided"><span class="ni">🤖</span>Asistente</button>
-    <button class="nav-btn" data-view="menu"><span class="ni">📋</span>Categorías</button>
+    <button class="nav-btn" data-view="guided"><span class="ni">🤖</span>Asistente</button>
+    <button class="nav-btn" data-view="categories"><span class="ni">📋</span>Categorías</button>
     <button class="nav-btn" data-view="cart"><span class="ni">🛒</span>Carrito<span class="nav-badge hidden" id="navBadge">0</span></button>
     <button class="nav-btn" data-view="tracking"><span class="ni">🛵</span>Pedido</button>
     <button class="nav-btn" data-view="help"><span class="ni">💬</span>Ayuda</button>
@@ -529,8 +530,8 @@ var state = { view: "guided", category: "todos", query: "", cart: [], clientName
 
 // Estado del flujo guiado
 var guidedState = {
-  step: 'food', // 'food', 'drinks', 'desserts', 'done'
-  viewingCategory: null, // null o el ID de la categoría que está viendo
+  step: 'food', // 'food', 'drinks', 'desserts', 'all', 'done'
+  viewingCategory: null, 
   stepsOrder: ['food', 'drinks', 'desserts']
 };
 
@@ -699,6 +700,13 @@ function startGuidedFlow() {
   go('guided');
 }
 
+function showAllCategories() {
+  guidedState.step = 'all';
+  guidedState.viewingCategory = null;
+  renderGuided();
+  go('guided', 'all');
+}
+
 function escapeGuidedFlow() {
   state.category = 'todos';
   renderChips();
@@ -716,6 +724,7 @@ function getCategoryPhase(catName) {
 }
 
 function getFilteredCategories(phase) {
+  if (phase === 'all') return CATS.filter(c => c.id !== 'todos');
   return CATS.filter(c => c.id !== 'todos' && getCategoryPhase(c.name) === phase);
 }
 
@@ -748,41 +757,55 @@ function renderGuided() {
   // 1. Si estamos en la pantalla final
   if (guidedState.step === 'done') {
     if (state.cart.length === 0) {
-      // Carrito vacío: Ocultar botón de carrito y mostrar solo Categorías
       textEl.innerHTML = `Parece que tu carrito está vacío, <b>${esc(state.clientName)}</b>. 🛒<br><br>¿Quieres volver a explorar las categorías para elegir algo?`;
-      actionsEl.innerHTML = `
-        <button class="btn-guided btn-guided-back" onclick="escapeGuidedFlow()">📋 Ver Categorías</button>
-      `;
+      actionsEl.innerHTML = `<button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>`;
       content.innerHTML = `<div class="empty"><div class="big">🛍️</div><p>Explora nuestras categorías para armar tu pedido.</p></div>`;
     } else {
-      // Carrito con productos
       textEl.innerHTML = `¡Excelente elección, <b>${esc(state.clientName)}</b>! 🎉<br><br>Ya tienes todo tu pedido armado. ¿Quieres revisar tu carrito para confirmar?`;
       actionsEl.innerHTML = `
         <button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>
-        <button class="btn-guided btn-guided-back" onclick="escapeGuidedFlow()">📋 Ver Categorías</button>
+        <button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>
       `;
       content.innerHTML = `<div class="empty"><div class="big">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
     }
     return;
   }
 
-  // 2. Determinar qué estamos mostrando (Categorías o Productos de la fase actual)
+  // 2. Modo "Todas las Categorías"
+  if (guidedState.step === 'all' && !guidedState.viewingCategory) {
+    textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 Elige una categoría para ver nuestros productos.`;
+    
+    let btnHtml = '';
+    if (state.cart.length > 0) {
+      btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito (${state.cart.reduce((a,i)=>a+i.qty,0)})</button>`;
+    }
+    actionsEl.innerHTML = btnHtml;
+
+    const allCats = getFilteredCategories('all');
+    let gridHtml = allCats.map(c => `
+      <div class="cat-card" onclick="selectGuidedCategory('${c.id}')">
+        <span class="icon">${c.icon || '🍽️'}</span>
+        <span class="name">${esc(c.name)}</span>
+      </div>
+    `).join('');
+    content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
+    return;
+  }
+
+  // 3. Flujo guiado normal (food, drinks, desserts) o viendo productos de "all"
   const currentPhaseCats = getFilteredCategories(guidedState.step);
   
-  // Validación: Si no hay categorías en esta fase, saltar automáticamente
   if (currentPhaseCats.length === 0 && !guidedState.viewingCategory) {
     skipGuidedPhase();
     return;
   }
 
-  // 3. Configurar los textos del bot según la fase
   if (!guidedState.viewingCategory) {
-    // Viendo Categorías
+    // Viendo Categorías del paso
     if (guidedState.step === 'food') textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 ¿Qué se te antoja comer hoy?`;
     if (guidedState.step === 'drinks') textEl.innerHTML = `¡Buenísimo! 😋 ¿Te gustaría acompañar tu comida con alguna bebida?`;
     if (guidedState.step === 'desserts') textEl.innerHTML = `¿Y qué tal un postre para terminar? 🍰 Tenemos cosas dulces.`;
     
-    // Lógica de botones fijos (viendo categorías)
     let btnHtml = '';
     if (guidedState.step !== 'food') {
       btnHtml += `<button class="btn-guided btn-guided-back" onclick="prevGuidedPhase()">← Regresar</button>`;
@@ -802,14 +825,21 @@ function renderGuided() {
     // Viendo Productos de una categoría
     const catObj = CATS.find(c => c.id === guidedState.viewingCategory);
     if (guidedState.step === 'food') textEl.innerHTML = `Aquí tienes nuestras opciones de <b>${esc(catObj.name)}</b>. ¿Qué te provoca?`;
-    if (guidedState.step === 'drinks') textEl.innerHTML = `Nuestras bebidas de <b>${esc(catObj.name)}</b>. ¿Cuál te llevas?`;
-    if (guidedState.step === 'desserts') textEl.innerHTML = `Mira estos postres de <b>${esc(catObj.name)}</b>. ¡Se ven deliciosos!`;
+    else if (guidedState.step === 'drinks') textEl.innerHTML = `Nuestras bebidas de <b>${esc(catObj.name)}</b>. ¿Cuál te llevas?`;
+    else if (guidedState.step === 'desserts') textEl.innerHTML = `Mira estos postres de <b>${esc(catObj.name)}</b>. ¡Se ven deliciosos!`;
+    else textEl.innerHTML = `Aquí tienes nuestras opciones de <b>${esc(catObj.name)}</b>. ¿Qué te provoca?`;
 
-    // Lógica de botones fijos (viendo productos)
-    actionsEl.innerHTML = `
-      <button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar</button>
-      <button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>
-    `;
+    let btnHtml = '';
+    if (guidedState.step === 'all') {
+      btnHtml += `<button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar a Categorías</button>`;
+      if (state.cart.length > 0) {
+        btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>`;
+      }
+    } else {
+      btnHtml += `<button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar</button>`;
+      btnHtml += `<button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>`;
+    }
+    actionsEl.innerHTML = btnHtml;
 
     const items = MENU.filter(p => p.cat === guidedState.viewingCategory && p.available !== false);
     if (items.length === 0) {
@@ -977,7 +1007,7 @@ function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("
 
 function renderCart(){
   var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
-  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="go('menu')">Ver Categorías</button>`; return; }
+  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="showAllCategories()">Ver Categorías</button>`; return; }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
       <div class="ci-emoji">${i.emoji}</div>
@@ -1104,7 +1134,7 @@ async function submitRating() {
 }
 document.getElementById('ratingModal').addEventListener('click', function(e) { if (e.target === this) closeRatingModal(); });
 
-function go(view){
+function go(view, subview = null){
   state.view = view;
   $$(".view").forEach(v => v.classList.add("hidden"));
   const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
@@ -1114,7 +1144,14 @@ function go(view){
   $("#chips").style.display = view === "menu" ? "" : "none";
   
   // Resaltar el botón de navegación
-  $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  $$(".nav-btn").forEach(b => b.classList.remove("active"));
+  if (view === 'guided' && subview === 'all') {
+      const btn = document.querySelector('.nav-btn[data-view="categories"]');
+      if (btn) btn.classList.add('active');
+  } else {
+      const btn = document.querySelector(`.nav-btn[data-view="${view}"]`);
+      if (btn) btn.classList.add('active');
+  }
   
   if (view !== "tracking") {
     if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
@@ -1154,7 +1191,18 @@ async function init(){
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
   fetchExchangeRate();
   
-  $$(".nav-btn").forEach(b => b.onclick = () => go(b.dataset.view));
+  $$(".nav-btn").forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.view === 'guided') {
+        startGuidedFlow();
+      } else if (b.dataset.view === 'categories') {
+        showAllCategories();
+      } else {
+        go(b.dataset.view);
+      }
+    };
+  });
+  
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
   $("#btnHelp").onclick = () => go("help");
 
