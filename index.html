@@ -93,9 +93,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .card-body h3{margin:0 0 6px;font-size:17px;font-weight:800;letter-spacing:-.3px;line-height:1.3;color:var(--ink)}
 .card-body p{margin:0;font-size:13px;color:var(--muted);line-height:1.5;font-weight:400;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
-.price{font-size:19px;font-weight:900;color:var(--ink);letter-spacing:-.5px}
-.price-ves{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
-.price-ves strong{color:var(--brand);font-weight:700;}
+.price{font-size:19px;font-weight:900;color:var(--ink);letter-spacing:-.5px; display:flex; flex-direction:column;}
+.price-ves{display:block !important;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
+.price-ves strong{color:var(--brand);font-weight:800;}
 .add-btn{border:none;background:var(--brand-soft);color:var(--brand);width:44px;height:44px;border-radius:50%;font-size:24px;font-weight:700;cursor:pointer;display:grid;place-items:center;flex:none;transition:.2s;font-family:inherit;}
 .add-btn:active{transform:scale(.85); background:var(--brand); color:#fff;}
 
@@ -121,7 +121,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .ci-info h4{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
 .ci-info .extras{font-size:12px;color:var(--muted);line-height:1.5;margin:0;font-weight:400}
 .ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
-.ci-price{font-size:16px;font-weight:800;color:var(--ink)}
+.ci-price{font-size:16px;font-weight:800;color:var(--ink); display:flex; flex-direction:column; align-items:flex-end;}
 .qty{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:12px;padding:4px;box-shadow:var(--shadow-sm)}
 .qty button{width:32px;height:32px;border:none;background:var(--surface-2);border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;color:var(--ink);display:grid;place-items:center;font-family:inherit;transition:.2s}
 .qty button:active{background:var(--brand);color:#FFFFFF}
@@ -129,6 +129,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 .totals{background:var(--surface);border-radius:var(--r-lg);padding:24px;margin-top:24px;box-shadow:var(--shadow-sm)}
 .trow{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;color:var(--muted);font-weight:500}
+.trow > span:last-child, .trow > b { text-align: right; }
 .trow.total{font-size:22px;font-weight:900;color:var(--ink);border-top:1px dashed var(--line);margin-top:16px;padding-top:20px}
 .trow b{color:var(--ink);font-weight:700}
 
@@ -137,6 +138,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .btn-primary{background:var(--brand);color:#FFFFFF;box-shadow:0 8px 24px rgba(255,90,31,0.3)}
 .btn-wa{background:var(--wa);color:#FFFFFF;box-shadow:0 8px 24px rgba(37,211,102,0.3)}
 .btn-ghost{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+/* Forzar texto blanco en el botón */
+.btn .price-ves, .btn .price-ves strong { color: #FFFFFF !important; }
 
 .field{margin-bottom:20px}
 .field label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink)}
@@ -592,7 +595,13 @@ function updateRateBadge(){ var badge = document.getElementById("rateBadge"); if
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function money(n){ var usd = CONFIG.currency + Number(n).toFixed(2); if (EXCHANGE_RATE) return usd + '<span class="price-ves">≈ <strong>Bs. ' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; return usd; }
+function money(n){ 
+  var usd = CONFIG.currency + Number(n).toFixed(2); 
+  if (EXCHANGE_RATE) {
+    return usd + '<span class="price-ves">≈ Bs. <strong>' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; 
+  }
+  return usd; 
+}
 function findProduct(id){ return MENU.find(p => p.id === id); }
 
 function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
@@ -943,7 +952,7 @@ function renderModal(){
             <span id="mQtyDisplay" style="font-size:20px;font-weight:900;min-width:32px;text-align:center;">${m.qty}</span>
             <button onclick="updateModalQty(1)" style="width:44px;height:44px;border:none;background:var(--surface);border-radius:12px;font-size:22px;font-weight:700;cursor:pointer;color:var(--ink);box-shadow:var(--shadow-sm);">+</button>
           </div>
-          <div style="font-size:26px;font-weight:900;color:var(--ink);" id="mUnit">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
+          <div style="font-size:26px;font-weight:900;color:var(--ink); display:flex; flex-direction:column; align-items:flex-end;" id="mUnit">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
         </div>
         <button class="btn btn-primary" onclick="addToCart()" style="width:100%;padding:20px;border-radius:20px;border:none;background:var(--brand);color:#FFFFFF;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(255,90,31,0.3);">Agregar al carrito</button>
       </div>
@@ -1176,7 +1185,6 @@ function go(view, subview = null){
     var name = nameInput.value.trim(); if (!name) return;
     saveName(name); document.getElementById("botWelcome").classList.add("hidden");
     
-    // Si hay un pedido activo, ir a tracking, si no, al asistente
     if (localStorage.getItem('ff_current_order_code')) {
       go('tracking');
     } else {
@@ -1188,7 +1196,6 @@ function go(view, subview = null){
 async function init(){
   loadLocal();
   
-  // FORZAR PANTALLA DE BIENVENIDA AL INICIAR
   document.getElementById("botWelcome").classList.remove("hidden");
   if (state.clientName) {
     document.getElementById("botNameInput").value = state.clientName;
@@ -1219,7 +1226,6 @@ async function init(){
   checkStoreStatus(); setInterval(checkStoreStatus, 60000);
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
   
-  // Ejecutar la carga de tasa
   fetchExchangeRate();
   
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
