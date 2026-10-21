@@ -317,7 +317,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
           <div class="pay-details" id="payDetails"></div>
         </div>
 
-        <!-- RESTAURADO: COMPROBANTE DE PAGO -->
+        <!-- COMPROBANTE DE PAGO -->
         <div class="proof-field" id="proofField">
           <label style="margin-top:16px">Comprobante de pago</label>
           <div id="proofPickerWrap">
@@ -550,15 +550,49 @@ function exitApp() {
   }, 100);
 }
 
+// LÓGICA MEJORADA DE CARGA DE TASA (CON CACHÉ Y TIMEOUT)
 async function fetchExchangeRate() {
+  // Si ya hay una tasa en caché, mostrarla de inmediato para no dejar "Cargando..."
+  if (EXCHANGE_RATE) {
+    updateRateBadge();
+    refreshCurrentView();
+  }
+
+  // Función auxiliar para el timeout
+  const fetchWithTimeout = (url, timeout = 4000) => {
+    return Promise.race([
+      fetch(url),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+    ]);
+  };
+
   try {
-    let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
-    if (res.ok) { let data = await res.json(); if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) { EXCHANGE_RATE = parseFloat(data.monitors.bcv.price); updateRateBadge(); refreshCurrentView(); return; } }
-  } catch (e) {}
+    let res = await fetchWithTimeout("https://pydolarve.org/api/v1/dollar?page=bcv");
+    if (res.ok) {
+      let data = await res.json();
+      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
+        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
+        localStorage.setItem('ff_exchange_rate', EXCHANGE_RATE);
+        updateRateBadge(); refreshCurrentView(); return;
+      }
+    }
+  } catch (e) { console.log("Fallo API 1 (PyDolar):", e.message); }
+
   try {
-    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial"); let data = await res.json(); if (data && data.promedio) { EXCHANGE_RATE = parseFloat(data.promedio); updateRateBadge(); refreshCurrentView(); return; }
-  } catch (e) {}
-  if (!EXCHANGE_RATE) { EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView(); }
+    let res = await fetchWithTimeout("https://ve.dolarapi.com/v1/dolares/oficial");
+    let data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      localStorage.setItem('ff_exchange_rate', EXCHANGE_RATE);
+      updateRateBadge(); refreshCurrentView(); return;
+    }
+  } catch (e) { console.log("Fallo API 2 (DolarAPI):", e.message); }
+
+  // Si todo falla y no hay caché, usar el valor por defecto
+  if (!EXCHANGE_RATE) { 
+    EXCHANGE_RATE = 36.50; 
+    updateRateBadge(); refreshCurrentView(); 
+  }
 }
 
 function updateRateBadge(){ var badge = document.getElementById("rateBadge"); if (badge && EXCHANGE_RATE) { var formattedRate = EXCHANGE_RATE.toFixed(4).replace(/\.?0+$/, ''); badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; } }
@@ -575,6 +609,11 @@ function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (sta
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
+  // NUEVO: Cargar la tasa de cambio guardada
+  try { 
+    const cachedRate = localStorage.getItem('ff_exchange_rate');
+    if (cachedRate) EXCHANGE_RATE = parseFloat(cachedRate);
+  } catch(e){}
 }
 function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(state.cart)); }
 function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
@@ -1184,6 +1223,8 @@ async function init(){
 
   checkStoreStatus(); setInterval(checkStoreStatus, 60000);
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
+  
+  // Ejecutar la carga de tasa sin bloquear la interfaz
   fetchExchangeRate();
   
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
