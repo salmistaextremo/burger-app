@@ -41,6 +41,15 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .icon-btn{width:46px;height:46px;border-radius:14px;border:none;background:var(--surface);font-size:20px;display:grid;place-items:center;cursor:pointer;flex:none;transition:.2s;color:var(--ink);box-shadow:var(--shadow-sm)}
 .icon-btn:active{transform:scale(.94);background:var(--surface-2)}
 
+/* BUSCADOR Y CHIPS */
+.search{margin-top:14px;position:relative}
+.search input{width:100%;padding:14px 16px 14px 44px;border-radius:16px;border:none;background:var(--surface);font-size:14px;outline:none;font-family:inherit;color:var(--ink);transition:.2s;box-shadow:var(--shadow-sm);font-weight:500}
+.search input::placeholder{color:var(--muted)}
+.search input:focus{box-shadow:0 0 0 4px var(--brand-soft)}
+.search::before{content:'🔎';position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.5}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+
 /* BOT GUÍA */
 .guided-header { padding: 12px 20px 10px; position: sticky; top: 70px; z-index: 20; background: var(--bg); }
 .bot-bubble { display: flex; gap: 14px; align-items: center; background: var(--surface); padding: 16px 20px; border-radius: 24px; border-bottom-left-radius: 6px; margin-bottom: 6px; box-shadow: var(--shadow-sm); animation: fade .4s ease; }
@@ -223,6 +232,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       </div>
       <button class="icon-btn" id="btnHelp" title="Atención al cliente">💬</button>
     </div>
+    <div class="search" id="searchWrap">
+      <input id="searchInput" type="search" placeholder="Buscar hamburguesa, combo, bebida…" autocomplete="off">
+    </div>
+    <div class="chips" id="chips"></div>
   </header>
 
   <main>
@@ -1045,8 +1058,12 @@ function go(view, subview = null){
   $$(".view").forEach(v => v.classList.add("hidden"));
   const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
   
-  $("#searchWrap").style.display = view === "menu" ? "" : "none"; 
-  $("#chips").style.display = view === "menu" ? "" : "none";
+  // VALIDACIONES PARA EVITAR QUE EL SCRIPT SE ROMPA
+  const searchWrap = document.getElementById("searchWrap");
+  if (searchWrap) searchWrap.style.display = view === "menu" ? "" : "none"; 
+  
+  const chipsEl = document.getElementById("chips");
+  if (chipsEl) chipsEl.style.display = view === "menu" ? "" : "none";
   
   $$(".nav-btn").forEach(b => b.classList.remove("active"));
   if (view === 'guided' && subview === 'all') {
