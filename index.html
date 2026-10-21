@@ -457,6 +457,7 @@ main{padding:0}
 
   <nav class="nav">
     <button class="nav-btn active" data-view="guided"><span class="ni">🤖</span>Asistente</button>
+    <button class="nav-btn" data-view="menu"><span class="ni">📋</span>Categorías</button>
     <button class="nav-btn" data-view="cart"><span class="ni">🛒</span>Carrito<span class="nav-badge hidden" id="navBadge">0</span></button>
     <button class="nav-btn" data-view="tracking"><span class="ni">🛵</span>Pedido</button>
     <button class="nav-btn" data-view="help"><span class="ni">💬</span>Ayuda</button>
@@ -746,12 +747,22 @@ function renderGuided() {
   
   // 1. Si estamos en la pantalla final
   if (guidedState.step === 'done') {
-    textEl.innerHTML = `¡Excelente elección, <b>${esc(state.clientName)}</b>! 🎉<br><br>Ya tienes todo tu pedido armado. ¿Quieres revisar tu carrito para confirmar?`;
-    actionsEl.innerHTML = `
-      <button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>
-      <button class="btn-guided btn-guided-back" onclick="escapeGuidedFlow()">Ver menú</button>
-    `;
-    content.innerHTML = `<div class="empty"><div class="big">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
+    if (state.cart.length === 0) {
+      // Carrito vacío: Ocultar botón de carrito y mostrar solo Categorías
+      textEl.innerHTML = `Parece que tu carrito está vacío, <b>${esc(state.clientName)}</b>. 🛒<br><br>¿Quieres volver a explorar las categorías para elegir algo?`;
+      actionsEl.innerHTML = `
+        <button class="btn-guided btn-guided-back" onclick="escapeGuidedFlow()">📋 Ver Categorías</button>
+      `;
+      content.innerHTML = `<div class="empty"><div class="big">🛍️</div><p>Explora nuestras categorías para armar tu pedido.</p></div>`;
+    } else {
+      // Carrito con productos
+      textEl.innerHTML = `¡Excelente elección, <b>${esc(state.clientName)}</b>! 🎉<br><br>Ya tienes todo tu pedido armado. ¿Quieres revisar tu carrito para confirmar?`;
+      actionsEl.innerHTML = `
+        <button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>
+        <button class="btn-guided btn-guided-back" onclick="escapeGuidedFlow()">📋 Ver Categorías</button>
+      `;
+      content.innerHTML = `<div class="empty"><div class="big">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
+    }
     return;
   }
 
@@ -966,7 +977,7 @@ function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("
 
 function renderCart(){
   var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
-  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="go('menu')">Ver menú</button>`; return; }
+  if (!state.cart.length) { list.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="go('menu')">Ver Categorías</button>`; return; }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
       <div class="ci-emoji">${i.emoji}</div>
