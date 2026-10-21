@@ -129,7 +129,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 .totals{background:var(--surface);border-radius:var(--r-lg);padding:24px;margin-top:24px;box-shadow:var(--shadow-sm)}
 .trow{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;color:var(--muted);font-weight:500}
-.trow > span:last-child, .trow > b { text-align: right; }
+.trow > span:last-child, .trow > b { text-align: right; display: flex; flex-direction: column; align-items: flex-end;}
 .trow.total{font-size:22px;font-weight:900;color:var(--ink);border-top:1px dashed var(--line);margin-top:16px;padding-top:20px}
 .trow b{color:var(--ink);font-weight:700}
 
@@ -138,7 +138,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .btn-primary{background:var(--brand);color:#FFFFFF;box-shadow:0 8px 24px rgba(255,90,31,0.3)}
 .btn-wa{background:var(--wa);color:#FFFFFF;box-shadow:0 8px 24px rgba(37,211,102,0.3)}
 .btn-ghost{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
-/* Forzar texto blanco en el botón */
 .btn .price-ves, .btn .price-ves strong { color: #FFFFFF !important; }
 
 .field{margin-bottom:20px}
@@ -596,9 +595,10 @@ function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function money(n){ 
+  if (n === undefined || n === null) n = 0;
   var usd = CONFIG.currency + Number(n).toFixed(2); 
   if (EXCHANGE_RATE) {
-    return usd + '<span class="price-ves">≈ Bs. <strong>' + (n * EXCHANGE_RATE).toFixed(2) + '</strong></span>'; 
+    return `<span style="display:block; font-weight:900;">${usd}</span><span class="price-ves" style="display:block !important;">≈ Bs. <strong>${(Number(n) * EXCHANGE_RATE).toFixed(2)}</strong></span>`; 
   }
   return usd; 
 }
