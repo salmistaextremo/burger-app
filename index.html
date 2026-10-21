@@ -779,7 +779,7 @@ function handleProofUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   if (file.size > 10 * 1024 * 1024) { 
-    alert("La imagen es muy grande (máx 10MB). Por favor, elige una más pequeña o toma una foto con menor resolución."); 
+    alert("La imagen es muy grande (máx 10MB). Por favor, elige una más pequeña."); 
     return; 
   }
   const reader = new FileReader();
@@ -980,31 +980,22 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm");
   btn.disabled = true; btn.innerHTML = "Enviando...";
 
-  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE (BUCKET 'comprobantes')
+  // ⚡ SUBIR COMPROBANTE A SUPABASE STORAGE (Desactivado temporalmente)
   let proofUrl = null;
+  /* 
   if (state.proofImage) {
     try {
       const res = await fetch(state.proofImage);
       const blob = await res.blob();
-      const fileExt = blob.type.split('/')[1] || 'jpg';
-      const fileName = `proof-${Date.now()}.${fileExt}`;
-      
-      const { data: uploadData, error } = await supabaseClient.storage
-        .from('comprobantes') 
-        .upload(fileName, blob, { cacheControl: '3600', upsert: false });
-
-      if (error) {
-        console.error("Error de Supabase Storage:", error);
-        alert("Atención: El pedido se enviará, pero la imagen del comprobante NO se pudo subir. Detalle técnico: " + error.message);
-      } else {
+      const fileName = `proof-${Date.now()}.jpg`;
+      const { data, error } = await supabaseClient.storage.from('comprobantes').upload(fileName, blob);
+      if (!error) {
         const { data: urlData } = supabaseClient.storage.from('comprobantes').getPublicUrl(fileName);
         proofUrl = urlData.publicUrl;
       }
-    } catch (err) {
-      console.error("Error procesando imagen:", err);
-      alert("Error de red al procesar la imagen. Revisa tu conexión a internet.");
-    }
+    } catch (err) { console.warn(err); }
   }
+  */
 
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
@@ -1035,7 +1026,7 @@ async function submitOrder() {
   const { error } = await supabaseClient.from('orders').insert([orderData]);
   if (error) {
     console.error("Error de Supabase:", error);
-    alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema. Detalle técnico: " + error.message);
+    alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema.");
   }
 
   saveName(name);
@@ -1216,7 +1207,6 @@ async function submitRating() {
 
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
     
-    // ✅ ANIMACIÓN DE ÉXITO EN EL MODAL
     document.getElementById('ratingBoxContent').innerHTML = `
       <div style="padding: 30px 10px; animation: bounceIn 0.5s ease;">
         <div style="font-size: 64px; margin-bottom: 12px; animation: float 2s infinite;">🎉</div>
