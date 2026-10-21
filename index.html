@@ -39,7 +39,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 /* NUEVA BARRA DE ACCIONES FIJAS */
 .guided-actions-bar {
   position: fixed;
-  bottom: calc(65px + env(safe-area-inset-bottom)); /* Se coloca justo encima del menú de navegación */
+  bottom: calc(65px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -51,7 +51,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   padding: 12px 18px;
   display: flex;
   gap: 10px;
-  z-index: 35; /* Debajo de la barra de navegación principal */
+  z-index: 35;
   animation: fade .3s ease;
 }
 .btn-guided { flex: 1; padding: 12px; border-radius: 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; border: 1px solid transparent; }
@@ -60,7 +60,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .btn-guided-complete { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
 .btn-guided:active { transform: scale(0.97); }
 
-.guided-content { padding: 0 18px 140px; } /* Espacio extra abajo para no chocar con los botones fijos */
+.guided-content { padding: 0 18px 140px; }
 .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;}
 .cat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 12px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm); }
 .cat-card:active { transform: scale(0.96); border-color: var(--brand); }
@@ -68,7 +68,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .cat-card .name { font-size: 14px; font-weight: 700; color: var(--ink); }
 .escape-btn { display: block; text-align: center; font-size: 12px; color: var(--muted); text-decoration: underline; margin-top: 12px; cursor: pointer; padding-bottom: 8px;}
 
-/* RESTO DE ESTILOS (Menú, carrito, etc.) */
+/* RESTO DE ESTILOS */
 .rate-badge{display:inline-flex;align-items:center;gap:6px;background:var(--brand-soft);color:var(--brand-d);font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;margin-top:6px;letter-spacing:.3px}
 .rate-badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
 .price-ves{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px;letter-spacing:.2px}
@@ -158,6 +158,71 @@ main{padding:0}
 .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--danger);box-shadow:0 0 0 4px var(--danger-soft)}
 .field.invalid .err{display:block}
 .field .hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;font-weight:400}
+
+/* NUEVA TARJETA DE MAPA */
+.location-card {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #E5E7EB;
+  /* Simulación de mapa con gradientes */
+  background-image: 
+      linear-gradient(90deg, rgba(255,255,255,0.8) 2px, transparent 2px),
+      linear-gradient(rgba(255,255,255,0.8) 2px, transparent 2px),
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px;
+  background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+  transition: 0.3s;
+}
+.location-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+      linear-gradient(45deg, transparent 48%, #ffffff 48%, #ffffff 52%, transparent 52%),
+      linear-gradient(-45deg, transparent 48%, #ffffff 48%, #ffffff 52%, transparent 52%);
+  background-size: 80px 80px;
+  opacity: 0.7;
+}
+.location-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.3);
+  backdrop-filter: blur(1px);
+  transition: 0.3s;
+  z-index: 1;
+}
+.location-card:active { transform: scale(0.98); }
+.location-card:active::after { background: rgba(255,255,255,0.1); }
+.location-card-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: var(--brand-d);
+  font-weight: 800;
+  font-size: 14.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 20px;
+}
+.location-card-content .icon { font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
+/* Estado capturado */
+.location-card.captured::after { background: rgba(232, 249, 238, 0.85); backdrop-filter: blur(2px); }
+.location-card.captured .location-card-content { color: var(--ok); }
+
 .pay-select-wrap{position:relative}
 .pay-select-wrap select{width:100%;padding:15px 42px 15px 15px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-size:14.5px;font-family:inherit;outline:none;color:var(--ink);cursor:pointer;font-weight:500;appearance:none;-webkit-appearance:none;-moz-appearance:none;transition:.2s}
 .pay-select-wrap select:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
@@ -346,7 +411,7 @@ main{padding:0}
   </header>
 
   <main>
-    <!-- NUEVA VISTA GUIADA (ASISTENTE) -->
+    <!-- VISTA GUIADA (ASISTENTE) -->
     <section id="view-guided" class="view hidden">
       <div class="guided-header">
         <div class="bot-bubble">
@@ -355,21 +420,17 @@ main{padding:0}
         </div>
         <div class="escape-btn" onclick="escapeGuidedFlow()">Prefiero ver el menú completo</div>
       </div>
-      <div class="guided-content" id="guidedContent">
-        <!-- Aquí se inyectan las categorías o los productos -->
-      </div>
+      <div class="guided-content" id="guidedContent"></div>
       
-      <!-- BARRA DE BOTONES FIJOS (Ahora fuera del header y del content) -->
-      <div class="guided-actions-bar" id="guidedActions">
-         <!-- Botones dinámicos de Regresar / Continuar -->
-      </div>
+      <div class="guided-actions-bar" id="guidedActions"></div>
     </section>
 
-    <!-- VISTA MENÚ LIBRE (Por si escapan de la guía) -->
+    <!-- VISTA MENÚ LIBRE -->
     <section id="view-menu" class="view hidden"><div id="menuList" class="menu-list"></div></section>
     
     <section id="view-cart" class="view hidden"><div id="cartList"></div><div id="cartTotals"></div><div id="cartActions"></div></section>
 
+    <!-- VISTA FINALIZAR PEDIDO -->
     <section id="view-checkout" class="view hidden">
       <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;letter-spacing:-.4px">Finalizar pedido</h2>
       <p style="font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.6">Completa tus datos. Al confirmar se abrirá WhatsApp con el resumen y recibirás tu <b style="color:var(--brand)">número de pedido</b> para rastrearlo.</p>
@@ -385,13 +446,17 @@ main{padding:0}
         </div>
       </div>
       
+      <!-- DIRECCIÓN REEMPLAZADA POR TARJETA DE MAPA -->
       <div id="addressBlock">
-        <div class="field" id="f-addr-w">
-          <label>Dirección de entrega *</label>
-          <textarea id="f-addr" placeholder="Calle, número, sector…"></textarea>
-          <div class="err">Ingresa la dirección de entrega</div>
-          <button type="button" id="btnLocation" class="btn btn-ghost" onclick="getLocation()" style="margin-top:10px; padding:12px; font-size:13px; border-style:dashed;">📍 Compartir ubicación exacta (Google Maps)</button>
-          <div id="locationStatus" style="font-size:12px; color:var(--brand); margin-top:8px; display:none; font-weight:500;"></div>
+        <div class="field">
+          <label>Ubicación de entrega *</label>
+          <div id="locationCard" class="location-card" onclick="getLocation()">
+             <div class="location-card-content" id="locationCardContent">
+                 <span class="icon">📍</span>
+                 <span>Enviar mi ubicación en tiempo real</span>
+             </div>
+          </div>
+          <div id="locationStatus" style="font-size:12px; color:var(--muted); margin-top:8px; display:none; font-weight:500; text-align:center;"></div>
         </div>
         <div class="field"><label>Punto de referencia (opcional)</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
       </div>
@@ -418,7 +483,7 @@ main{padding:0}
         </div>
       </div>
 
-      <div class="field"><label>Notas para la cocina (opcional)</label><textarea id="f-notes" placeholder="Ej: sin cebolla…"></textarea></div>
+      <!-- CUADRO DE NOTAS ELIMINADO -->
       
       <div id="checkoutSummary"></div>
       
@@ -455,7 +520,7 @@ main{padding:0}
     </section>
   </main>
 
-  <!-- MENÚ INFERIOR DE NAVEGACIÓN -->
+  <!-- MENÚ INFERIOR -->
   <nav class="nav">
     <button class="nav-btn" data-view="guided"><span class="ni">🤖</span>Asistente</button>
     <button class="nav-btn" data-view="categories"><span class="ni">📋</span>Categorías</button>
@@ -528,12 +593,7 @@ var EXCHANGE_RATE = null;
 
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
 
-// Estado del flujo guiado
-var guidedState = {
-  step: 'food', // 'food', 'drinks', 'desserts', 'all', 'done'
-  viewingCategory: null, 
-  stepsOrder: ['food', 'drinks', 'desserts']
-};
+var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
 async function loadSharedData(){
   try {
@@ -555,7 +615,7 @@ async function loadSharedData(){
       CONFIG.payments = config.payments || [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }];
       CONFIG.hours = config.hours || CONFIG.hours;
       CONFIG.days = config.days || CONFIG.days;
-      CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
+      CONFIG.helpHoursText = config.helphourstext || CONFIG.helphourstext || CONFIG.helpHoursText;
     }
 
     if (catsRes.data) {
@@ -667,19 +727,34 @@ function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_nam
 
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
 
+// ACTUALIZADO: Nueva lógica del mapa
 function getLocation() {
-  const btn = document.getElementById("btnLocation"); const statusEl = document.getElementById("locationStatus");
+  const card = document.getElementById("locationCard");
+  const content = document.getElementById("locationCardContent");
+  const statusEl = document.getElementById("locationStatus");
+
   if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
-  btn.innerHTML = "⏳ Obteniendo ubicación..."; btn.disabled = true; statusEl.style.display = "block"; statusEl.style.color = "var(--muted)"; statusEl.innerHTML = "Esperando permiso de ubicación...";
+
+  content.innerHTML = `<span class="icon">⏳</span><span>Obteniendo ubicación...</span>`;
+  statusEl.style.display = "block";
+  statusEl.style.color = "var(--muted)";
+  statusEl.innerHTML = "Esperando permiso...";
+
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const lat = position.coords.latitude; const lng = position.coords.longitude;
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-      btn.innerHTML = "✅ Ubicación capturada"; btn.style.borderColor = "var(--ok)"; btn.style.color = "var(--ok)"; btn.disabled = false;
-      statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`; toast("Ubicación capturada con éxito");
+      
+      card.classList.add("captured");
+      content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      
+      statusEl.style.color = "var(--ok)";
+      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+      toast("Ubicación capturada");
     },
     (error) => {
-      btn.innerHTML = "📍 Reintentar compartir ubicación"; btn.disabled = false; statusEl.style.color = "var(--danger)";
+      content.innerHTML = `<span class="icon">📍</span><span>Reintentar enviar ubicación</span>`;
+      statusEl.style.color = "var(--danger)";
       let msg = "Error al obtener ubicación.";
       if (error.code === 1) msg = "Permiso denegado. Habilita la ubicación en tu navegador.";
       if (error.code === 2) msg = "Ubicación no disponible. Verifica tu GPS.";
@@ -689,10 +764,6 @@ function getLocation() {
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
 }
-
-/* ========================================================
-   LÓGICA DEL ASISTENTE GUIADO
-   ======================================================== */
 
 function startGuidedFlow() {
   guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
@@ -715,7 +786,6 @@ function escapeGuidedFlow() {
   toast("Explorando menú libre");
 }
 
-// Clasifica una categoría según su nombre
 function getCategoryPhase(catName) {
   const n = catName.toLowerCase();
   if (n.includes('bebida') || n.includes('jugo') || n.includes('refresco') || n.includes('malta') || n.includes('agua') || n.includes('cerveza') || n.includes('vino') || n.includes('café')) return 'drinks';
@@ -754,7 +824,6 @@ function renderGuided() {
   const textEl = document.getElementById('guidedBotText');
   const actionsEl = document.getElementById('guidedActions');
   
-  // 1. Si estamos en la pantalla final
   if (guidedState.step === 'done') {
     if (state.cart.length === 0) {
       textEl.innerHTML = `Parece que tu carrito está vacío, <b>${esc(state.clientName)}</b>. 🛒<br><br>¿Quieres volver a explorar las categorías para elegir algo?`;
@@ -771,16 +840,13 @@ function renderGuided() {
     return;
   }
 
-  // 2. Modo "Todas las Categorías"
   if (guidedState.step === 'all' && !guidedState.viewingCategory) {
     textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 Elige una categoría para ver nuestros productos.`;
-    
     let btnHtml = '';
     if (state.cart.length > 0) {
       btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito (${state.cart.reduce((a,i)=>a+i.qty,0)})</button>`;
     }
     actionsEl.innerHTML = btnHtml;
-
     const allCats = getFilteredCategories('all');
     let gridHtml = allCats.map(c => `
       <div class="cat-card" onclick="selectGuidedCategory('${c.id}')">
@@ -792,16 +858,13 @@ function renderGuided() {
     return;
   }
 
-  // 3. Flujo guiado normal (food, drinks, desserts) o viendo productos de "all"
   const currentPhaseCats = getFilteredCategories(guidedState.step);
-  
   if (currentPhaseCats.length === 0 && !guidedState.viewingCategory) {
     skipGuidedPhase();
     return;
   }
 
   if (!guidedState.viewingCategory) {
-    // Viendo Categorías del paso
     if (guidedState.step === 'food') textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 ¿Qué se te antoja comer hoy?`;
     if (guidedState.step === 'drinks') textEl.innerHTML = `¡Buenísimo! 😋 ¿Te gustaría acompañar tu comida con alguna bebida?`;
     if (guidedState.step === 'desserts') textEl.innerHTML = `¿Y qué tal un postre para terminar? 🍰 Tenemos cosas dulces.`;
@@ -822,7 +885,6 @@ function renderGuided() {
     content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
 
   } else {
-    // Viendo Productos de una categoría
     const catObj = CATS.find(c => c.id === guidedState.viewingCategory);
     if (guidedState.step === 'food') textEl.innerHTML = `Aquí tienes nuestras opciones de <b>${esc(catObj.name)}</b>. ¿Qué te provoca?`;
     else if (guidedState.step === 'drinks') textEl.innerHTML = `Nuestras bebidas de <b>${esc(catObj.name)}</b>. ¿Cuál te llevas?`;
@@ -863,10 +925,6 @@ function selectGuidedCategory(catId) {
   guidedState.viewingCategory = catId;
   renderGuided();
 }
-
-/* ========================================================
-   RESTO DE FUNCIONES (Carrito, Modal, Checkout, etc.)
-   ======================================================== */
 
 function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
@@ -1036,23 +1094,38 @@ function updateOrderType() {
 function renderCheckout(){
   renderPayments();
   if (state.clientName) $("#f-name").value = state.clientName;
+  
+  const card = document.getElementById("locationCard");
+  const content = document.getElementById("locationCardContent");
+  const statusEl = document.getElementById("locationStatus");
+
   if (state.userLocationUrl) {
-    const btn = document.getElementById("btnLocation"); const statusEl = document.getElementById("locationStatus");
-    if (btn && statusEl) {
-      btn.innerHTML = "✅ Ubicación capturada"; btn.style.borderColor = "var(--ok)"; btn.style.color = "var(--ok)"; statusEl.style.display = "block"; statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver mi ubicación en Maps</a>`;
-    }
+    card.classList.add("captured");
+    content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+    statusEl.style.display = "block";
+    statusEl.style.color = "var(--ok)";
+    statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+  } else {
+    card.classList.remove("captured");
+    content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`;
+    statusEl.style.display = "none";
   }
+
   updateOrderType();
 }
 
 async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
-  var addr = $("#f-addr").value.trim(); var ref = $("#f-ref").value.trim(); var notes = $("#f-notes").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
+  var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
+  
   var valid = true;
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
   if (!phone) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
-  if (isDelivery && !addr) { $("#f-addr-w").classList.add("invalid"); valid = false; } else { $("#f-addr-w").classList.remove("invalid"); }
-  if (!valid) { toast("Completa los campos obligatorios"); return; }
+  
+  // Validar que si es delivery, haya enviado ubicación
+  if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
+  
+  if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
@@ -1061,15 +1134,20 @@ async function submitOrder() {
 
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
-  if (isDelivery) { msg += `*Dirección:* ${addr} (${ref})\n`; if (state.userLocationUrl) msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; }
-  msg += `*Tipo:* ${isDelivery ? 'Delivery' : 'Retiro en tienda'}\n*Pago:* ${payMethod}\n\n*Productos:*\n`;
+  if (isDelivery) { 
+    msg += `*Tipo:* Delivery\n`;
+    if (ref) msg += `*Ref:* ${ref}\n`;
+    msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; 
+  } else {
+    msg += `*Tipo:* Retiro en tienda\n`;
+  }
+  msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
   state.cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`; });
   msg += `\n*Subtotal:* $${sub.toFixed(2)}\n*Delivery:* $${del.toFixed(2)}\n*TOTAL:* $${total.toFixed(2)}\n`;
-  if (notes) msg += `\n*Notas:* ${notes}`;
 
   var orderData = {
-    code: code, status: 'recibido', customer: { name, phone, address: addr, ref: ref, locationUrl: state.userLocationUrl },
-    items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: notes, proof_url: proofUrl 
+    code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl },
+    items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl 
   };
 
   const { error } = await supabaseClient.from('orders').insert([orderData]);
@@ -1139,11 +1217,9 @@ function go(view, subview = null){
   $$(".view").forEach(v => v.classList.add("hidden"));
   const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
   
-  // Ocultar buscador y chips en vistas que no son el menú libre
   $("#searchWrap").style.display = view === "menu" ? "" : "none"; 
   $("#chips").style.display = view === "menu" ? "" : "none";
   
-  // Resaltar el botón de navegación
   $$(".nav-btn").forEach(b => b.classList.remove("active"));
   if (view === 'guided' && subview === 'all') {
       const btn = document.querySelector('.nav-btn[data-view="categories"]');
@@ -1177,9 +1253,6 @@ function go(view, subview = null){
   startBtn.addEventListener("click", function(){
     var name = nameInput.value.trim(); if (!name) return;
     saveName(name); document.getElementById("botWelcome").classList.add("hidden");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => { state.userLocationUrl = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`; }, (error) => { console.log("Permiso denegado."); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-    }
     startGuidedFlow(); 
   });
 })();
