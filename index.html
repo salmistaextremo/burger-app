@@ -969,7 +969,8 @@ function addToCart(){
   var unit = p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0);
   var found = state.cart.find(i => i.key === key);
   if (found) found.qty += m.qty;
-  else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
+  // CORRECCIÓN: Guardar img en el carrito
+  else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, img: p.img, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
   saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
   
   if (state.view === 'guided') {
@@ -985,7 +986,9 @@ function renderCart(){
   if (!state.cart.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="showAllCategories()">Ver Categorías</button>`; return; }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
-      <div class="ci-emoji">${i.emoji}</div>
+      <div class="ci-emoji">
+        ${i.img ? `<img src="${esc(i.img)}" alt="${esc(i.name)}" style="object-fit:cover;">` : `<span style="font-size:28px;">${i.emoji || '🍔'}</span>`}
+      </div>
       <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
       <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQty('${i.key}',-1)">−</button><span>${i.qty}</span><button onclick="changeQty('${i.key}',1)">+</button></div></div>
     </div>`).join("");
@@ -1060,7 +1063,8 @@ async function submitOrder() {
     msg += `*Tipo:* Retiro en tienda\n`;
   }
   msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
-  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`; });
+  // CORRECCIÓN: Añadir emoji al mensaje de WhatsApp
+  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`; });
   msg += `\n*Subtotal:* $${sub.toFixed(2)}\n*Delivery:* $${del.toFixed(2)}\n*TOTAL:* $${total.toFixed(2)}\n`;
 
   var orderData = {
