@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-/* ... (Aquí van todos los estilos anteriores que ya tenías) ... */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#FFFFFF; --bg-2:#F8F9FA; --surface:#FFFFFF; --surface-2:#F5F6F8; --surface-3:#EEF0F3;
@@ -32,23 +31,42 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 /* ESTILOS DEL BOT GUÍA */
 .guided-header { background: #FFF; padding: 16px 18px 10px; position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--line); }
-.bot-bubble { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-2); padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; margin-bottom: 16px; animation: fade .4s ease; }
+.bot-bubble { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-2); padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; margin-bottom: 8px; animation: fade .4s ease; }
 .bot-avatar-small { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-2), var(--brand)); display: grid; place-items: center; font-size: 18px; color: white; flex: none; overflow: hidden; }
 .bot-avatar-small img { width: 100%; height: 100%; object-fit: cover; }
 .bot-text { font-size: 14.5px; color: var(--ink); line-height: 1.5; font-weight: 500; margin-top: 4px; }
-.guided-actions { display: flex; gap: 8px; margin-bottom: 16px; }
+
+/* NUEVA BARRA DE ACCIONES FIJAS */
+.guided-actions-bar {
+  position: fixed;
+  bottom: calc(65px + env(safe-area-inset-bottom)); /* Se coloca justo encima del menú de navegación */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  padding: 12px 18px;
+  display: flex;
+  gap: 10px;
+  z-index: 35; /* Debajo de la barra de navegación principal */
+  animation: fade .3s ease;
+}
 .btn-guided { flex: 1; padding: 12px; border-radius: 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; border: 1px solid transparent; }
 .btn-guided-back { background: var(--surface); border-color: var(--line); color: var(--ink-2); }
 .btn-guided-skip { background: var(--brand-soft); color: var(--brand-d); }
 .btn-guided-complete { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
 .btn-guided:active { transform: scale(0.97); }
-.guided-content { padding: 0 18px 18px; }
-.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.guided-content { padding: 0 18px 140px; } /* Espacio extra abajo para no chocar con los botones fijos */
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;}
 .cat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 12px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm); }
 .cat-card:active { transform: scale(0.96); border-color: var(--brand); }
 .cat-card .icon { font-size: 36px; margin-bottom: 8px; display: block; }
 .cat-card .name { font-size: 14px; font-weight: 700; color: var(--ink); }
-.escape-btn { display: block; text-align: center; font-size: 12px; color: var(--muted); text-decoration: underline; margin-top: 8px; cursor: pointer; }
+.escape-btn { display: block; text-align: center; font-size: 12px; color: var(--muted); text-decoration: underline; margin-top: 12px; cursor: pointer; padding-bottom: 8px;}
 
 /* RESTO DE ESTILOS (Menú, carrito, etc.) */
 .rate-badge{display:inline-flex;align-items:center;gap:6px;background:var(--brand-soft);color:var(--brand-d);font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;margin-top:6px;letter-spacing:.3px}
@@ -78,12 +96,13 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .chip{flex:none;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.2s;color:var(--muted);font-family:inherit}
 .chip.active{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#FFFFFF;border-color:transparent;font-weight:600;box-shadow:0 4px 14px var(--brand-glow)}
 .chip:active{transform:scale(.96)}
-main{padding:18px}
+main{padding:0}
 .view{animation:fade .3s ease}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:28px 0 14px}
 .sec-title:first-child{margin-top:6px}
-.menu-list{display:flex;flex-direction:column;gap:16px}
+.menu-list{display:flex;flex-direction:column;gap:16px; padding: 18px;}
+#cartList, #cartTotals, #cartActions, #view-checkout, #view-tracking, #view-help { padding: 18px; }
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:.25s cubic-bezier(.2,.9,.3,1);cursor:pointer;box-shadow:var(--shadow-sm)}
 .card:active{transform:scale(.99);border-color:var(--line-2);box-shadow:var(--shadow)}
 .card.sold-out { opacity: 0.6; filter: grayscale(1); pointer-events: none; }
@@ -334,13 +353,15 @@ main{padding:18px}
           <div class="bot-avatar-small" id="guidedBotAvatar">🤖</div>
           <div class="bot-text" id="guidedBotText">Hola...</div>
         </div>
-        <div class="guided-actions" id="guidedActions">
-           <!-- Botones dinámicos de Regresar / Saltar -->
-        </div>
         <div class="escape-btn" onclick="escapeGuidedFlow()">Prefiero ver el menú completo</div>
       </div>
       <div class="guided-content" id="guidedContent">
         <!-- Aquí se inyectan las categorías o los productos -->
+      </div>
+      
+      <!-- BARRA DE BOTONES FIJOS (Ahora fuera del header y del content) -->
+      <div class="guided-actions-bar" id="guidedActions">
+         <!-- Botones dinámicos de Regresar / Continuar -->
       </div>
     </section>
 
@@ -709,6 +730,15 @@ function skipGuidedPhase() {
   }
 }
 
+function prevGuidedPhase() {
+  const currentIndex = guidedState.stepsOrder.indexOf(guidedState.step);
+  if (currentIndex > 0) {
+    guidedState.step = guidedState.stepsOrder[currentIndex - 1];
+    guidedState.viewingCategory = null;
+    renderGuided();
+  }
+}
+
 function renderGuided() {
   const content = document.getElementById('guidedContent');
   const textEl = document.getElementById('guidedBotText');
@@ -741,7 +771,13 @@ function renderGuided() {
     if (guidedState.step === 'drinks') textEl.innerHTML = `¡Buenísimo! 😋 ¿Te gustaría acompañar tu comida con alguna bebida?`;
     if (guidedState.step === 'desserts') textEl.innerHTML = `¿Y qué tal un postre para terminar? 🍰 Tenemos cosas dulces.`;
     
-    actionsEl.innerHTML = `<button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Saltar paso ⏭️</button>`;
+    // Lógica de botones fijos (viendo categorías)
+    let btnHtml = '';
+    if (guidedState.step !== 'food') {
+      btnHtml += `<button class="btn-guided btn-guided-back" onclick="prevGuidedPhase()">← Regresar</button>`;
+    }
+    btnHtml += `<button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>`;
+    actionsEl.innerHTML = btnHtml;
     
     let gridHtml = currentPhaseCats.map(c => `
       <div class="cat-card" onclick="selectGuidedCategory('${c.id}')">
@@ -758,9 +794,10 @@ function renderGuided() {
     if (guidedState.step === 'drinks') textEl.innerHTML = `Nuestras bebidas de <b>${esc(catObj.name)}</b>. ¿Cuál te llevas?`;
     if (guidedState.step === 'desserts') textEl.innerHTML = `Mira estos postres de <b>${esc(catObj.name)}</b>. ¡Se ven deliciosos!`;
 
+    // Lógica de botones fijos (viendo productos)
     actionsEl.innerHTML = `
       <button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar</button>
-      <button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Saltar paso ⏭️</button>
+      <button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>
     `;
 
     const items = MENU.filter(p => p.cat === guidedState.viewingCategory && p.available !== false);
@@ -920,10 +957,8 @@ function addToCart(){
   else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
   saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
   
-  // Si estamos en la vista guiada, no saltamos de paso automáticamente, dejamos que el usuario decida.
   if (state.view === 'guided') {
-    // Solo actualizamos el texto del bot para dar feedback
-    toast("¡Agregado! Puedes elegir otro o presionar 'Saltar paso'");
+    toast("¡Agregado! Puedes elegir otro o presionar 'Continuar'");
   }
 }
 
@@ -981,8 +1016,6 @@ async function submitOrder() {
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
   
-  // NOTA: La subida de comprobante está pausada temporalmente. 
-  // Para activarla, descomenta el bloque y asegúrate de tener las políticas RLS en Supabase.
   let proofUrl = null;
 
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
@@ -1099,7 +1132,7 @@ function go(view){
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => { state.userLocationUrl = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`; }, (error) => { console.log("Permiso denegado."); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
     }
-    startGuidedFlow(); // 👈 Inicia la experiencia guiada
+    startGuidedFlow(); 
   });
 })();
 
@@ -1118,7 +1151,6 @@ async function init(){
     document.getElementById("botWelcome").classList.add("hidden");
     document.getElementById("botNameInput").value = state.clientName;
     
-    // Si ya tiene un nombre, lo mandamos directo al asistente
     if (localStorage.getItem('ff_current_order_code')) {
       go('tracking');
     } else {
