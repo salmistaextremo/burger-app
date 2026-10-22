@@ -114,6 +114,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none}
 .ci-price{font-size:16px;font-weight:800;color:var(--brand);display:flex;flex-direction:column;align-items:flex-end; text-align: right;}
 
+/* 👇 AQUÍ ESTÁ EL CAMBIO DE LOS BOTONES (SE ELIMINARON LAS LÍNEAS Y EL FONDO) */
+.qty{display:flex;align-items:center;gap:6px;}
+.qty button{width:28px;height:28px;border:none;background:transparent;border-radius:8px;font-size:20px;font-weight:500;cursor:pointer;color:var(--ink);display:grid;place-items:center;transition:.2s;}
+.qty button:active{background:var(--surface-2);transform:scale(.9);}
+.qty span{min-width:20px;text-align:center;font-size:15px;font-weight:800;}
+
 .totals{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;margin-top:20px}
 .trow{display:flex;justify-content:space-between;align-items:flex-start;font-size:13.5px;padding:7px 0;color:var(--muted)}
 .trow.total{font-size:19px;font-weight:800;color:var(--ink);border-top:1px solid var(--line);margin-top:12px;padding-top:16px}
@@ -146,7 +152,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .opt .box{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:13px;color:transparent;background:var(--surface-2)}
 .opt:has(input:checked) .box{background:var(--brand);border-color:var(--brand);color:#fff}
 .qty-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:20px 0}
-.qty-row .qty button{width:44px;height:44px;font-size:22px}
+.qty-row .qty button{width:44px;height:44px;font-size:22px; background:var(--surface-2); border-radius:12px;}
 .qty-row .qty span{font-size:18px;min-width:40px}
 
 .field{margin-bottom:18px}
@@ -318,7 +324,6 @@ function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// Ahora el HTML retornado tiene un salto de línea para el Bs
 function money(n) {
   const rate = EXCHANGE_RATE || 36.50; 
   const usdStr = CONFIG.currency + Number(n).toFixed(2);
@@ -728,7 +733,6 @@ function goToCart() {
 
 function closeView(id) { $("#" + id).classList.add("hidden"); }
 
-// 👇 AQUÍ SE ELIMINÓ EL DELIVERY DE LA VISTA DEL CARRITO
 function renderCart() {
   const body = $("#cartBody");
   let html = state.cart.map(i => `
@@ -837,7 +841,6 @@ function updatePayDetails() {
   field.classList.remove("hidden");
 }
 
-// 👇 AQUÍ SE AGREGA EL DELIVERY DINÁMICAMENTE SI SE SELECCIONA
 function updateOrderType() {
   const isDel = $("input[name='otype']:checked").value === 'delivery';
   $("#addressBlock").style.display = isDel ? "block" : "none";
