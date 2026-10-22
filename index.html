@@ -114,7 +114,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none}
 .ci-price{font-size:16px;font-weight:800;color:var(--brand);display:flex;flex-direction:column;align-items:flex-end; text-align: right;}
 
-/* 👇 AQUÍ ESTÁ EL CAMBIO DE LOS BOTONES (SE ELIMINARON LAS LÍNEAS Y EL FONDO) */
+/* BOTONES MINIMALISTAS DE CANTIDAD */
 .qty{display:flex;align-items:center;gap:6px;}
 .qty button{width:28px;height:28px;border:none;background:transparent;border-radius:8px;font-size:20px;font-weight:500;cursor:pointer;color:var(--ink);display:grid;place-items:center;transition:.2s;}
 .qty button:active{background:var(--surface-2);transform:scale(.9);}
@@ -240,7 +240,14 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <div id="addressBlock">
       <div class="field"><label>Dirección de entrega *</label><textarea id="f-addr" placeholder="Calle, número, sector..."></textarea></div>
       <div class="field"><label>Punto de referencia</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
-      <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:16px" onclick="getLocation()" id="btnLocation">📍 Compartir ubicación (Maps)</button>
+      
+      <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">📍 Compartir ubicación (Maps)</button>
+      
+      <!-- 👇 AQUÍ ESTÁ EL NUEVO MAPA DE GOOGLE MAPS QUE APARECE AL COMPARTIR UBICACIÓN -->
+      <div id="mapPreviewContainer" class="hidden" style="margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 200px; background: var(--surface-2);">
+        <iframe id="mapPreviewIframe" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+
     </div>
 
     <div class="field">
@@ -881,8 +888,12 @@ function clearProof() {
   $("#proofPreviewWrap").classList.add("hidden");
 }
 
+// 👇 AQUÍ SE ACTUALIZA LA FUNCIÓN PARA MOSTRAR EL MAPA
 function getLocation() {
   const btn = $("#btnLocation");
+  const mapContainer = $("#mapPreviewContainer");
+  const mapIframe = $("#mapPreviewIframe");
+  
   btn.textContent = "⏳ Obteniendo...";
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -890,6 +901,12 @@ function getLocation() {
       btn.textContent = "✅ Ubicación capturada";
       btn.style.color = "var(--ok)";
       btn.style.borderColor = "var(--ok)";
+      
+      // Mostrar el mapa embebido
+      if (mapContainer && mapIframe) {
+        mapIframe.src = `https://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}&hl=es&z=16&output=embed`;
+        mapContainer.classList.remove("hidden");
+      }
     }, 
     () => { toast("Error al obtener ubicación"); btn.textContent = "📍 Reintentar"; }
   );
