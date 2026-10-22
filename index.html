@@ -57,8 +57,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:18px;display:grid;place-items:center;cursor:pointer;transition:.2s}
 .icon-btn:active{transform:scale(.94);background:var(--surface-2)}
 .btn-back{width:auto;padding:0 12px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
-.cart-btn{position:relative}
-.cart-badge{position:absolute;top:-4px;right:-4px;background:var(--brand);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;border:2px solid #fff}
 
 /* ====== CHAT UI ====== */
 .chat-container{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;padding-bottom:100px}
@@ -77,7 +75,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .opt-cat .emoji{font-size:36px}
 .opt-cat .name{font-size:14px;font-weight:600;color:var(--ink);text-align:center}
 
-/* TARJETA DE PRODUCTO TIPO BANNER GRANDE */
 .prod-opt{flex:1 1 100%;background:#fff;border:1px solid var(--line);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);position:relative;margin-bottom:12px;}
 .prod-opt:active{transform:scale(.98);border-color:var(--brand)}
 .p-img-banner{width:100%;height:220px;background:var(--surface-2);display:grid;place-items:center;position:relative;overflow:hidden}
@@ -91,13 +88,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .p-price{font-size:22px;font-weight:900;color:var(--brand);display:flex;flex-direction:column;line-height:1.1;}
 .price-ves{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px; display: block; text-align: right;}
 .p-add{width:44px;height:44px;border-radius:14px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:24px;font-weight:bold;flex:none;transition:0.2s}
-.prod-opt:active .p-add{background:var(--brand);color:#fff}
 
 .action-btn{width:100%;padding:16px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
 .action-btn.primary{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;box-shadow:0 4px 14px var(--brand-glow)}
-.action-btn.primary:active{transform:scale(.97)}
 .action-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line); margin-top: 12px;}
-.action-btn.secondary:active{background:var(--line)}
 
 /* ====== VISTAS (CARRITO/CHECKOUT/TRACKING) ====== */
 .view-overlay{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;animation:up .3s ease}
@@ -107,7 +101,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .view-hdr h2{margin:0;font-size:18px;font-weight:800;flex:1;text-align:center;margin-right:32px}
 .view-body{flex:1;overflow-y:auto;padding:20px;padding-bottom:100px}
 
-/* ====== VISTA DE SEGUIMIENTO EN TIEMPO REAL ====== */
+/* ====== VISTA DE SEGUIMIENTO ====== */
 #viewTracking .view-body { display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-2); padding: 20px; }
 .track-card { background: #fff; border-radius: 24px; padding: 28px 24px; box-shadow: var(--shadow-md); width: 100%; text-align: center; border: 1px solid var(--line); }
 .track-card .tc-code { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--brand); font-weight: 800; }
@@ -134,7 +128,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none}
 .ci-price{font-size:16px;font-weight:800;color:var(--brand);display:flex;flex-direction:column;align-items:flex-end; text-align: right;}
 
-/* BOTONES MINIMALISTAS DE CANTIDAD */
 .qty{display:flex;align-items:center;gap:6px;}
 .qty button{width:28px;height:28px;border:none;background:transparent;border-radius:8px;font-size:20px;font-weight:500;cursor:pointer;color:var(--ink);display:grid;place-items:center;transition:.2s;}
 .qty button:active{background:var(--surface-2);transform:scale(.9);}
@@ -209,7 +202,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 </head>
 <body>
 
-<!-- PANTALLA 1: BIENVENIDA -->
 <div id="welcomeScreen" class="welcome-screen">
   <div class="welcome-avatar" id="welcomeBot">🍔</div>
   <h1 class="welcome-title">¡Bienvenido a <span id="welcomeBrand">Rapid Burger</span>!</h1>
@@ -220,7 +212,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
-<!-- APP PRINCIPAL -->
 <div id="app" class="hidden">
   <header class="mini-hdr">
     <div class="mini-brand">
@@ -236,11 +227,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </header>
 
   <div id="chatContainer" class="chat-container">
-    <!-- Aquí se inyectan los mensajes del bot y las opciones -->
+    <!-- Chat -->
   </div>
 </div>
 
-<!-- VISTA CARRITO -->
 <div id="viewCart" class="view-overlay hidden">
   <div class="view-hdr" style="justify-content: space-between;">
     <button class="back-btn" onclick="closeView('viewCart')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
@@ -250,7 +240,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   <div class="view-body" id="cartBody"></div>
 </div>
 
-<!-- VISTA CHECKOUT -->
 <div id="viewCheckout" class="view-overlay hidden">
   <div class="view-hdr">
     <button class="back-btn" onclick="closeView('viewCheckout')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
@@ -271,8 +260,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <div id="addressBlock">
       <div class="field"><label>Dirección de entrega *</label><textarea id="f-addr" placeholder="Calle, número, sector..."></textarea></div>
       <div class="field"><label>Punto de referencia</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
-      
-      <!-- BOTÓN DE GPS -->
       <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">
         📍 Capturar ubicación GPS
       </button>
@@ -285,7 +272,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <label>Método de pago *</label>
       <select id="paySelect"></select>
       <div id="payDetails" style="margin-top:10px; font-size:13px; color:var(--ink-2); line-height:1.6;"></div>
-      
       <div id="proofField" style="margin-top:16px" class="hidden">
         <label>Comprobante de pago</label>
         <div id="proofPickerWrap">
@@ -304,14 +290,11 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     </div>
 
     <div class="field"><label>Notas para la cocina</label><textarea id="f-notes" placeholder="Ej: sin cebolla..."></textarea></div>
-    
     <div id="checkoutSummary"></div>
-    
     <button class="btn-primary btn-wa" onclick="submitOrder()" id="btnConfirm">📲 Confirmar y enviar por WhatsApp</button>
   </div>
 </div>
 
-<!-- VISTA DE SEGUIMIENTO EN TIEMPO REAL -->
 <div id="viewTracking" class="view-overlay hidden">
   <div class="view-hdr" style="justify-content: space-between;">
     <button class="back-btn" onclick="closeView('viewTracking'); startChatWizard();">← Volver al menú</button>
@@ -319,43 +302,24 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <div style="width:80px"></div>
   </div>
   <div class="view-body">
-    <div class="track-card" id="trackCardContent">
-      <!-- Se inyecta dinámicamente -->
-    </div>
+    <div class="track-card" id="trackCardContent"></div>
   </div>
 </div>
 
-<!-- BOTONERA INFERIOR -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="nav-btn active" onclick="showCategoriesView()">
-    <span class="ni">📁</span>
-    Categorías
-  </button>
-  <button class="nav-btn" onclick="goToCart()">
-    <span class="ni">🛒</span>
-    Carrito
-    <span id="cartBadge" class="nav-badge hidden">0</span>
-  </button>
-  <button class="nav-btn" onclick="openHelp()">
-    <span class="ni">💬</span>
-    Ayuda
-  </button>
-  <button class="nav-btn" onclick="focusAssistant()">
-    <span class="ni">🍔</span>
-    Asistente
-  </button>
+  <button class="nav-btn active" onclick="showCategoriesView()"><span class="ni">📁</span>Categorías</button>
+  <button class="nav-btn" onclick="goToCart()"><span class="ni">🛒</span>Carrito<span id="cartBadge" class="nav-badge hidden">0</span></button>
+  <button class="nav-btn" onclick="openHelp()"><span class="ni">💬</span>Ayuda</button>
+  <button class="nav-btn" onclick="focusAssistant()"><span class="ni">🍔</span>Asistente</button>
 </nav>
 
-<!-- MODAL DE PRODUCTO -->
 <div id="modal" class="modal hidden"></div>
 
-<!-- MODAL DE CALIFICACIÓN -->
 <div id="ratingModal" class="rating-modal hidden">
   <div class="rating-box" id="ratingBoxContent">
     <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
     <h2>¡Buen provecho!</h2>
     <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
-    
     <div class="stars-container" id="starsContainer">
       <span class="star" onclick="setRating(1)">★</span>
       <span class="star" onclick="setRating(2)">★</span>
@@ -363,9 +327,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <span class="star" onclick="setRating(4)">★</span>
       <span class="star" onclick="setRating(5)">★</span>
     </div>
-    
     <textarea id="ratingComment" placeholder="Déjanos un comentario (opcional)..."></textarea>
-    
     <button class="btn-primary" onclick="submitRating()" id="btnSubmitRating">Enviar calificación</button>
     <button class="btn-start" style="background: transparent; color: var(--muted); box-shadow: none; font-weight: 600; margin-top: 8px; padding: 10px;" onclick="closeRatingModal()">Ahora no</button>
   </div>
@@ -392,7 +354,7 @@ var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF
 
 var state = { 
   clientName: "", cart: [], proofImage: null, userLocationUrl: null,
-  wizardStep: "food", trackingChannel: null
+  wizardStep: "food", trackingChannel: null, trackingInterval: null
 };
 
 var currentRating = 0;
@@ -764,8 +726,14 @@ function updateBadge() {
   b.classList.toggle("hidden", n === 0);
 }
 
-// === LÓGICA BOTONERA Y REGRESAR ===
+// === LÓGICA DE NAVEGACIÓN Y LIMPIEZA ===
+function stopTracking() {
+  if (state.trackingChannel) { supabaseClient.removeChannel(state.trackingChannel); state.trackingChannel = null; }
+  if (state.trackingInterval) { clearInterval(state.trackingInterval); state.trackingInterval = null; }
+}
+
 function showCategoriesView() {
+  stopTracking();
   $("#viewCart").classList.add("hidden");
   $("#viewCheckout").classList.add("hidden");
   $("#viewTracking").classList.add("hidden");
@@ -773,6 +741,7 @@ function showCategoriesView() {
 }
 
 function focusAssistant() {
+  stopTracking();
   $("#viewCart").classList.add("hidden");
   $("#viewCheckout").classList.add("hidden");
   $("#viewTracking").classList.add("hidden");
@@ -800,6 +769,7 @@ function openHelp() {
 }
 
 function goBack() {
+  stopTracking();
   $("#viewCheckout").classList.add("hidden");
   $("#viewCart").classList.add("hidden");
   $("#viewTracking").classList.add("hidden");
@@ -807,12 +777,16 @@ function goBack() {
 }
 
 function goToCart() {
+  stopTracking();
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
   renderCart();
   $("#viewCart").classList.remove("hidden");
 }
 
-function closeView(id) { $("#" + id).classList.add("hidden"); }
+function closeView(id) { 
+  if (id === 'viewTracking') stopTracking();
+  $("#" + id).classList.add("hidden"); 
+}
 
 function renderCart() {
   const body = $("#cartBody");
@@ -995,7 +969,7 @@ function getLocation() {
   );
 }
 
-// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL
+// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL (CON RESPALDO POR POLLING)
 function showTrackingView(code) {
   $("#viewCheckout").classList.add("hidden");
   $("#viewTracking").classList.remove("hidden");
@@ -1003,31 +977,39 @@ function showTrackingView(code) {
   const trackContent = $("#trackCardContent");
   trackContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--muted);">Cargando estado del pedido...</div>`;
   
-  // 1. Cargar estado inicial
-  supabaseClient.from('orders').select('*').eq('code', code).single().then(({data, error}) => {
+  let lastStatus = null;
+
+  async function fetchLatestOrder() {
+    const {data, error} = await supabaseClient.from('orders').select('*').eq('code', code).single();
     if (data) {
-      renderTracking(data);
-      if (data.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
-        setTimeout(() => openRatingModal(code), 1000);
+      if (lastStatus !== data.status) {
+        renderTracking(data);
+        lastStatus = data.status;
       }
-    } else {
-      trackContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--danger);">Pedido no encontrado.</div>`;
+      
+      if (data.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
+        if ($("#ratingModal").classList.contains("hidden")) {
+           openRatingModal(code);
+        }
+      }
     }
-  });
+  }
+
+  // 1. Cargar estado inicial
+  fetchLatestOrder();
   
   // 2. Suscribirse a cambios en tiempo real
   if (state.trackingChannel) supabaseClient.removeChannel(state.trackingChannel);
   
   state.trackingChannel = supabaseClient.channel('client-track-' + code)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
-      const newData = payload.new;
-      renderTracking(newData);
-      
-      if (newData.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
-        setTimeout(() => openRatingModal(code), 1000);
-      }
+      fetchLatestOrder(); // Siempre trae datos frescos por si el payload está incompleto
     })
     .subscribe();
+    
+  // 3. Polling de respaldo (Cada 5 segundos) por si falla el Realtime
+  if (state.trackingInterval) clearInterval(state.trackingInterval);
+  state.trackingInterval = setInterval(fetchLatestOrder, 5000);
 }
 
 function renderTracking(order) {
@@ -1082,6 +1064,7 @@ function openRatingModal(code) {
   updateStarsUI(0);
   $("#ratingComment").value = "";
   $("#ratingModal").classList.remove("hidden");
+  stopTracking(); // Detenemos el polling y realtime
 }
 
 function closeRatingModal() {
@@ -1182,6 +1165,7 @@ async function submitOrder() {
   
   // Reset local state
   state.cart = []; state.proofImage = null; updateBadge();
+  $("#viewCheckout").classList.add("hidden");
   
   // Guardar código y mostrar seguimiento
   localStorage.setItem('ff_current_order_code', code);
@@ -1203,7 +1187,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             $("#welcomeScreen").classList.add("hidden");
             $("#app").classList.remove("hidden");
             showTrackingView(savedCode);
-            setTimeout(() => openRatingModal(savedCode), 1000);
           } else {
             localStorage.removeItem('ff_current_order_code');
           }
