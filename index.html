@@ -79,7 +79,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 .prod-opt{flex:1 1 100%;background:#fff;border:1px solid var(--line);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);position:relative;margin-bottom:12px;}
 .prod-opt:active{transform:scale(.98);border-color:var(--brand)}
-.prod-opt.unavailable { opacity: 0.6; pointer-events: none; filter: grayscale(0.8); }
 .p-img-banner{width:100%;height:220px;background:var(--surface-2);display:grid;place-items:center;position:relative;overflow:hidden}
 .p-img-banner img{width:100%;height:100%;object-fit:cover}
 .p-img-banner span{font-size:80px}
@@ -321,7 +320,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
-<!-- BOTONERA INFERIOR -->
+<!-- BOTONERA INFERIOR CON NUEVO BOTÓN "MI PEDIDO" -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-btn active" onclick="showCategoriesView()"><span class="ni">📁</span>Categorías</button>
   <button class="nav-btn" onclick="goToCart()"><span class="ni">🛒</span>Carrito<span id="cartBadge" class="nav-badge hidden">0</span></button>
@@ -363,7 +362,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 var CONFIG = {
   brand: "Rapid Burger", logo: "", whatsapp: "584121234567",
   payments: [], deliveryFee: 2.00, currency: "$",
-  hours: null, days: null, helpHoursText: ""
+  hours: null, days: null, helpHoursText: "",
+  exchange_rate: null // 👈 Tasa manual
 };
 
 var DB = { cats: [], menu: [] };
@@ -373,7 +373,7 @@ var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF
 var state = { 
   clientName: "", cart: [], proofImage: null, userLocationUrl: null,
   wizardStep: "food", trackingChannel: null, trackingInterval: null,
-  currentCatId: null, currentCatName: null, appChannel: null, syncInterval: null
+  currentCatId: null, currentCatName: null, appChannel: null
 };
 
 var currentRating = 0;
@@ -413,7 +413,16 @@ function fallbackCopy(text) {
   t.remove();
 }
 
+// 👇 OBTENER TASA DE CAMBIO (Prioriza Manual)
 async function fetchExchangeRate() {
+  // 1. Revisar si hay una tasa manual en la base de datos
+  if (CONFIG.exchange_rate && CONFIG.exchange_rate > 0) {
+    EXCHANGE_RATE = parseFloat(CONFIG.exchange_rate);
+    console.log("Usando tasa manual:", EXCHANGE_RATE);
+    return;
+  }
+
+  // 2. Si no hay manual, buscar en APIs
   const cached = localStorage.getItem('bcv_rate');
   if (cached) EXCHANGE_RATE = parseFloat(cached);
 
@@ -458,8 +467,6 @@ function findCategoryByKeywords(keys) {
 }
 
 async function loadData() {
-  await fetchExchangeRate(); 
-
   try {
     const [configRes, catsRes, prodsRes] = await Promise.all([
       supabaseClient.from('config').select('*').eq('id', 1).single(),
@@ -476,6 +483,7 @@ async function loadData() {
       CONFIG.hours = configRes.data.hours;
       CONFIG.days = configRes.data.days;
       CONFIG.helpHoursText = configRes.data.helphourstext;
+      CONFIG.exchange_rate = configRes.data.exchange_rate; // 👈 Guardar tasa manual
     }
     
     $("#welcomeBrand").textContent = CONFIG.brand;
@@ -608,49 +616,6 @@ function generateProductsHtml(catId, catName) {
   
   html += `<button class="action-btn secondary" onclick="skipStep('${catId}')">${btnText}</button>`;
   return html;
-}
-
-// 👇 ACTUALIZACIONES EN TIEMPO REAL (CON RESPALDO)
-function refreshMenuUI() {
-  // Si el cliente está en la pantalla de categorías
-  if (state.currentCatId === null) {
-    const lastOptions = $("#chatContainer").lastElementChild;
-    if (lastOptions && lastOptions.classList.contains('options-container')) {
-      lastOptions.innerHTML = generateCategoriesHtml();
-    }
-  } else {
-    // Si el cliente está viendo los productos de una categoría específica
-    const lastOptions = $("#chatContainer").lastElementChild;
-    if (lastOptions && lastOptions.classList.contains('options-container')) {
-      lastOptions.innerHTML = generateProductsHtml(state.currentCatId, state.currentCatName);
-    }
-  }
-}
-
-function setupRealtimeUpdates() {
-  if (state.appChannel) supabaseClient.removeChannel(state.appChannel);
-
-  state.appChannel = supabaseClient.channel('client-updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'config' }, payload => {
-      loadData().then(() => checkStoreStatus());
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
-      loadData().then(() => refreshMenuUI());
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
-      loadData().then(() => refreshMenuUI());
-    })
-    .subscribe();
-
-  // Respaldo: Consultar cada 15 segundos por si falla el realtime de Supabase
-  if (state.syncInterval) clearInterval(state.syncInterval);
-  state.syncInterval = setInterval(() => {
-    loadData().then(() => {
-      if (state.view === 'menu' || $("#app").classList.contains("hidden") === false) {
-        refreshMenuUI();
-      }
-    });
-  }, 15000);
 }
 
 function setupWelcome() {
@@ -1324,13 +1289,13 @@ async function submitOrder() {
 
 // INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadData();
+  await loadData(); // Primero cargar datos (incluida la tasa manual)
+  await fetchExchangeRate(); // Luego calcular la tasa
   
   const isOpen = checkStoreStatus();
   
   if (isOpen) {
     setupWelcome();
-    setupRealtimeUpdates(); // 👈 ACTIVAR ESCUCHA EN TIEMPO REAL Y POLLING
     
     const savedCode = localStorage.getItem('ff_current_order_code');
     if (savedCode) {
