@@ -342,7 +342,6 @@ textarea{resize:vertical;min-height:80px}
   <div class="mh-brand">Admin</div>
   
   <div class="mh-actions">
-    <!-- BOTÓN CLIENTE COMO BOTÓN (No enlace) para asegurar que se vea -->
     <button class="mh-btn client" onclick="window.open('index.html', '_blank')">
       👁️ Cliente
     </button>
@@ -643,6 +642,9 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
   }
 }
 
+// ==========================================
+// 👇 ESCUCHA EN TIEMPO REAL CORREGIDA
+// ==========================================
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
   
@@ -669,8 +671,12 @@ function setupOrderListener() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      const oldOrder = payload.old;
-      if (updatedOrder.rating && (!oldOrder.rating || oldOrder.rating !== updatedOrder.rating)) {
+      
+      // 👇 CORRECCIÓN: Usar la copia local para comparar en lugar de payload.old
+      const existingOrder = DB.orders.find(o => o.id === updatedOrder.id);
+      const isNewRating = updatedOrder.rating && (!existingOrder || existingOrder.rating !== updatedOrder.rating);
+      
+      if (isNewRating) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
           navigator.serviceWorker.ready.then(registration => {
@@ -684,6 +690,8 @@ function setupOrderListener() {
         }
         toast(`⭐ ¡Pedido ${updatedOrder.code} calificado!`);
       }
+      
+      // Siempre recargamos los datos para asegurar que la UI se actualice
       dbLoad().then(() => {
         if (state.tab === 'orders' || state.tab === 'home') render();
       });
