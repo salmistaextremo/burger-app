@@ -229,17 +229,15 @@ textarea{resize:vertical;min-height:80px}
    ========================================= */
 @media(max-width:860px){
   .app { flex-direction: column; padding-bottom: 0; }
-  .sidebar { display: none; } /* Ocultar barra lateral por completo */
-  .mobile-header { display: flex; } /* Mostrar header superior */
+  .sidebar { display: none; }
+  .mobile-header { display: flex; }
   
   .main{padding:16px; width: 100%;}
   
-  /* Bienvenida */
   .welcome-card { padding: 20px; margin-bottom: 16px; text-align: left; }
   .welcome-card h1 { font-size: 20px; margin-bottom: 4px; }
   .welcome-card p { font-size: 13px; }
 
-  /* Cuadrícula de Navegación Móvil (2x3) */
   .mobile-only { display: block; }
   .mobile-nav-grid {
     display: grid;
@@ -271,62 +269,30 @@ textarea{resize:vertical;min-height:80px}
   }
   .mobile-nav-grid button .ico { font-size: 22px; line-height: 1; }
   
-  /* Badges de la cuadrícula */
   .mobile-nav-grid button .count {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    font-size: 8.5px;
-    font-weight: 800;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
-    border-radius: 4px;
-    background: var(--surface-2);
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--line);
+    position: absolute; top: 6px; right: 6px; font-size: 8.5px; font-weight: 800;
+    min-width: 14px; height: 14px; padding: 0 3px; border-radius: 4px;
+    background: var(--surface-2); color: var(--muted); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
   }
   .mobile-nav-grid button.active .count { background: var(--brand); color: white; border-color: var(--brand); }
   .mobile-nav-grid button .count.new { background: var(--danger); color: white; border-color: var(--danger); }
 
-  /* Tarjetas de Estadísticas (3 columnas) */
-  .stats-grid { 
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px; 
-    margin-bottom: 20px;
-  }
-  .stat-card { 
-    flex-direction: column; padding: 12px 6px; text-align: center; gap: 4px; border-radius: 12px;
-  }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .stat-card { flex-direction: column; padding: 12px 6px; text-align: center; gap: 4px; border-radius: 12px; }
   .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; margin-bottom: 2px; }
   .stat-info p { font-size: 9px; margin-bottom: 2px; letter-spacing: 0; }
   .stat-info h3 { font-size: 18px; margin: 0; }
 
-  /* Paneles de información extra */
   .info-panel { padding: 16px; margin-bottom: 16px; }
   .info-panel h3 { font-size: 15px; margin-bottom: 10px; }
   .info-panel p { font-size: 13px; margin-bottom: 6px; }
   
-  /* Tablas y Formularios */
   .form-grid{grid-template-columns:1fr}
   .report-filters{flex-direction:column;align-items:stretch;}
   
-  /* Botón flotante para volver al inicio en otras vistas */
   .back-to-home-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 16px;
-    padding: 8px 12px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink);
+    display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; padding: 8px 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--ink);
   }
 }
 </style>
@@ -337,22 +303,12 @@ textarea{resize:vertical;min-height:80px}
   🔔 Haz clic aquí para activar las notificaciones y sonidos de nuevos pedidos
 </div>
 
-<!-- HEADER EXCLUSIVO PARA MÓVILES -->
 <header class="mobile-header">
   <div class="mh-brand">Admin</div>
-  
   <div class="mh-actions">
-    <button class="mh-btn client" onclick="window.open('index.html', '_blank')">
-      👁️ Cliente
-    </button>
-    
-    <button id="btnInstallAppMobile" class="mh-btn install hidden" onclick="installApp()">
-      📲 Instalar
-    </button>
-    
-    <button class="mh-btn logout" onclick="doLogout()">
-      🚪 Salir
-    </button>
+    <button class="mh-btn client" onclick="window.open('index.html', '_blank')">👁️ Cliente</button>
+    <button id="btnInstallAppMobile" class="mh-btn install hidden" onclick="installApp()">📲 Instalar</button>
+    <button class="mh-btn logout" onclick="doLogout()">🚪 Salir</button>
   </div>
 </header>
 
@@ -369,13 +325,11 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <div class="app hidden" id="appContainer">
-  <!-- SIDEBAR (Solo visible en Escritorio) -->
   <aside class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
       <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Burguer Express</p></div>
     </div>
-    
     <nav class="sb-nav">
       <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
       <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
@@ -384,7 +338,6 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
     </nav>
-    
     <div class="sb-footer">
       <button id="btnInstallAppDesktop" class="hidden" onclick="installApp()" style="background: var(--brand-soft); color: var(--brand-d); font-weight: 700; margin-bottom: 8px; border: 1px solid #FFE0D0;">
         <span>📲</span> Instalar Aplicación
@@ -393,7 +346,6 @@ textarea{resize:vertical;min-height:80px}
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
   </aside>
-  
   <main class="main" id="main"></main>
 </div>
 
@@ -420,6 +372,7 @@ var DEFAULT_CONFIG = {
 
 var EXCHANGE_RATE = null;
 var state = { tab: "home" };
+var pollingInterval = null; // Variable para el intervalo de respaldo
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
@@ -428,14 +381,12 @@ function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
 // ==========================================
-// 👇 LÓGICA DEL BOTÓN DE INSTALACIÓN PWA
+// LÓGICA DE INSTALACIÓN PWA
 // ==========================================
 let deferredPrompt;
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isStandalone) {
     document.getElementById('btnInstallAppDesktop').classList.remove('hidden');
@@ -447,11 +398,8 @@ function installApp() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        toast("✅ ¡Instalando aplicación!");
-      } else {
-        toast("❌ Instalación cancelada");
-      }
+      if (choiceResult.outcome === 'accepted') toast("✅ ¡Instalando aplicación!");
+      else toast("❌ Instalación cancelada");
       deferredPrompt = null;
       document.getElementById('btnInstallAppDesktop').classList.add('hidden');
       document.getElementById('btnInstallAppMobile').classList.add('hidden');
@@ -467,7 +415,7 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 }
 
 // ==========================================
-// 👇 LÓGICA DE NOTIFICACIONES
+// LÓGICA DE NOTIFICACIONES Y AUDIO
 // ==========================================
 let audioCtx;
 let notificationsEnabled = false;
@@ -536,6 +484,9 @@ function updateAppBadge() {
   }
 }
 
+// ==========================================
+// AUTENTICACIÓN Y CARGA DE DATOS
+// ==========================================
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
@@ -544,7 +495,7 @@ async function checkAuth() {
     checkNotificationState();
     setupPushNotifications();
     try {
-      await dbLoad(); render(); setupNav(); setupOrderListener(); fetchExchangeRate();
+      await dbLoad(); render(); setupNav(); setupOrderListener(); setupPolling(); fetchExchangeRate();
       window.currentAdminUser = session.user.email; 
       if (DB.config) {
         document.getElementById("sbBrandName").textContent = DB.config.brand;
@@ -574,6 +525,7 @@ function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
   supabaseClient.auth.signOut().then(() => {
     if (window.adminOrderChannel) { supabaseClient.removeChannel(window.adminOrderChannel); window.adminOrderChannel = null; }
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     if ("clearAppBadge" in navigator) navigator.clearAppBadge();
     localStorage.removeItem('admin_notif_unlocked');
     document.title = "Panel Admin — Burguer Express";
@@ -643,7 +595,7 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
 }
 
 // ==========================================
-// 👇 ESCUCHA EN TIEMPO REAL CORREGIDA
+// ⚡ SISTEMA DE TIEMPO REAL (WEBSOCKET)
 // ==========================================
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
@@ -672,7 +624,6 @@ function setupOrderListener() {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
       
-      // 👇 CORRECCIÓN: Usar la copia local para comparar en lugar de payload.old
       const existingOrder = DB.orders.find(o => o.id === updatedOrder.id);
       const isNewRating = updatedOrder.rating && (!existingOrder || existingOrder.rating !== updatedOrder.rating);
       
@@ -691,12 +642,84 @@ function setupOrderListener() {
         toast(`⭐ ¡Pedido ${updatedOrder.code} calificado!`);
       }
       
-      // Siempre recargamos los datos para asegurar que la UI se actualice
       dbLoad().then(() => {
         if (state.tab === 'orders' || state.tab === 'home') render();
       });
     })
     .subscribe();
+}
+
+// ==========================================
+// ⚡ RESPALDO: POLLING (Consulta cada 10s)
+// ==========================================
+// Esto garantiza que si el WebSocket falla (por red o RLS), los datos se actualicen.
+function setupPolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  
+  pollingInterval = setInterval(async () => {
+    // Solo hacer polling si la pestaña está visible (para ahorrar recursos)
+    if (document.hidden) return; 
+    
+    try {
+      const { data: freshOrders, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+      if (error || !freshOrders) return;
+
+      let newOrderFound = false;
+      let newRatingFound = false;
+
+      // Comparar la base de datos fresca con la copia local
+      freshOrders.forEach(fresh => {
+        const local = DB.orders.find(o => o.id === fresh.id);
+        
+        // 1. Detectar pedido nuevo
+        if (!local) {
+          newOrderFound = true;
+        } 
+        // 2. Detectar calificación nueva
+        else if (fresh.rating && !local.rating) {
+          newRatingFound = true;
+        }
+      });
+
+      // Si hay cambios, actualizamos y notificamos
+      if (newOrderFound) {
+        if (notificationsEnabled) playNotificationSound();
+        if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification('🔔 ¡Nuevo Pedido!', {
+              body: `Tienes un nuevo pedido pendiente.`,
+              icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+              vibrate: [200, 100, 200], tag: 'nuevo-pedido-poll'
+            });
+          });
+        }
+        toast(`🔔 ¡Nuevo Pedido detectado!`);
+      } 
+      else if (newRatingFound) {
+        if (notificationsEnabled) playNotificationSound();
+        if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification('⭐ ¡Cliente ha calificado!', {
+              body: `Un cliente ha dejado una reseña.`,
+              icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+              vibrate: [200, 100, 200], tag: 'nueva-calificacion-poll'
+            });
+          });
+        }
+        toast(`⭐ ¡Nueva calificación recibida!`);
+      }
+
+      // Si hubo cambios, recargamos la base de datos local y re-renderizamos
+      if (newOrderFound || newRatingFound) {
+        DB.orders = freshOrders;
+        updateAppBadge();
+        if (state.tab === 'orders' || state.tab === 'home') render();
+      }
+
+    } catch (err) {
+      console.log("Polling error (silencioso):", err);
+    }
+  }, 10000); // 10 segundos
 }
 
 function setupNav() {
@@ -720,34 +743,17 @@ function switchTab(tab) {
 function render() {
   var m = $("#main");
   
-  // Generar el menú móvil
   let mobileNav = `
     <div class="mobile-only mobile-nav-grid">
-      <button class="${state.tab === 'home' ? 'active' : ''}" onclick="switchTab('home')">
-        <span class="ico">🏠</span>Inicio
-      </button>
-      <button class="${state.tab === 'products' ? 'active' : ''}" onclick="switchTab('products')">
-        <span class="ico">🍔</span>Productos
-        <span class="count">${DB.menu.length}</span>
-      </button>
-      <button class="${state.tab === 'categories' ? 'active' : ''}" onclick="switchTab('categories')">
-        <span class="ico">📁</span>Categorías
-        <span class="count">${DB.cats.length}</span>
-      </button>
-      <button class="${state.tab === 'orders' ? 'active' : ''}" onclick="switchTab('orders')">
-        <span class="ico">🧾</span>Pedidos
-        <span class="count">${DB.orders.length}</span>
-      </button>
-      <button class="${state.tab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-        <span class="ico">📈</span>Reportes
-      </button>
-      <button class="${state.tab === 'business' ? 'active' : ''}" onclick="switchTab('business')">
-        <span class="ico">🏪</span>Negocio
-      </button>
+      <button class="${state.tab === 'home' ? 'active' : ''}" onclick="switchTab('home')"><span class="ico">🏠</span>Inicio</button>
+      <button class="${state.tab === 'products' ? 'active' : ''}" onclick="switchTab('products')"><span class="ico">🍔</span>Productos<span class="count">${DB.menu.length}</span></button>
+      <button class="${state.tab === 'categories' ? 'active' : ''}" onclick="switchTab('categories')"><span class="ico">📁</span>Categorías<span class="count">${DB.cats.length}</span></button>
+      <button class="${state.tab === 'orders' ? 'active' : ''}" onclick="switchTab('orders')"><span class="ico">🧾</span>Pedidos<span class="count">${DB.orders.length}</span></button>
+      <button class="${state.tab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')"><span class="ico">📈</span>Reportes</button>
+      <button class="${state.tab === 'business' ? 'active' : ''}" onclick="switchTab('business')"><span class="ico">🏪</span>Negocio</button>
     </div>
   `;
 
-  // Si no estamos en inicio, añadir botón de volver
   let backBtn = state.tab !== 'home' ? `<button class="back-to-home-btn" onclick="switchTab('home')">← Volver al inicio</button>` : '';
 
   let content = "";
@@ -758,9 +764,7 @@ function render() {
   else if (state.tab === "reports") content = renderReports();
   else if (state.tab === "business") content = renderBusiness();
 
-  // Inyectar contenido y menú móvil
   m.innerHTML = `${mobileNav} ${backBtn} ${content}`;
-  
   updateCounts();
 }
 
@@ -790,7 +794,6 @@ function renderHome() {
     `;
   }
 
-  // Generar lista de métodos de pago
   let paymentsHtml = (DB.config.payments || []).map(p => `
     <span style="background: var(--surface-2); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); display: inline-block; margin: 0 6px 6px 0;">
       ${p.icon} ${esc(p.label)}
@@ -802,39 +805,23 @@ function renderHome() {
       <h1>¡Hola, ${esc(adminName)}!</h1>
       <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
     </div>
-    
     ${alertHtml}
-    
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div>
-        <div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div>
-        <div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div>
-        <div class="stat-info"><p>Pedidos Totales</p><h3>${DB.orders.length}</h3></div>
-      </div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div><div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div><div class="stat-info"><p>Pedidos Totales</p><h3>${DB.orders.length}</h3></div></div>
     </div>
-    
     <div class="card info-panel">
       <div class="card-body">
         <h3 class="card-title" style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 12px; color: var(--brand);">Información del Negocio</h3>
-        
         <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
           <p><b>Nombre:</b> ${esc(DB.config.brand)}</p>
           <p><b>WhatsApp:</b> ${esc(DB.config.whatsapp)}</p>
           <p><b>Horario de hoy:</b> ${esc(DB.config.hours?.open || 'N/A')} a ${esc(DB.config.hours?.close || 'N/A')}</p>
           <p><b>Ganancias Totales:</b> <span style="color: var(--brand); font-size: 16px; font-weight: 800;">${money(totalEarnings)}</span></p>
         </div>
-
         <h3 class="card-title" style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 20px; margin-bottom: 12px; color: var(--brand);">Métodos de Pago Activos</h3>
-        <div>
-          ${paymentsHtml || '<span style="font-size:12px; color:var(--muted)">No hay métodos configurados.</span>'}
-        </div>
+        <div>${paymentsHtml || '<span style="font-size:12px; color:var(--muted)">No hay métodos configurados.</span>'}</div>
       </div>
     </div>
   `;
@@ -853,12 +840,7 @@ function renderOrders() {
       let reviewHtml = "";
       if (o.rating) {
         const stars = '★'.repeat(o.rating) + '☆'.repeat(5 - o.rating);
-        reviewHtml = `
-          <div class="order-review">
-            <div class="stars">${stars}</div>
-            <div class="comment">"${esc(o.review_text || 'Sin comentario')}"</div>
-          </div>
-        `;
+        reviewHtml = `<div class="order-review"><div class="stars">${stars}</div><div class="comment">"${esc(o.review_text || 'Sin comentario')}"</div></div>`;
       }
 
       const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '...';
@@ -889,9 +871,7 @@ function renderOrders() {
                 </div>
             </div>
         </div>
-        
         ${reviewHtml}
-        
         <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
           <span style="font-size:12px; font-weight:600; color:var(--muted)">Cambiar Estado:</span>
           <select onchange="dbUpdateOrderStatus('${o.id}', this.value)" style="padding:6px 10px; border-radius:8px; font-size:12px; width:auto; font-weight:700; color:var(--brand); border-color: ${isPending ? 'var(--brand)' : 'var(--line)'}">
@@ -911,36 +891,18 @@ function openProofModal(url) {
   document.getElementById("modal").innerHTML = `
     <div class="modal-box" style="max-width: 500px; background: #000;">
       <div class="modal-head" style="background: #fff; border-bottom: 1px solid #ddd;"><h2>Comprobante de Pago</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body" style="text-align:center; padding: 0;">
-        <img src="${url}" style="max-width: 100%; max-height: 75vh; display: block; margin: 0 auto;">
-      </div>
-      <div class="modal-foot" style="background: #fff;">
-        <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
-      </div>
+      <div class="modal-body" style="text-align:center; padding: 0;"><img src="${url}" style="max-width: 100%; max-height: 75vh; display: block; margin: 0 auto;"></div>
+      <div class="modal-foot" style="background: #fff;"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
     </div>`;
   document.getElementById("modal").classList.remove("hidden");
 }
 
 function renderBusiness() {
-  let openTime = "11:00";
-  let closeTime = "23:00";
-  if (DB.config.hours) {
-    openTime = DB.config.hours.open || "11:00";
-    closeTime = DB.config.hours.close || "23:00";
-  }
-
+  let openTime = "11:00", closeTime = "23:00";
+  if (DB.config.hours) { openTime = DB.config.hours.open || "11:00"; closeTime = DB.config.hours.close || "23:00"; }
   const days = DB.config.days || [1,2,3,4,5,6,0];
-  const dayNames = [
-    { id: 1, name: 'Lun' }, { id: 2, name: 'Mar' }, { id: 3, name: 'Mié' }, 
-    { id: 4, name: 'Jue' }, { id: 5, name: 'Vie' }, { id: 6, name: 'Sáb' }, { id: 0, name: 'Dom' }
-  ];
-
-  let dayPickerHtml = dayNames.map(d => `
-    <label>
-      <input type="checkbox" class="day-check" value="${d.id}" ${days.includes(d.id) ? 'checked' : ''}>
-      <span>${d.name}</span>
-    </label>
-  `).join('');
+  const dayNames = [{ id: 1, name: 'Lun' }, { id: 2, name: 'Mar' }, { id: 3, name: 'Mié' }, { id: 4, name: 'Jue' }, { id: 5, name: 'Vie' }, { id: 6, name: 'Sáb' }, { id: 0, name: 'Dom' }];
+  let dayPickerHtml = dayNames.map(d => `<label><input type="checkbox" class="day-check" value="${d.id}" ${days.includes(d.id) ? 'checked' : ''}><span>${d.name}</span></label>`).join('');
 
   return `
     <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
@@ -948,38 +910,15 @@ function renderBusiness() {
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
-        
         <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
-        
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
-        
-        <div class="field full">
-          <label>Texto de horario para el cliente (opcional)</label>
-          <textarea id="bHelpHours" rows="3" placeholder="Ej: Lunes a Jueves: 11:00 AM - 11:00 PM&#10;Viernes y Sábado: 11:00 AM - 1:00 AM&#10;Domingo: 12:00 PM - 10:00 PM">${esc(DB.config.helpHoursText || '')}</textarea>
-          <div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si dejas este campo vacío, se generará automáticamente con los días y horas que seleccionaste arriba.</div>
-        </div>
+        <div class="field full"><label>Texto de horario para el cliente (opcional)</label><textarea id="bHelpHours" rows="3" placeholder="Ej: Lunes a Jueves: 11:00 AM - 11:00 PM&#10;Viernes y Sábado: 11:00 AM - 1:00 AM&#10;Domingo: 12:00 PM - 10:00 PM">${esc(DB.config.helpHoursText || '')}</textarea><div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si dejas este campo vacío, se generará automáticamente con los días y horas que seleccionaste arriba.</div></div>
       </div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar cambios</button>
     </div></div>
-
-    <div class="page-head" style="margin-top:32px;">
-      <div><h2 class="page-title" style="font-size:20px;">Métodos de Pago</h2><p class="page-sub">Configura cómo pueden pagar tus clientes.</p></div>
-      <button class="btn btn-primary" onclick="openPaymentEditor(null)">＋ Nuevo método</button>
-    </div>
-    
-    <div class="pay-list">
-      ${(DB.config.payments || []).map((p, i) => `
-        <div class="pay-item">
-          <div class="pay-icon">${p.icon}</div>
-          <div class="pay-body"><h4>${esc(p.label)}</h4></div>
-          <div class="pay-actions">
-            <button onclick="openPaymentEditor(${i})">✎</button>
-            <button onclick="deletePayment(${i})" style="color:var(--danger)">✕</button>
-          </div>
-        </div>
-      `).join("")}
-    </div>
+    <div class="page-head" style="margin-top:32px;"><div><h2 class="page-title" style="font-size:20px;">Métodos de Pago</h2><p class="page-sub">Configura cómo pueden pagar tus clientes.</p></div><button class="btn btn-primary" onclick="openPaymentEditor(null)">＋ Nuevo método</button></div>
+    <div class="pay-list">${(DB.config.payments || []).map((p, i) => `<div class="pay-item"><div class="pay-icon">${p.icon}</div><div class="pay-body"><h4>${esc(p.label)}</h4></div><div class="pay-actions"><button onclick="openPaymentEditor(${i})">✎</button><button onclick="deletePayment(${i})" style="color:var(--danger)">✕</button></div></div>`).join("")}</div>
   `;
 }
 
@@ -989,14 +928,11 @@ async function saveBusiness() {
   const openTime = document.getElementById('bOpenTime').value;
   const closeTime = document.getElementById('bCloseTime').value;
   const helpText = document.getElementById('bHelpHours').value;
-  
   const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
   if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
-
   DB.config.hours = { open: openTime, close: closeTime };
   DB.config.helpHoursText = helpText;
   DB.config.days = checkedDays;
-
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   toast('✅ Negocio actualizado');
@@ -1007,44 +943,20 @@ function openPaymentEditor(index) {
   editingPaymentIndex = index;
   const isEdit = index !== null;
   const p = isEdit ? DB.config.payments[index] : { id: 'pagomovil_' + Date.now(), type: 'pagomovil', label: 'Pago Móvil', icon: '📱', details: {} };
+  const types = [{ id: 'pagomovil', name: 'Pago Móvil' }, { id: 'transferencia', name: 'Transferencia' }, { id: 'zelle', name: 'Zelle' }, { id: 'efectivo', name: 'Efectivo' }, { id: 'tarjeta', name: 'Tarjeta' }];
   
-  const types = [
-    { id: 'pagomovil', name: 'Pago Móvil' },
-    { id: 'transferencia', name: 'Transferencia' },
-    { id: 'zelle', name: 'Zelle' },
-    { id: 'efectivo', name: 'Efectivo' },
-    { id: 'tarjeta', name: 'Tarjeta' }
-  ];
-
   document.getElementById("modal").innerHTML = `
     <div class="modal-box">
       <div class="modal-head"><h2>${isEdit ? 'Editar' : 'Nuevo'} Método de Pago</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field">
-            <label>Tipo de Pago</label>
-            <select id="pay-type" onchange="updatePaymentDetailsForm(this.value)">
-              ${types.map(t => `<option value="${t.id}" ${p.type === t.id ? 'selected' : ''}>${t.name}</option>`).join("")}
-            </select>
-          </div>
-          <div class="field">
-            <label>Etiqueta a mostrar</label>
-            <input type="text" id="pay-label" value="${esc(p.label)}" placeholder="Ej: Pago Móvil Banesco">
-          </div>
-          <div class="field">
-            <label>Icono (Emoji)</label>
-            <input type="text" id="pay-icon" value="${esc(p.icon)}" maxlength="5" style="text-align:center;font-size:20px">
-          </div>
-          <div class="field full" id="payment-details-container" style="border-top:1px solid var(--line); padding-top:16px; margin-top:8px;">
-            <label style="margin-bottom:12px; color:var(--brand);">Datos de la cuenta</label>
-            <div id="payment-details-fields"></div>
-          </div>
+          <div class="field"><label>Tipo de Pago</label><select id="pay-type" onchange="updatePaymentDetailsForm(this.value)">${types.map(t => `<option value="${t.id}" ${p.type === t.id ? 'selected' : ''}>${t.name}</option>`).join("")}</select></div>
+          <div class="field"><label>Etiqueta a mostrar</label><input type="text" id="pay-label" value="${esc(p.label)}" placeholder="Ej: Pago Móvil Banesco"></div>
+          <div class="field"><label>Icono (Emoji)</label><input type="text" id="pay-icon" value="${esc(p.icon)}" maxlength="5" style="text-align:center;font-size:20px"></div>
+          <div class="field full" id="payment-details-container" style="border-top:1px solid var(--line); padding-top:16px; margin-top:8px;"><label style="margin-bottom:12px; color:var(--brand);">Datos de la cuenta</label><div id="payment-details-fields"></div></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" onclick="savePayment()">Guardar</button>
-      </div>
+      <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="savePayment()">Guardar</button></div>
     </div>`;
   document.getElementById("modal").classList.remove("hidden");
   updatePaymentDetailsForm(p.type, p.details);
@@ -1054,23 +966,11 @@ function updatePaymentDetailsForm(type, details = {}) {
   const container = document.getElementById("payment-details-fields");
   let html = '';
   if (type === 'pagomovil') {
-    html = `<div class="form-grid" style="grid-template-columns:1fr 1fr; gap:12px;">
-        <div class="field"><label>Banco</label><input type="text" id="pd-banco" value="${esc(details.banco || '')}"></div>
-        <div class="field"><label>Teléfono</label><input type="text" id="pd-telefono" value="${esc(details.telefono || '')}"></div>
-        <div class="field full"><label>Cédula / RIF</label><input type="text" id="pd-cedula" value="${esc(details.cedula || '')}"></div>
-      </div>`;
+    html = `<div class="form-grid" style="grid-template-columns:1fr 1fr; gap:12px;"><div class="field"><label>Banco</label><input type="text" id="pd-banco" value="${esc(details.banco || '')}"></div><div class="field"><label>Teléfono</label><input type="text" id="pd-telefono" value="${esc(details.telefono || '')}"></div><div class="field full"><label>Cédula / RIF</label><input type="text" id="pd-cedula" value="${esc(details.cedula || '')}"></div></div>`;
   } else if (type === 'transferencia') {
-    html = `<div class="form-grid" style="grid-template-columns:1fr 1fr; gap:12px;">
-        <div class="field"><label>Banco</label><input type="text" id="pd-banco" value="${esc(details.banco || '')}"></div>
-        <div class="field"><label>Titular</label><input type="text" id="pd-titular" value="${esc(details.titular || '')}"></div>
-        <div class="field full"><label>Número de cuenta</label><input type="text" id="pd-cuenta" value="${esc(details.cuenta || '')}"></div>
-        <div class="field full"><label>RIF</label><input type="text" id="pd-rif" value="${esc(details.rif || '')}"></div>
-      </div>`;
+    html = `<div class="form-grid" style="grid-template-columns:1fr 1fr; gap:12px;"><div class="field"><label>Banco</label><input type="text" id="pd-banco" value="${esc(details.banco || '')}"></div><div class="field"><label>Titular</label><input type="text" id="pd-titular" value="${esc(details.titular || '')}"></div><div class="field full"><label>Número de cuenta</label><input type="text" id="pd-cuenta" value="${esc(details.cuenta || '')}"></div><div class="field full"><label>RIF</label><input type="text" id="pd-rif" value="${esc(details.rif || '')}"></div></div>`;
   } else if (type === 'zelle') {
-    html = `<div class="form-grid" style="grid-template-columns:1fr; gap:12px;">
-        <div class="field"><label>Correo</label><input type="text" id="pd-email" value="${esc(details.email || '')}"></div>
-        <div class="field"><label>Titular</label><input type="text" id="pd-titular" value="${esc(details.titular || '')}"></div>
-      </div>`;
+    html = `<div class="form-grid" style="grid-template-columns:1fr; gap:12px;"><div class="field"><label>Correo</label><input type="text" id="pd-email" value="${esc(details.email || '')}"></div><div class="field"><label>Titular</label><input type="text" id="pd-titular" value="${esc(details.titular || '')}"></div></div>`;
   } else { html = `<p style="font-size:13px; color:var(--muted)">Este método no requiere datos adicionales.</p>`; }
   container.innerHTML = html;
 }
@@ -1080,20 +980,9 @@ async function savePayment() {
   const label = document.getElementById("pay-label").value.trim();
   const icon = document.getElementById("pay-icon").value.trim() || '💳';
   const details = {};
-  
-  if (type === 'pagomovil') {
-    details.banco = document.getElementById("pd-banco").value.trim();
-    details.telefono = document.getElementById("pd-telefono").value.trim();
-    details.cedula = document.getElementById("pd-cedula").value.trim();
-  } else if (type === 'transferencia') {
-    details.banco = document.getElementById("pd-banco").value.trim();
-    details.titular = document.getElementById("pd-titular").value.trim();
-    details.cuenta = document.getElementById("pd-cuenta").value.trim();
-    details.rif = document.getElementById("pd-rif").value.trim();
-  } else if (type === 'zelle') {
-    details.email = document.getElementById("pd-email").value.trim();
-    details.titular = document.getElementById("pd-titular").value.trim();
-  }
+  if (type === 'pagomovil') { details.banco = document.getElementById("pd-banco").value.trim(); details.telefono = document.getElementById("pd-telefono").value.trim(); details.cedula = document.getElementById("pd-cedula").value.trim(); }
+  else if (type === 'transferencia') { details.banco = document.getElementById("pd-banco").value.trim(); details.titular = document.getElementById("pd-titular").value.trim(); details.cuenta = document.getElementById("pd-cuenta").value.trim(); details.rif = document.getElementById("pd-rif").value.trim(); }
+  else if (type === 'zelle') { details.email = document.getElementById("pd-email").value.trim(); details.titular = document.getElementById("pd-titular").value.trim(); }
 
   if (!label) return toast("Ponle una etiqueta al método", "error");
   const newPayment = { id: type + '_' + Date.now(), type, label, icon, details };
@@ -1115,55 +1004,24 @@ async function deletePayment(index) {
   render();
 }
 
-function closeModal() { 
-  document.getElementById("modal").classList.add("hidden"); 
-  document.getElementById("modal").innerHTML = ""; 
-  editingPaymentIndex = null; 
-  editingCategoryId = null; 
-}
+function closeModal() { document.getElementById("modal").classList.add("hidden"); document.getElementById("modal").innerHTML = ""; editingPaymentIndex = null; editingCategoryId = null; }
 
 let currentEmojiTargetId = null;
-
 function openEmojiPicker(targetInputId) {
   currentEmojiTargetId = targetInputId;
-  
-  const pickerHtml = `
-    <div id="emojiPickerWindow" class="emoji-window">
-      <div class="emoji-window-box">
-        <div class="emoji-window-head">
-          <h3>Selecciona un Icono</h3>
-          <button class="modal-close" onclick="closeEmojiPicker()">✕</button>
-        </div>
-        <div class="emoji-grid">
-          ${FOOD_EMOJIS.map(e => `<button type="button" onclick="selectEmoji('${e}')">${e}</button>`).join("")}
-        </div>
-      </div>
-    </div>
-  `;
-  
+  const pickerHtml = `<div id="emojiPickerWindow" class="emoji-window"><div class="emoji-window-box"><div class="emoji-window-head"><h3>Selecciona un Icono</h3><button class="modal-close" onclick="closeEmojiPicker()">✕</button></div><div class="emoji-grid">${FOOD_EMOJIS.map(e => `<button type="button" onclick="selectEmoji('${e}')">${e}</button>`).join("")}</div></div></div>`;
   document.body.insertAdjacentHTML('beforeend', pickerHtml);
 }
-
-function closeEmojiPicker() {
-  const win = document.getElementById("emojiPickerWindow");
-  if (win) win.remove();
-  currentEmojiTargetId = null;
-}
-
+function closeEmojiPicker() { const win = document.getElementById("emojiPickerWindow"); if (win) win.remove(); currentEmojiTargetId = null; }
 function selectEmoji(emoji) {
   if (currentEmojiTargetId) {
     const previewDiv = document.getElementById(currentEmojiTargetId);
     if (previewDiv) {
       previewDiv.innerHTML = emoji;
-      
       let hiddenInputId = null;
       if (currentEmojiTargetId === 'p-emoji-preview') hiddenInputId = 'p-emoji';
       if (currentEmojiTargetId === 'cat-emoji-preview') hiddenInputId = 'cat-emoji';
-      
-      if (hiddenInputId) {
-        const hiddenInput = document.getElementById(hiddenInputId);
-        if (hiddenInput) hiddenInput.value = emoji;
-      }
+      if (hiddenInputId) { const hiddenInput = document.getElementById(hiddenInputId); if (hiddenInput) hiddenInput.value = emoji; }
     }
   }
   closeEmojiPicker();
@@ -1174,45 +1032,20 @@ function renderProducts() {
     <div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button></div>
     <div class="p-list">${DB.menu.map(p => {
       const isAvail = p.available !== false;
-      return `
-        <div class="p-card ${isAvail ? '' : 'unavailable'}">
-          <div class="p-thumb">${p.img ? `<img src="${esc(p.img)}">` : p.emoji}</div>
-          <div class="p-info"><h4>${esc(p.name)}</h4><p>${esc(p.desc)}</p><div class="p-meta"><span class="p-price">${money(p.price)}</span></div></div>
-          <div class="p-actions">
-            <button class="btn-toggle-avail ${isAvail ? 'avail' : 'unavail'}" onclick="toggleAvailability('${p.id}')" title="Cambiar disponibilidad">
-              ${isAvail ? '✅' : '🚫'}
-            </button>
-            <button onclick="openProductEditor('${p.id}')">✎</button>
-            <button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button>
-          </div>
-        </div>`;
-    }).join("")}</div>
-  `;
+      return `<div class="p-card ${isAvail ? '' : 'unavailable'}"><div class="p-thumb">${p.img ? `<img src="${esc(p.img)}">` : p.emoji}</div><div class="p-info"><h4>${esc(p.name)}</h4><p>${esc(p.desc)}</p><div class="p-meta"><span class="p-price">${money(p.price)}</span></div></div><div class="p-actions"><button class="btn-toggle-avail ${isAvail ? 'avail' : 'unavail'}" onclick="toggleAvailability('${p.id}')" title="Cambiar disponibilidad">${isAvail ? '✅' : '🚫'}</button><button onclick="openProductEditor('${p.id}')">✎</button><button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button></div></div>`;
+    }).join("")}</div>`;
 }
 
 async function toggleAvailability(id) {
   const p = DB.menu.find(x => x.id === id);
   if (!p) return;
   p.available = !(p.available !== false);
-  try {
-    await dbSaveMenu();
-    toast(`Producto marcado como ${p.available ? 'Disponible' : 'Agotado'}`);
-    render();
-  } catch (err) {
-    p.available = !p.available;
-    toast("Error al cambiar disponibilidad", "error");
-  }
+  try { await dbSaveMenu(); toast(`Producto marcado como ${p.available ? 'Disponible' : 'Agotado'}`); render(); } catch (err) { p.available = !p.available; toast("Error al cambiar disponibilidad", "error"); }
 }
 
-async function deleteProduct(id) {
-  if (!confirm("¿Eliminar producto?")) return;
-  DB.menu = DB.menu.filter(x => x.id !== id);
-  try { await dbSaveMenu(); toast("Producto eliminado"); render(); } catch(err) { toast("Error al eliminar", "error"); }
-}
+async function deleteProduct(id) { if (!confirm("¿Eliminar producto?")) return; DB.menu = DB.menu.filter(x => x.id !== id); try { await dbSaveMenu(); toast("Producto eliminado"); render(); } catch(err) { toast("Error al eliminar", "error"); } }
 
-let editingProductId = null;
-let tempImgFile = null;
-
+let editingProductId = null; let tempImgFile = null;
 function openProductEditor(id) {
   editingProductId = id;
   const isEdit = !!id;
@@ -1221,36 +1054,14 @@ function openProductEditor(id) {
   const catsOptions = DB.cats.map(c => `<option value="${c.id}" ${product.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join("");
 
   document.getElementById("modal").innerHTML = `
-    <div class="modal-box">
-      <div class="modal-head"><h2>${isEdit ? 'Editar' : 'Nuevo'} Producto</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div class="form-grid">
-          <div class="field full"><label>Nombre *</label><input type="text" id="p-name" value="${esc(product.name)}"></div>
-          <div class="field full"><label>Descripción</label><textarea id="p-desc">${esc(product.desc)}</textarea></div>
-          <div class="field"><label>Precio ($) *</label><input type="number" id="p-price" step="0.01" min="0" value="${product.price}"></div>
-          <div class="field"><label>Categoría *</label><select id="p-cat"><option value="">Selecciona...</option>${catsOptions}</select></div>
-          
-          <div class="field">
-            <label>Icono</label>
-            <input type="hidden" id="p-emoji" value="${esc(product.emoji || '🍔')}">
-            <div id="p-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('p-emoji-preview')">
-              ${esc(product.emoji || '🍔')}
-            </div>
-          </div>
-          
-          <div class="field"><label>Etiqueta (Badge)</label><input type="text" id="p-badge" value="${esc(product.badge || '')}"></div>
-          
-          <div class="field full"><label>Imagen (opcional)</label>
-            <div class="img-picker" onclick="document.getElementById('p-img-file').click()">
-              <input type="file" id="p-img-file" accept="image/*" style="display:none" onchange="handleImgUpload(event)">
-              <div id="p-img-preview">${product.img ? `<img src="${esc(product.img)}">` : '<div class="placeholder">📷 Subir imagen</div>'}</div>
-            </div>
-          </div>
-          <div class="field full"><label>Extras</label><div id="p-extras-list"></div><button class="btn btn-ghost btn-sm" onclick="addExtraRow()" style="margin-top:8px">＋ Añadir extra</button></div>
-        </div>
-      </div>
-      <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveProduct()">Guardar producto</button></div>
-    </div>`;
+    <div class="modal-box"><div class="modal-head"><h2>${isEdit ? 'Editar' : 'Nuevo'} Producto</h2><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="form-grid">
+      <div class="field full"><label>Nombre *</label><input type="text" id="p-name" value="${esc(product.name)}"></div><div class="field full"><label>Descripción</label><textarea id="p-desc">${esc(product.desc)}</textarea></div>
+      <div class="field"><label>Precio ($) *</label><input type="number" id="p-price" step="0.01" min="0" value="${product.price}"></div><div class="field"><label>Categoría *</label><select id="p-cat"><option value="">Selecciona...</option>${catsOptions}</select></div>
+      <div class="field"><label>Icono</label><input type="hidden" id="p-emoji" value="${esc(product.emoji || '🍔')}"><div id="p-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('p-emoji-preview')">${esc(product.emoji || '🍔')}</div></div>
+      <div class="field"><label>Etiqueta (Badge)</label><input type="text" id="p-badge" value="${esc(product.badge || '')}"></div>
+      <div class="field full"><label>Imagen (opcional)</label><div class="img-picker" onclick="document.getElementById('p-img-file').click()"><input type="file" id="p-img-file" accept="image/*" style="display:none" onchange="handleImgUpload(event)"><div id="p-img-preview">${product.img ? `<img src="${esc(product.img)}">` : '<div class="placeholder">📷 Subir imagen</div>'}</div></div></div>
+      <div class="field full"><label>Extras</label><div id="p-extras-list"></div><button class="btn btn-ghost btn-sm" onclick="addExtraRow()" style="margin-top:8px">＋ Añadir extra</button></div>
+    </div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveProduct()">Guardar producto</button></div></div>`;
   document.getElementById("modal").classList.remove("hidden");
   if (product.extras && product.extras.length) product.extras.forEach(e => addExtraRow(e.name, e.price)); else addExtraRow();
 }
@@ -1258,12 +1069,9 @@ function openProductEditor(id) {
 function handleImgUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 2 * 1024 * 1024) { toast("La imagen debe pesar menos de 2MB", "error"); return; }
-  
   tempImgFile = file;
   const reader = new FileReader();
-  reader.onload = (ev) => { 
-    document.getElementById("p-img-preview").innerHTML = `<img src="${ev.target.result}">`; 
-  };
+  reader.onload = (ev) => { document.getElementById("p-img-preview").innerHTML = `<img src="${ev.target.result}">`; };
   reader.readAsDataURL(file);
 }
 
@@ -1281,150 +1089,62 @@ async function saveProduct() {
   const cat = document.getElementById("p-cat").value;
   const emoji = document.getElementById("p-emoji").value.trim() || "🍔";
   const badge = document.getElementById("p-badge").value.trim() || null;
-  
   if (!name || !price || isNaN(price) || price <= 0 || !cat) return toast("Completa los campos obligatorios (*)", "error");
-
-  const btn = document.querySelector(".modal-foot .btn-primary"); 
-  btn.disabled = true; btn.textContent = "Guardando...";
-
+  const btn = document.querySelector(".modal-foot .btn-primary"); btn.disabled = true; btn.textContent = "Guardando...";
   try {
-    let finalImgUrl = null;
-    let existingImg = null;
-
-    if (editingProductId) {
-      const existing = DB.menu.find(p => p.id === editingProductId);
-      existingImg = existing.img;
-    }
-
+    let finalImgUrl = null, existingImg = null;
+    if (editingProductId) { const existing = DB.menu.find(p => p.id === editingProductId); existingImg = existing.img; }
     if (tempImgFile) {
-      const fileExt = tempImgFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabaseClient.storage
-        .from('productos')
-        .upload(fileName, tempImgFile, { cacheControl: '3600', upsert: false });
-
+      const fileExt = tempImgFile.name.split('.').pop(); const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('productos').upload(fileName, tempImgFile, { cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabaseClient.storage
-        .from('productos')
-        .getPublicUrl(fileName);
-      
+      const { data: urlData } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
       finalImgUrl = urlData.publicUrl;
     }
-
     const extras = [];
     document.querySelectorAll("#p-extras-list .extra-row").forEach(row => {
-      const exName = row.querySelector(".ex-name").value.trim();
-      const exPrice = parseFloat(row.querySelector(".ex-price").value);
+      const exName = row.querySelector(".ex-name").value.trim(); const exPrice = parseFloat(row.querySelector(".ex-price").value);
       if (exName && !isNaN(exPrice) && exPrice > 0) extras.push({ name: exName, price: exPrice });
     });
-
     let avail = true;
-    if (editingProductId) {
-      const existing = DB.menu.find(p => p.id === editingProductId);
-      avail = existing.available !== false;
-    }
-
-    const productData = { 
-      name, desc, price, cat, emoji, badge, 
-      img: finalImgUrl || existingImg,
-      extras, available: avail 
-    };
-
-    if (editingProductId) { 
-      const idx = DB.menu.findIndex(p => p.id === editingProductId); 
-      if (idx > -1) DB.menu[idx] = { ...DB.menu[idx], ...productData }; 
-    } else { 
-      DB.menu.push({ id: 'temp-' + Date.now(), ...productData }); 
-    }
-
-    await dbSaveMenu(); 
-    toast("✅ Producto guardado"); 
-    tempImgFile = null;
-    closeModal(); 
-    render(); 
-
-  } catch(err) { 
-    console.error("Error al guardar:", err);
-    toast("❌ Error al subir la imagen o guardar el producto", "error"); 
-    btn.disabled = false; btn.textContent = "Guardar producto"; 
-  }
+    if (editingProductId) { const existing = DB.menu.find(p => p.id === editingProductId); avail = existing.available !== false; }
+    const productData = { name, desc, price, cat, emoji, badge, img: finalImgUrl || existingImg, extras, available: avail };
+    if (editingProductId) { const idx = DB.menu.findIndex(p => p.id === editingProductId); if (idx > -1) DB.menu[idx] = { ...DB.menu[idx], ...productData }; } 
+    else { DB.menu.push({ id: 'temp-' + Date.now(), ...productData }); }
+    await dbSaveMenu(); toast("✅ Producto guardado"); tempImgFile = null; closeModal(); render(); 
+  } catch(err) { console.error("Error al guardar:", err); toast("❌ Error al subir la imagen o guardar el producto", "error"); btn.disabled = false; btn.textContent = "Guardar producto"; }
 }
 
 function renderCategories() {
   return `
-    <div class="page-head">
-      <div><h1 class="page-title">Categorías</h1></div>
-      <button class="btn btn-primary" onclick="openCategoryEditor()">＋ Nueva categoría</button>
-    </div>
-    <div class="cat-list">
-      ${DB.cats.map(c=>`
-        <div class="cat-row">
-          <div class="cat-icon">${c.icon || '📁'}</div>
-          <div class="cat-info"><h4>${esc(c.name)}</h4></div>
-          <div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div>
-        </div>
-      `).join("")}
-    </div>
+    <div class="page-head"><div><h1 class="page-title">Categorías</h1></div><button class="btn btn-primary" onclick="openCategoryEditor()">＋ Nueva categoría</button></div>
+    <div class="cat-list">${DB.cats.map(c=>`<div class="cat-row"><div class="cat-icon">${c.icon || '📁'}</div><div class="cat-info"><h4>${esc(c.name)}</h4></div><div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div></div>`).join("")}</div>
   `;
 }
 
 let editingCategoryId = null;
-
 function openCategoryEditor() {
   document.getElementById("modal").innerHTML = `
-    <div class="modal-box">
-      <div class="modal-head"><h2>Nueva Categoría</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body">
-        <div class="field">
-          <label>Nombre de la categoría *</label>
-          <input type="text" id="cat-name" placeholder="Ej: Hamburguesas">
-        </div>
-        <div class="field">
-          <label>Icono</label>
-          <input type="hidden" id="cat-emoji" value="🍔">
-          <div id="cat-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('cat-emoji-preview')">
-            🍔
-          </div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveCategory()">Guardar Categoría</button>
-      </div>
-    </div>`;
+    <div class="modal-box"><div class="modal-head"><h2>Nueva Categoría</h2><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body">
+      <div class="field"><label>Nombre de la categoría *</label><input type="text" id="cat-name" placeholder="Ej: Hamburguesas"></div>
+      <div class="field"><label>Icono</label><input type="hidden" id="cat-emoji" value="🍔"><div id="cat-emoji-preview" class="emoji-input-box" onclick="openEmojiPicker('cat-emoji-preview')">🍔</div></div>
+    </div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveCategory()">Guardar Categoría</button></div></div>`;
   document.getElementById("modal").classList.remove("hidden");
 }
 
 async function saveCategory() {
   const name = document.getElementById("cat-name").value.trim();
   const icon = document.getElementById("cat-emoji").value.trim() || "📁";
-  
   if (!name) return toast("Escribe el nombre de la categoría", "error");
-
-  const btn = document.querySelector(".modal-foot .btn-primary"); 
-  btn.disabled = true; btn.textContent = "Guardando...";
-
+  const btn = document.querySelector(".modal-foot .btn-primary"); btn.disabled = true; btn.textContent = "Guardando...";
   supabaseClient.from('categories').insert([{ name, icon }]).select().then(({data, error}) => {
     btn.disabled = false; btn.textContent = "Guardar Categoría";
-    if (!error && data) { 
-      dbLoad().then(() => { 
-        closeModal();
-        render(); 
-        toast("✅ Categoría creada"); 
-      }); 
-    } else {
-      toast("Error al crear categoría", "error");
-    }
+    if (!error && data) { dbLoad().then(() => { closeModal(); render(); toast("✅ Categoría creada"); }); } 
+    else { toast("Error al crear categoría", "error"); }
   });
 }
 
-async function deleteCategory(id) {
-  if (!confirm("¿Eliminar esta categoría?")) return;
-  await supabaseClient.from('categories').delete().eq('id', id);
-  dbLoad().then(() => { render(); toast("Categoría eliminada"); });
-}
+async function deleteCategory(id) { if (!confirm("¿Eliminar esta categoría?")) return; await supabaseClient.from('categories').delete().eq('id', id); dbLoad().then(() => { render(); toast("Categoría eliminada"); }); }
 
 function renderReports() {
   const hoy = new Date();
@@ -1433,14 +1153,9 @@ function renderReports() {
   return `
     <div class="page-head"><div><h1 class="page-title">Reportes</h1></div></div>
     <div class="card" style="margin-bottom:24px"><div class="card-body">
-      <div class="report-filters">
-        <div class="field"><label>Desde</label><input type="date" id="rep-start" value="${primerDia}"></div>
-        <div class="field"><label>Hasta</label><input type="date" id="rep-end" value="${ultimoDia}"></div>
-        <button class="btn btn-primary" onclick="generarReporte()">Generar Reporte</button>
-      </div>
+      <div class="report-filters"><div class="field"><label>Desde</label><input type="date" id="rep-start" value="${primerDia}"></div><div class="field"><label>Hasta</label><input type="date" id="rep-end" value="${ultimoDia}"></div><button class="btn btn-primary" onclick="generarReporte()">Generar Reporte</button></div>
       <div class="report-actions" id="rep-actions" style="display:none"><button class="btn btn-ghost" onclick="exportarCSV()">📊 Excel/CSV</button><button class="btn btn-ghost" onclick="window.print()">📄 PDF</button></div>
-    </div></div>
-    <div id="report-content"></div>
+    </div></div><div id="report-content"></div>
   `;
 }
 
@@ -1465,9 +1180,7 @@ function generarReporte() {
       <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">🧾</div><div class="stat-info"><p>Pedidos</p><h3>${filtered.length}</h3></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">👥</div><div class="stat-info"><p>Clientes</p><h3>${clientesSet.size}</h3></div></div>
     </div>
-    <div class="card"><div class="card-body"><table class="report-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Ingresos</th></tr></thead><tbody>
-      ${Object.keys(productosVendidos).sort((a,b)=>productosVendidos[b].qty - productosVendidos[a].qty).map(name => `<tr><td><b>${esc(name)}</b></td><td>${productosVendidos[name].qty} u.</td><td>${money(productosVendidos[name].total)}</td></tr>`).join("")}
-    </tbody></table></div></div>`;
+    <div class="card"><div class="card-body"><table class="report-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Ingresos</th></tr></thead><tbody>${Object.keys(productosVendidos).sort((a,b)=>productosVendidos[b].qty - productosVendidos[a].qty).map(name => `<tr><td><b>${esc(name)}</b></td><td>${productosVendidos[name].qty} u.</td><td>${money(productosVendidos[name].total)}</td></tr>`).join("")}</tbody></table></div></div>`;
   window.currentReportData = filtered;
 }
 
@@ -1475,9 +1188,7 @@ function exportarCSV() {
   if (!window.currentReportData || window.currentReportData.length === 0) return toast("No hay datos", "error");
   let csv = "Codigo,Fecha,Cliente,Telefono,Metodo de Pago,Total\n";
   window.currentReportData.forEach(o => { csv += `"${o.code}","${new Date(o.created_at||o.createdAt).toLocaleString()}","${o.customer.name}","${o.customer.phone}","${o.payment_method||o.payment}",${o.total}\n`; });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(link); link.click(); document.body.removeChild(link); toast("✅ CSV descargado");
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); toast("✅ CSV descargado");
 }
 
 document.addEventListener("DOMContentLoaded", function() {
