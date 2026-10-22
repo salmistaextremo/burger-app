@@ -321,7 +321,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
-<!-- BOTONERA INFERIOR CON NUEVO BOTÓN "MI PEDIDO" -->
+<!-- BOTONERA INFERIOR -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-btn active" onclick="showCategoriesView()"><span class="ni">📁</span>Categorías</button>
   <button class="nav-btn" onclick="goToCart()"><span class="ni">🛒</span>Carrito<span id="cartBadge" class="nav-badge hidden">0</span></button>
@@ -373,7 +373,7 @@ var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF
 var state = { 
   clientName: "", cart: [], proofImage: null, userLocationUrl: null,
   wizardStep: "food", trackingChannel: null, trackingInterval: null,
-  currentCatId: null, currentCatName: null, appChannel: null
+  currentCatId: null, currentCatName: null, appChannel: null, syncInterval: null
 };
 
 var currentRating = 0;
@@ -557,7 +557,7 @@ function checkStoreStatus() {
   return true;
 }
 
-// 👇 FUNCIONES DE RENDERIZADO DE HTML (Separadas para poder actualizar en tiempo real)
+// 👇 FUNCIONES DE RENDERIZADO
 function generateCategoriesHtml() {
   let html = "";
   DB.cats.forEach(c => {
@@ -610,39 +610,47 @@ function generateProductsHtml(catId, catName) {
   return html;
 }
 
-// 👇 ACTUALIZACIONES EN TIEMPO REAL (SUPABASE REALTIME)
+// 👇 ACTUALIZACIONES EN TIEMPO REAL (CON RESPALDO)
+function refreshMenuUI() {
+  // Si el cliente está en la pantalla de categorías
+  if (state.currentCatId === null) {
+    const lastOptions = $("#chatContainer").lastElementChild;
+    if (lastOptions && lastOptions.classList.contains('options-container')) {
+      lastOptions.innerHTML = generateCategoriesHtml();
+    }
+  } else {
+    // Si el cliente está viendo los productos de una categoría específica
+    const lastOptions = $("#chatContainer").lastElementChild;
+    if (lastOptions && lastOptions.classList.contains('options-container')) {
+      lastOptions.innerHTML = generateProductsHtml(state.currentCatId, state.currentCatName);
+    }
+  }
+}
+
 function setupRealtimeUpdates() {
   if (state.appChannel) supabaseClient.removeChannel(state.appChannel);
 
   state.appChannel = supabaseClient.channel('client-updates')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'config' }, payload => {
-      loadData().then(() => {
-        checkStoreStatus(); // Por si cambian los horarios
-      });
+      loadData().then(() => checkStoreStatus());
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
-      loadData().then(() => {
-        // Si el cliente está viendo las categorías actualmente, las refrescamos
-        const lastOptions = $("#chatContainer").lastElementChild;
-        if (lastOptions && lastOptions.classList.contains('options-container') && lastOptions.innerHTML.includes('opt-cat')) {
-           lastOptions.innerHTML = generateCategoriesHtml();
-           toast("Menú de categorías actualizado");
-        }
-      });
+      loadData().then(() => refreshMenuUI());
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
-      loadData().then(() => {
-        // Si el cliente está viendo los productos de una categoría, los refrescamos
-        if (state.currentCatId) {
-          const lastOptions = $("#chatContainer").lastElementChild;
-          if (lastOptions && lastOptions.classList.contains('options-container') && lastOptions.innerHTML.includes('prod-opt')) {
-             lastOptions.innerHTML = generateProductsHtml(state.currentCatId, state.currentCatName);
-             toast("Platos actualizados");
-          }
-        }
-      });
+      loadData().then(() => refreshMenuUI());
     })
     .subscribe();
+
+  // Respaldo: Consultar cada 15 segundos por si falla el realtime de Supabase
+  if (state.syncInterval) clearInterval(state.syncInterval);
+  state.syncInterval = setInterval(() => {
+    loadData().then(() => {
+      if (state.view === 'menu' || $("#app").classList.contains("hidden") === false) {
+        refreshMenuUI();
+      }
+    });
+  }, 15000);
 }
 
 function setupWelcome() {
@@ -1318,14 +1326,12 @@ async function submitOrder() {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   
-  // 👇 VERIFICAR HORARIO ANTES DE PERMITIR EL ACCESO
   const isOpen = checkStoreStatus();
   
   if (isOpen) {
     setupWelcome();
-    setupRealtimeUpdates(); // 👈 ACTIVAR ESCUCHA EN TIEMPO REAL
+    setupRealtimeUpdates(); // 👈 ACTIVAR ESCUCHA EN TIEMPO REAL Y POLLING
     
-    // Verificar si hay un pedido en curso al recargar
     const savedCode = localStorage.getItem('ff_current_order_code');
     if (savedCode) {
       supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
