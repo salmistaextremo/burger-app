@@ -57,6 +57,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:18px;display:grid;place-items:center;cursor:pointer;transition:.2s}
 .icon-btn:active{transform:scale(.94);background:var(--surface-2)}
 .btn-back{width:auto;padding:0 12px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.cart-btn{position:relative}
+.cart-badge{position:absolute;top:-4px;right:-4px;background:var(--brand);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;border:2px solid #fff}
 
 /* ====== CHAT UI ====== */
 .chat-container{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;padding-bottom:100px}
@@ -144,7 +146,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 /* ====== BOTONERA INFERIOR ====== */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;z-index:50;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
-.nav-btn{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;padding:8px 0;position:relative;transition:.2s}
+.nav-btn{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9.5px;font-weight:600;color:var(--muted);cursor:pointer;padding:8px 0;position:relative;transition:.2s}
 .nav-btn .ni{font-size:22px;line-height:1}
 .nav-btn.active{color:var(--brand)}
 .nav-badge{position:absolute;top:2px;right:50%;margin-right:-26px;background:var(--brand);color:#FFFFFF;font-size:9.5px;font-weight:800;min-width:18px;height:18px;border-radius:10px;display:grid;place-items:center;padding:0 5px;border:2px solid #fff}
@@ -306,9 +308,11 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
+<!-- BOTONERA INFERIOR CON NUEVO BOTÓN "MI PEDIDO" -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-btn active" onclick="showCategoriesView()"><span class="ni">📁</span>Categorías</button>
   <button class="nav-btn" onclick="goToCart()"><span class="ni">🛒</span>Carrito<span id="cartBadge" class="nav-badge hidden">0</span></button>
+  <button class="nav-btn" onclick="goToTracking()"><span class="ni">🛵</span>Mi Pedido</button>
   <button class="nav-btn" onclick="openHelp()"><span class="ni">💬</span>Ayuda</button>
   <button class="nav-btn" onclick="focusAssistant()"><span class="ni">🍔</span>Asistente</button>
 </nav>
@@ -757,6 +761,11 @@ function focusAssistant() {
 }
 
 function openHelp() {
+  stopTracking();
+  $("#viewTracking").classList.add("hidden");
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  
   let msg = `¡Hola! Somos <b>${CONFIG.brand}</b> 🍔. ¿Necesitas ayuda con tu pedido?`;
   let html = `<button class="action-btn primary" onclick="window.open('https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda')">💬 Chatear con un asesor</button>`;
   $("#chatContainer").insertAdjacentHTML("beforeend", `
@@ -778,9 +787,22 @@ function goBack() {
 
 function goToCart() {
   stopTracking();
+  $("#viewTracking").classList.add("hidden");
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
   renderCart();
   $("#viewCart").classList.remove("hidden");
+}
+
+function goToTracking() {
+  const savedCode = localStorage.getItem('ff_current_order_code');
+  if (!savedCode) {
+    toast("No tienes ningún pedido en curso");
+    return;
+  }
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.remove("hidden");
+  showTrackingView(savedCode);
 }
 
 function closeView(id) { 
@@ -969,7 +991,7 @@ function getLocation() {
   );
 }
 
-// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL (CON RESPALDO POR POLLING)
+// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL
 function showTrackingView(code) {
   $("#viewCheckout").classList.add("hidden");
   $("#viewTracking").classList.remove("hidden");
@@ -995,19 +1017,16 @@ function showTrackingView(code) {
     }
   }
 
-  // 1. Cargar estado inicial
   fetchLatestOrder();
   
-  // 2. Suscribirse a cambios en tiempo real
   if (state.trackingChannel) supabaseClient.removeChannel(state.trackingChannel);
   
   state.trackingChannel = supabaseClient.channel('client-track-' + code)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
-      fetchLatestOrder(); // Siempre trae datos frescos por si el payload está incompleto
+      fetchLatestOrder();
     })
     .subscribe();
     
-  // 3. Polling de respaldo (Cada 5 segundos) por si falla el Realtime
   if (state.trackingInterval) clearInterval(state.trackingInterval);
   state.trackingInterval = setInterval(fetchLatestOrder, 5000);
 }
@@ -1064,7 +1083,7 @@ function openRatingModal(code) {
   updateStarsUI(0);
   $("#ratingComment").value = "";
   $("#ratingModal").classList.remove("hidden");
-  stopTracking(); // Detenemos el polling y realtime
+  stopTracking();
 }
 
 function closeRatingModal() {
@@ -1163,11 +1182,9 @@ async function submitOrder() {
 
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
   
-  // Reset local state
   state.cart = []; state.proofImage = null; updateBadge();
   $("#viewCheckout").classList.add("hidden");
   
-  // Guardar código y mostrar seguimiento
   localStorage.setItem('ff_current_order_code', code);
   showTrackingView(code);
 }
@@ -1177,7 +1194,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   setupWelcome();
   
-  // Verificar si hay un pedido en curso al recargar
   const savedCode = localStorage.getItem('ff_current_order_code');
   if (savedCode) {
     supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
