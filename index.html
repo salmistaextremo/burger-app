@@ -174,9 +174,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:14px 22px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
 
-/* MAPA ESTILO TARJETA */
-#mapPreviewContainer { position: relative; margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 180px; background: var(--surface-2); }
-#mapPreviewIframe { width: 100%; height: 100%; border: 0; pointer-events: none; } /* Desactiva interacciones del iframe */
+/* 👇 ESTILOS DEL MAPA ESTÁTICO */
+#mapPreviewContainer { position: relative; margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 180px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+#mapPreviewImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .map-overlay-btn { position: absolute; bottom: 10px; right: 10px; background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s; z-index: 10; border: 1px solid var(--line); }
 .map-overlay-btn:active { transform: scale(0.95); }
 </style>
@@ -249,9 +249,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       
       <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">📍 Compartir ubicación (Maps)</button>
       
-      <!-- 👇 MAPA ESTILO TARJETA CON BOTÓN A GOOGLE MAPS -->
+      <!-- 👇 MAPA ESTÁTICO (SE CARGA COMO IMAGEN, NO COMO IFRAME) -->
       <div id="mapPreviewContainer" class="hidden">
-        <iframe id="mapPreviewIframe" src="" allowfullscreen="" loading="lazy"></iframe>
+        <img id="mapPreviewImg" src="" alt="Mapa de ubicación">
         <a id="mapExternalLink" href="#" target="_blank" class="map-overlay-btn">
           <span>🗺️</span> Abrir en Maps
         </a>
@@ -897,11 +897,11 @@ function clearProof() {
   $("#proofPreviewWrap").classList.add("hidden");
 }
 
-// 👇 AQUÍ ESTÁ EL CAMBIO A OPENSTREETMAP PARA EVITAR EL BLOQUEO
+// 👇 AQUÍ ESTÁ EL CAMBIO A IMAGEN ESTÁTICA (YANDEX MAPS)
 function getLocation() {
   const btn = $("#btnLocation");
   const mapContainer = $("#mapPreviewContainer");
-  const mapIframe = $("#mapPreviewIframe");
+  const mapImg = $("#mapPreviewImg");
   const mapLink = $("#mapExternalLink");
   
   btn.textContent = "⏳ Obteniendo...";
@@ -915,15 +915,10 @@ function getLocation() {
       btn.style.color = "var(--ok)";
       btn.style.borderColor = "var(--ok)";
       
-      if (mapContainer && mapIframe && mapLink) {
-        // Usamos OpenStreetMap para el iframe (no bloquea)
-        // Calculamos un pequeño cuadro delimitador (bbox) alrededor del punto
-        const offset = 0.003; 
-        const bbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
-        
-        mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+      if (mapContainer && mapImg && mapLink) {
+        // Usamos Yandex Static Maps (No requiere API Key y no se bloquea)
+        mapImg.src = `https://static-maps.yandex.ru/1.x/?lang=es_ES&ll=${lng},${lat}&z=16&l=map&pt=${lng},${lat},pm2rdm`;
         mapLink.href = state.userLocationUrl;
-        
         mapContainer.classList.remove("hidden");
       }
     }, 
