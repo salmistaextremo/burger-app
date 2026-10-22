@@ -173,6 +173,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:14px 22px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
+
+/* MAPA ESTILO TARJETA */
+#mapPreviewContainer { position: relative; margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 180px; background: var(--surface-2); }
+#mapPreviewIframe { width: 100%; height: 100%; border: 0; pointer-events: none; } /* Desactiva interacciones del iframe */
+.map-overlay-btn { position: absolute; bottom: 10px; right: 10px; background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s; z-index: 10; border: 1px solid var(--line); }
+.map-overlay-btn:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
@@ -243,9 +249,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       
       <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">📍 Compartir ubicación (Maps)</button>
       
-      <!-- 👇 AQUÍ ESTÁ EL NUEVO MAPA DE GOOGLE MAPS QUE APARECE AL COMPARTIR UBICACIÓN -->
-      <div id="mapPreviewContainer" class="hidden" style="margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 200px; background: var(--surface-2);">
-        <iframe id="mapPreviewIframe" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <!-- 👇 MAPA ESTILO TARJETA CON BOTÓN A GOOGLE MAPS -->
+      <div id="mapPreviewContainer" class="hidden">
+        <iframe id="mapPreviewIframe" src="" allowfullscreen="" loading="lazy"></iframe>
+        <a id="mapExternalLink" href="#" target="_blank" class="map-overlay-btn">
+          <span>🗺️</span> Abrir en Maps
+        </a>
       </div>
 
     </div>
@@ -888,23 +897,33 @@ function clearProof() {
   $("#proofPreviewWrap").classList.add("hidden");
 }
 
-// 👇 AQUÍ SE ACTUALIZA LA FUNCIÓN PARA MOSTRAR EL MAPA
+// 👇 AQUÍ ESTÁ EL CAMBIO A OPENSTREETMAP PARA EVITAR EL BLOQUEO
 function getLocation() {
   const btn = $("#btnLocation");
   const mapContainer = $("#mapPreviewContainer");
   const mapIframe = $("#mapPreviewIframe");
+  const mapLink = $("#mapExternalLink");
   
   btn.textContent = "⏳ Obteniendo...";
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      state.userLocationUrl = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      
+      state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       btn.textContent = "✅ Ubicación capturada";
       btn.style.color = "var(--ok)";
       btn.style.borderColor = "var(--ok)";
       
-      // Mostrar el mapa embebido
-      if (mapContainer && mapIframe) {
-        mapIframe.src = `https://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}&hl=es&z=16&output=embed`;
+      if (mapContainer && mapIframe && mapLink) {
+        // Usamos OpenStreetMap para el iframe (no bloquea)
+        // Calculamos un pequeño cuadro delimitador (bbox) alrededor del punto
+        const offset = 0.003; 
+        const bbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
+        
+        mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+        mapLink.href = state.userLocationUrl;
+        
         mapContainer.classList.remove("hidden");
       }
     }, 
