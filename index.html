@@ -16,10 +16,12 @@
   --ink:#1A1D21; --ink-2:#4A5058; --muted:#8A9099; --muted-2:#B8BEC5;
   --brand:#FF6B2C; --brand-2:#FF8A4C; --brand-d:#E85A1F; --brand-soft:#FFF2EC; --brand-glow:rgba(255,107,44,0.28);
   --ok:#22C55E; --ok-soft:#E8F9EE; --danger:#EF4444; --danger-soft:#FEF2F2; --wa:#25D366;
+  --star:#FFC107;
   --r:16px; --r-lg:24px; --r-sm:12px;
   --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
   --shadow:0 4px 16px rgba(0,0,0,0.06);
   --shadow-md:0 8px 28px rgba(0,0,0,0.08);
+  --shadow-lg:0 16px 40px rgba(0,0,0,0.1);
   --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 html,body{margin:0;padding:0;background:#FFFFFF;height:100%;overflow:hidden}
@@ -97,7 +99,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .action-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line); margin-top: 12px;}
 .action-btn.secondary:active{background:var(--line)}
 
-/* ====== VISTAS (CARRITO/CHECKOUT) ====== */
+/* ====== VISTAS (CARRITO/CHECKOUT/TRACKING) ====== */
 .view-overlay{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;animation:up .3s ease}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 .view-hdr{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
@@ -105,6 +107,24 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .view-hdr h2{margin:0;font-size:18px;font-weight:800;flex:1;text-align:center;margin-right:32px}
 .view-body{flex:1;overflow-y:auto;padding:20px;padding-bottom:100px}
 
+/* ====== VISTA DE SEGUIMIENTO EN TIEMPO REAL ====== */
+#viewTracking .view-body { display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-2); padding: 20px; }
+.track-card { background: #fff; border-radius: 24px; padding: 28px 24px; box-shadow: var(--shadow-md); width: 100%; text-align: center; border: 1px solid var(--line); }
+.track-card .tc-code { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--brand); font-weight: 800; }
+.track-card .tc-num { font-size: 36px; font-weight: 900; color: var(--ink); margin: 4px 0 8px; letter-spacing: -1px; }
+.track-card .tc-status { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--brand); margin-bottom: 24px; border: 1px solid #FFE0D0; }
+.track-card .bar { height: 8px; background: var(--surface-2); border-radius: 99px; margin-bottom: 24px; overflow: hidden; border: 1px solid var(--line); }
+.track-card .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand-2), var(--brand)); border-radius: 99px; transition: width 0.5s ease; }
+.track-card .steps { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+.track-card .step { display: flex; gap: 14px; opacity: 0.3; transition: all 0.4s; }
+.track-card .step.done, .track-card .step.current { opacity: 1; }
+.track-card .step .dot { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-size: 16px; color: var(--muted); flex: none; border: 1px solid var(--line); transition: 0.4s; }
+.track-card .step.done .dot { background: var(--ok); border-color: var(--ok); color: #fff; }
+.track-card .step.current .dot { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 4px var(--brand-soft); transform: scale(1.1); }
+.track-card .step h5 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--ink); }
+.track-card .step p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+/* CARRITO Y CHECKOUT */
 .cart-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start}
 .ci-emoji{width:70px;height:70px;border-radius:12px;display:grid;place-items:center;font-size:28px;background:var(--surface-2);flex:none;overflow:hidden;position:relative}
 .ci-emoji img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -174,11 +194,17 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:14px 22px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
 
-/* 👇 ESTILOS DEL MAPA ESTÁTICO */
-#mapPreviewContainer { position: relative; margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); height: 180px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
-#mapPreviewImg { width: 100%; height: 100%; object-fit: cover; display: block; }
-.map-overlay-btn { position: absolute; bottom: 10px; right: 10px; background: #fff; color: var(--ink); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.2s; z-index: 10; border: 1px solid var(--line); }
-.map-overlay-btn:active { transform: scale(0.95); }
+/* ====== MODAL DE CALIFICACIÓN ====== */
+.rating-modal { position: fixed; inset: 0; z-index: 200; background: rgba(26,29,33,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.rating-box { background: #fff; border-radius: 24px; padding: 32px 24px; text-align: center; box-shadow: var(--shadow-lg); width: 100%; max-width: 360px; animation: up 0.3s ease; }
+.rating-box h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+.rating-box p { margin: 0 0 20px; font-size: 14px; color: var(--muted); }
+.stars-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+.star { font-size: 40px; color: var(--line); cursor: pointer; transition: 0.2s; line-height: 1; }
+.star.active { color: var(--star); text-shadow: 0 0 10px rgba(255,193,7,0.4); }
+.star:hover { transform: scale(1.1); }
+.rating-box textarea { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); font-family: inherit; font-size: 14px; resize: none; margin-bottom: 20px; outline: none; transition: 0.2s; }
+.rating-box textarea:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 4px var(--brand-soft); }
 </style>
 </head>
 <body>
@@ -214,18 +240,17 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
-<!-- VISTA CARRITO / CHECKOUT -->
+<!-- VISTA CARRITO -->
 <div id="viewCart" class="view-overlay hidden">
   <div class="view-hdr" style="justify-content: space-between;">
     <button class="back-btn" onclick="closeView('viewCart')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
     <h2>Tu Pedido</h2>
     <div style="width:80px"></div>
   </div>
-  <div class="view-body" id="cartBody">
-    <!-- Renderizado dinámico -->
-  </div>
+  <div class="view-body" id="cartBody"></div>
 </div>
 
+<!-- VISTA CHECKOUT -->
 <div id="viewCheckout" class="view-overlay hidden">
   <div class="view-hdr">
     <button class="back-btn" onclick="closeView('viewCheckout')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
@@ -247,16 +272,13 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <div class="field"><label>Dirección de entrega *</label><textarea id="f-addr" placeholder="Calle, número, sector..."></textarea></div>
       <div class="field"><label>Punto de referencia</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
       
-      <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">📍 Compartir ubicación (Maps)</button>
-      
-      <!-- 👇 MAPA ESTÁTICO (SE CARGA COMO IMAGEN, NO COMO IFRAME) -->
-      <div id="mapPreviewContainer" class="hidden">
-        <img id="mapPreviewImg" src="" alt="Mapa de ubicación">
-        <a id="mapExternalLink" href="#" target="_blank" class="map-overlay-btn">
-          <span>🗺️</span> Abrir en Maps
-        </a>
+      <!-- BOTÓN DE GPS -->
+      <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">
+        📍 Capturar ubicación GPS
+      </button>
+      <div id="gpsSuccessLink" class="hidden" style="text-align:center; margin-bottom:16px;">
+        <a href="#" target="_blank" id="gpsExternalLink" style="font-size:12px; color:var(--brand); text-decoration:underline; font-weight:600;">Ver mi ubicación en Google Maps</a>
       </div>
-
     </div>
 
     <div class="field">
@@ -289,6 +311,20 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 </div>
 
+<!-- VISTA DE SEGUIMIENTO EN TIEMPO REAL -->
+<div id="viewTracking" class="view-overlay hidden">
+  <div class="view-hdr" style="justify-content: space-between;">
+    <button class="back-btn" onclick="closeView('viewTracking'); startChatWizard();">← Volver al menú</button>
+    <h2>Estado del Pedido</h2>
+    <div style="width:80px"></div>
+  </div>
+  <div class="view-body">
+    <div class="track-card" id="trackCardContent">
+      <!-- Se inyecta dinámicamente -->
+    </div>
+  </div>
+</div>
+
 <!-- BOTONERA INFERIOR -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-btn active" onclick="showCategoriesView()">
@@ -312,6 +348,29 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 <!-- MODAL DE PRODUCTO -->
 <div id="modal" class="modal hidden"></div>
+
+<!-- MODAL DE CALIFICACIÓN -->
+<div id="ratingModal" class="rating-modal hidden">
+  <div class="rating-box" id="ratingBoxContent">
+    <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
+    <h2>¡Buen provecho!</h2>
+    <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
+    
+    <div class="stars-container" id="starsContainer">
+      <span class="star" onclick="setRating(1)">★</span>
+      <span class="star" onclick="setRating(2)">★</span>
+      <span class="star" onclick="setRating(3)">★</span>
+      <span class="star" onclick="setRating(4)">★</span>
+      <span class="star" onclick="setRating(5)">★</span>
+    </div>
+    
+    <textarea id="ratingComment" placeholder="Déjanos un comentario (opcional)..."></textarea>
+    
+    <button class="btn-primary" onclick="submitRating()" id="btnSubmitRating">Enviar calificación</button>
+    <button class="btn-start" style="background: transparent; color: var(--muted); box-shadow: none; font-weight: 600; margin-top: 8px; padding: 10px;" onclick="closeRatingModal()">Ahora no</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -333,8 +392,11 @@ var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF
 
 var state = { 
   clientName: "", cart: [], proofImage: null, userLocationUrl: null,
-  wizardStep: "food"
+  wizardStep: "food", trackingChannel: null
 };
+
+var currentRating = 0;
+var ratingOrderCode = null;
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
@@ -706,12 +768,14 @@ function updateBadge() {
 function showCategoriesView() {
   $("#viewCart").classList.add("hidden");
   $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
   startChatWizard();
 }
 
 function focusAssistant() {
   $("#viewCart").classList.add("hidden");
   $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
   if ($("#chatContainer").innerHTML.trim() === "") {
     startChatWizard();
   } else {
@@ -738,6 +802,7 @@ function openHelp() {
 function goBack() {
   $("#viewCheckout").classList.add("hidden");
   $("#viewCart").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
   startChatWizard();
 }
 
@@ -897,33 +962,175 @@ function clearProof() {
   $("#proofPreviewWrap").classList.add("hidden");
 }
 
-// 👇 AQUÍ ESTÁ EL CAMBIO A IMAGEN ESTÁTICA (YANDEX MAPS)
 function getLocation() {
   const btn = $("#btnLocation");
-  const mapContainer = $("#mapPreviewContainer");
-  const mapImg = $("#mapPreviewImg");
-  const mapLink = $("#mapExternalLink");
+  const successLink = $("#gpsSuccessLink");
+  const externalLink = $("#gpsExternalLink");
   
-  btn.textContent = "⏳ Obteniendo...";
+  btn.textContent = "⏳ Obteniendo ubicación...";
+  btn.disabled = true;
+  
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      
       btn.textContent = "✅ Ubicación capturada";
       btn.style.color = "var(--ok)";
       btn.style.borderColor = "var(--ok)";
+      btn.disabled = false;
       
-      if (mapContainer && mapImg && mapLink) {
-        // Usamos Yandex Static Maps (No requiere API Key y no se bloquea)
-        mapImg.src = `https://static-maps.yandex.ru/1.x/?lang=es_ES&ll=${lng},${lat}&z=16&l=map&pt=${lng},${lat},pm2rdm`;
-        mapLink.href = state.userLocationUrl;
-        mapContainer.classList.remove("hidden");
+      if (successLink && externalLink) {
+        externalLink.href = state.userLocationUrl;
+        successLink.classList.remove("hidden");
       }
+      toast("GPS capturado correctamente");
     }, 
-    () => { toast("Error al obtener ubicación"); btn.textContent = "📍 Reintentar"; }
+    () => { 
+      toast("Error al obtener ubicación. Activa el GPS."); 
+      btn.textContent = "📍 Reintentar capturar GPS"; 
+      btn.disabled = false;
+    }
   );
+}
+
+// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL
+function showTrackingView(code) {
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.remove("hidden");
+  
+  const trackContent = $("#trackCardContent");
+  trackContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--muted);">Cargando estado del pedido...</div>`;
+  
+  // 1. Cargar estado inicial
+  supabaseClient.from('orders').select('*').eq('code', code).single().then(({data, error}) => {
+    if (data) {
+      renderTracking(data);
+      if (data.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
+        setTimeout(() => openRatingModal(code), 1000);
+      }
+    } else {
+      trackContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--danger);">Pedido no encontrado.</div>`;
+    }
+  });
+  
+  // 2. Suscribirse a cambios en tiempo real
+  if (state.trackingChannel) supabaseClient.removeChannel(state.trackingChannel);
+  
+  state.trackingChannel = supabaseClient.channel('client-track-' + code)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
+      const newData = payload.new;
+      renderTracking(newData);
+      
+      if (newData.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
+        setTimeout(() => openRatingModal(code), 1000);
+      }
+    })
+    .subscribe();
+}
+
+function renderTracking(order) {
+  const steps = order.type === 'delivery' ? [
+    { key: 'recibido', label: 'Recibido', desc: 'Esperando confirmación', icon: '🧾' },
+    { key: 'pagado', label: 'Pago Verificado', desc: 'Pago confirmado', icon: '💳' },
+    { key: 'preparando', label: 'En Preparación', desc: 'Cocinando tu pedido', icon: '👨‍🍳' },
+    { key: 'camino', label: 'En Camino', desc: 'El repartidor va hacia ti', icon: '🛵' },
+    { key: 'entregado', label: 'Entregado', desc: '¡Buen provecho!', icon: '✅' }
+  ] : [
+    { key: 'recibido', label: 'Recibido', desc: 'Esperando confirmación', icon: '🧾' },
+    { key: 'pagado', label: 'Pago Verificado', desc: 'Pago confirmado', icon: '💳' },
+    { key: 'preparando', label: 'En Preparación', desc: 'Cocinando tu pedido', icon: '👨‍🍳' },
+    { key: 'listo', label: 'Listo para Retirar', desc: 'Puedes pasar a buscarlo', icon: '🛍️' },
+    { key: 'entregado', label: 'Retirado', desc: '¡Gracias por tu compra!', icon: '✅' }
+  ];
+
+  let currentIndex = steps.findIndex(s => s.key === order.status);
+  if (currentIndex === -1) currentIndex = 0;
+  
+  const progress = (currentIndex / (steps.length - 1)) * 100;
+  
+  let html = `
+    <div class="tc-code">Pedido</div>
+    <div class="tc-num">${esc(order.code)}</div>
+    <div class="tc-status"><span style="font-size:16px">${steps[currentIndex].icon}</span> ${steps[currentIndex].label}</div>
+    <div class="bar"><i style="width:${progress}%"></i></div>
+    <div class="steps">
+  `;
+  
+  steps.forEach((s, i) => {
+    let stepClass = i < currentIndex ? 'done' : (i === currentIndex ? 'current' : '');
+    html += `
+      <div class="step ${stepClass}">
+        <div class="dot">${i < currentIndex ? '✓' : s.icon}</div>
+        <div>
+          <h5>${s.label}</h5>
+          <p>${s.desc}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `</div>`;
+  $("#trackCardContent").innerHTML = html;
+}
+
+// 👇 FUNCIONES DE CALIFICACIÓN
+function openRatingModal(code) {
+  ratingOrderCode = code;
+  currentRating = 0;
+  updateStarsUI(0);
+  $("#ratingComment").value = "";
+  $("#ratingModal").classList.remove("hidden");
+}
+
+function closeRatingModal() {
+  $("#ratingModal").classList.add("hidden");
+  localStorage.removeItem('ff_current_order_code');
+  goBack(); 
+}
+
+function setRating(val) {
+  currentRating = val;
+  updateStarsUI(val);
+}
+
+function updateStarsUI(val) {
+  const stars = document.querySelectorAll('#starsContainer .star');
+  stars.forEach((star, index) => {
+    if (index < val) star.classList.add('active');
+    else star.classList.remove('active');
+  });
+}
+
+async function submitRating() {
+  if (currentRating === 0) {
+    toast("Por favor, selecciona al menos 1 estrella");
+    return;
+  }
+  const comment = $("#ratingComment").value.trim();
+  const btn = $("#btnSubmitRating");
+  btn.disabled = true; btn.textContent = "Enviando...";
+  
+  const { error } = await supabaseClient.from('orders').update({
+    rating: currentRating,
+    review_text: comment
+  }).eq('code', ratingOrderCode);
+  
+  if (!error) {
+    localStorage.setItem('rated_' + ratingOrderCode, 'true');
+    $("#ratingBoxContent").innerHTML = `
+      <div style="padding: 20px 10px; animation: bounceIn 0.5s ease;">
+        <div style="font-size: 64px; margin-bottom: 16px; animation: float 2s infinite;">🎉</div>
+        <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800;">¡Gracias por tu opinión!</h2>
+        <p style="margin: 0 0 24px; color: var(--muted);">Tu calificación nos ayuda a mejorar el servicio.</p>
+        <button class="btn-primary" onclick="closeRatingModal()" style="width: 100%; margin-top: 0;">Volver al menú</button>
+      </div>
+    `;
+  } else {
+    toast("Error al enviar calificación");
+    btn.disabled = false; btn.textContent = "Enviar calificación";
+  }
 }
 
 async function submitOrder() {
@@ -973,15 +1180,43 @@ async function submitOrder() {
 
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
   
+  // Reset local state
   state.cart = []; state.proofImage = null; updateBadge();
-  $("#viewCheckout").classList.add("hidden");
-  $("#chatContainer").innerHTML = "";
-  addBotMsg(`¡Gracias <b>${esc(name)}</b>! Tu pedido <b>${code}</b> ha sido enviado. Pronto te contactaremos por WhatsApp. 🍔✨`);
+  
+  // Guardar código y mostrar seguimiento
+  localStorage.setItem('ff_current_order_code', code);
+  showTrackingView(code);
 }
 
+// INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   setupWelcome();
+  
+  // Verificar si hay un pedido en curso al recargar
+  const savedCode = localStorage.getItem('ff_current_order_code');
+  if (savedCode) {
+    supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
+      if (data) {
+        if (data.status === 'entregado') {
+          if (!data.rating && !localStorage.getItem('rated_' + savedCode)) {
+            $("#welcomeScreen").classList.add("hidden");
+            $("#app").classList.remove("hidden");
+            showTrackingView(savedCode);
+            setTimeout(() => openRatingModal(savedCode), 1000);
+          } else {
+            localStorage.removeItem('ff_current_order_code');
+          }
+        } else {
+          $("#welcomeScreen").classList.add("hidden");
+          $("#app").classList.remove("hidden");
+          showTrackingView(savedCode);
+        }
+      } else {
+        localStorage.removeItem('ff_current_order_code');
+      }
+    });
+  }
 });
 </script>
 </body>
