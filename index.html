@@ -54,6 +54,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .mini-brand p{margin:2px 0 0;font-size:11px;color:var(--muted);font-weight:500}
 .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:18px;display:grid;place-items:center;cursor:pointer;transition:.2s}
 .icon-btn:active{transform:scale(.94);background:var(--surface-2)}
+.btn-back{width:auto;padding:0 12px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .cart-btn{position:relative}
 .cart-badge{position:absolute;top:-4px;right:-4px;background:var(--brand);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;border:2px solid #fff}
 
@@ -93,14 +94,14 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .action-btn{width:100%;padding:16px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
 .action-btn.primary{background:linear-gradient(135deg, var(--brand-2), var(--brand));color:#fff;box-shadow:0 4px 14px var(--brand-glow)}
 .action-btn.primary:active{transform:scale(.97)}
-.action-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.action-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line); margin-top: 12px;}
 .action-btn.secondary:active{background:var(--line)}
 
 /* ====== VISTAS (CARRITO/CHECKOUT) ====== */
 .view-overlay{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;animation:up .3s ease}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 .view-hdr{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
-.view-hdr .back-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink);padding:8px;font-weight:800}
+.view-hdr .back-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink);padding:8px;font-weight:800; display: flex; align-items: center; gap: 6px; font-size: 14px;}
 .view-hdr h2{margin:0;font-size:18px;font-weight:800;flex:1;text-align:center;margin-right:32px}
 .view-body{flex:1;overflow-y:auto;padding:20px;padding-bottom:100px}
 
@@ -193,7 +194,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <p id="storeStatus">Abierto ahora</p>
       </div>
     </div>
-    <button class="icon-btn" onclick="goBack()" title="Regresar" style="font-size:22px; font-weight:bold;">←</button>
+    <button class="icon-btn btn-back" onclick="goBack()" title="Regresar">
+      <span style="font-size:18px; line-height:1;">←</span> Regresar
+    </button>
   </header>
 
   <div id="chatContainer" class="chat-container">
@@ -204,9 +207,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 <!-- VISTA CARRITO / CHECKOUT -->
 <div id="viewCart" class="view-overlay hidden">
   <div class="view-hdr" style="justify-content: space-between;">
-    <button class="back-btn" onclick="closeView('viewCart')">←</button>
+    <button class="back-btn" onclick="closeView('viewCart')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
     <h2>Tu Pedido</h2>
-    <div style="width:24px"></div>
+    <div style="width:80px"></div>
   </div>
   <div class="view-body" id="cartBody">
     <!-- Renderizado dinámico -->
@@ -215,7 +218,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 <div id="viewCheckout" class="view-overlay hidden">
   <div class="view-hdr">
-    <button class="back-btn" onclick="closeView('viewCheckout')">←</button>
+    <button class="back-btn" onclick="closeView('viewCheckout')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
     <h2>Finalizar Pedido</h2>
   </div>
   <div class="view-body">
@@ -316,36 +319,46 @@ function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.queryS
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function money(n) {
+  const rate = EXCHANGE_RATE || 36.50; // Fallback por si acaso
   const usdStr = CONFIG.currency + Number(n).toFixed(2);
-  if (EXCHANGE_RATE) {
-    const bsStr = (n * EXCHANGE_RATE).toFixed(2);
-    return `${usdStr}<span class="price-ves">Bs. ${bsStr}</span>`;
-  }
-  return usdStr;
+  const bsStr = (n * rate).toFixed(2);
+  return `${usdStr}<span class="price-ves">Bs. ${bsStr}</span>`;
 }
 
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 function scrollToBottom(){ var c = $("#chatContainer"); c.scrollTop = c.scrollHeight; }
 
+// ===== TASA DE CAMBIO CORREGIDA Y ROBUSTA =====
 async function fetchExchangeRate() {
+  // 1. Intentar cargar del localStorage primero para mostrar algo rápido
+  const cached = localStorage.getItem('bcv_rate');
+  if (cached) EXCHANGE_RATE = parseFloat(cached);
+
+  // 2. Intentar con la API oficial y estable (DolarAPI)
+  try {
+    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    let data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      localStorage.setItem('bcv_rate', EXCHANGE_RATE);
+      return;
+    }
+  } catch (e) { console.warn("Fallo dolarapi, intentando pydolarve..."); }
+
+  // 3. Intentar con Pydolarve como respaldo
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
       let data = await res.json();
       if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
         EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
+        localStorage.setItem('bcv_rate', EXCHANGE_RATE);
         return;
       }
     }
-  } catch (e) {}
-  try {
-    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
-    let data = await res.json();
-    if (data && data.promedio) {
-      EXCHANGE_RATE = parseFloat(data.promedio);
-      return;
-    }
-  } catch (e) {}
+  } catch (e) { console.warn("Fallo pydolarve también."); }
+
+  // 4. Si todo falla, usar caché o valor por defecto
   if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
 }
 
@@ -508,6 +521,20 @@ function selectCategory(catId, catName) {
       </div>
     `;
   });
+
+  // 👇 AGREGAR BOTÓN "SIGUIENTE" AL FINAL DE LA LISTA
+  const catNameLower = catName.toLowerCase();
+  let btnText = "Siguiente paso ➔";
+  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
+    btnText = "Omitir bebida / Ir a postres ➔";
+  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
+    btnText = "Omitir postre / Finalizar pedido ➔";
+  } else if (catNameLower.includes('hamburguesa') || catNameLower.includes('perro') || catNameLower.includes('pollo') || catNameLower.includes('chawarma')) {
+    btnText = "Omitir plato / Ir a bebidas ➔";
+  }
+  
+  html += `<button class="action-btn secondary" onclick="skipStep('${catId}')">${btnText}</button>`;
+
   renderOptions(html);
 }
 
@@ -573,6 +600,48 @@ function toggleExtra(name, on){
   updateModalPrice(); 
 }
 
+// ===== FUNCIONES DE SUGERENCIA Y AVANCE =====
+function suggestDrink() {
+  const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
+  if (drinkCat) {
+    addBotMsg(`¡Excelente elección! 😋 ¿Y para tomar? Te sugiero algo de nuestra sección de <b>${esc(drinkCat.name)}</b> 🥤.`);
+    setTimeout(() => selectCategory(drinkCat.id, drinkCat.name), 1200);
+  } else {
+    state.wizardStep = "upsell";
+    askForMore();
+  }
+}
+
+function suggestDessert() {
+  const dessertCat = findCategoryByKeywords(['postre', 'dulce', 'torta', 'helado']);
+  if (dessertCat) {
+    addBotMsg(`¡Genial! 🥤 ¿Se te antoja un postre para cerrar con broche de oro? Te muestro los <b>${esc(dessertCat.name)}</b> 🍰.`);
+    setTimeout(() => selectCategory(dessertCat.id, dessertCat.name), 1200);
+  } else {
+    state.wizardStep = "upsell";
+    askForMore();
+  }
+}
+
+function skipStep(catId) {
+  const catName = getCategoryName(catId);
+  addUserMsg("Prefiero no elegir aquí / Siguiente");
+  $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
+
+  const catNameLower = catName.toLowerCase();
+  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
+    state.wizardStep = "dessert";
+    suggestDessert();
+  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
+    state.wizardStep = "upsell";
+    askForMore();
+  } else {
+    // Si saltan el plato fuerte (raro, pero posible)
+    state.wizardStep = "drink";
+    suggestDrink();
+  }
+}
+
 function addToCartAndAdvance(catId) {
   const m = state.modal; const p = m.product;
   const key = p.id + "|" + m.extras.sort().join(",") + "|" + m.notes;
@@ -589,40 +658,18 @@ function addToCartAndAdvance(catId) {
   $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
 
   const catName = getCategoryName(catId);
+  const catNameLower = catName.toLowerCase();
   
-  if (catName.includes('bebida') || catName.includes('refresco') || catName.includes('jugo')) {
+  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
     state.wizardStep = "dessert";
-  } else if (catName.includes('postre') || catName.includes('dulce') || catName.includes('helado')) {
+    setTimeout(suggestDessert, 600);
+  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
     state.wizardStep = "upsell";
+    setTimeout(askForMore, 600);
   } else {
     state.wizardStep = "drink";
+    setTimeout(suggestDrink, 600);
   }
-
-  setTimeout(() => {
-    if (state.wizardStep === "drink") {
-      const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
-      if (drinkCat) {
-        addBotMsg(`¡Excelente elección! 😋 ¿Y para tomar? Te sugiero algo de nuestra sección de <b>${esc(drinkCat.name)}</b> 🥤.`);
-        setTimeout(() => selectCategory(drinkCat.id, drinkCat.name), 1200);
-      } else {
-        state.wizardStep = "upsell";
-        askForMore();
-      }
-    } 
-    else if (state.wizardStep === "dessert") {
-      const dessertCat = findCategoryByKeywords(['postre', 'dulce', 'torta', 'helado']);
-      if (dessertCat) {
-        addBotMsg(`¡Genial! 🥤 ¿Se te antoja un postre para cerrar con broche de oro? Te muestro los <b>${esc(dessertCat.name)}</b> 🍰.`);
-        setTimeout(() => selectCategory(dessertCat.id, dessertCat.name), 1200);
-      } else {
-        state.wizardStep = "upsell";
-        askForMore();
-      }
-    } 
-    else {
-      askForMore();
-    }
-  }, 600);
 }
 
 function askForMore() {
@@ -685,8 +732,6 @@ function openHelp() {
 function goBack() {
   $("#viewCheckout").classList.add("hidden");
   $("#viewCart").classList.add("hidden");
-  
-  // Regresa a la vista de categorías
   startChatWizard();
 }
 
