@@ -242,7 +242,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <div class="field">
       <label>Método de pago *</label>
       <select id="paySelect"></select>
-      <div id="payDetails" style="margin-top:10px; font-size:12px; color:var(--muted); line-height:1.5;"></div>
+      <div id="payDetails" style="margin-top:10px; font-size:13px; color:var(--ink-2); line-height:1.6;"></div>
       
       <div id="proofField" style="margin-top:16px" class="hidden">
         <label>Comprobante de pago</label>
@@ -309,6 +309,8 @@ var CONFIG = {
 
 var DB = { cats: [], menu: [] };
 var EXCHANGE_RATE = null;
+var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF", cuenta:"Número de cuenta", titular:"Titular", rif:"RIF", email:"Correo" };
+
 var state = { 
   clientName: "", cart: [], proofImage: null, userLocationUrl: null,
   wizardStep: "food"
@@ -319,7 +321,7 @@ function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.queryS
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function money(n) {
-  const rate = EXCHANGE_RATE || 36.50; // Fallback por si acaso
+  const rate = EXCHANGE_RATE || 36.50; 
   const usdStr = CONFIG.currency + Number(n).toFixed(2);
   const bsStr = (n * rate).toFixed(2);
   return `${usdStr}<span class="price-ves">Bs. ${bsStr}</span>`;
@@ -328,13 +330,24 @@ function money(n) {
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 function scrollToBottom(){ var c = $("#chatContainer"); c.scrollTop = c.scrollHeight; }
 
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  t.remove();
+}
+
 // ===== TASA DE CAMBIO CORREGIDA Y ROBUSTA =====
 async function fetchExchangeRate() {
-  // 1. Intentar cargar del localStorage primero para mostrar algo rápido
   const cached = localStorage.getItem('bcv_rate');
   if (cached) EXCHANGE_RATE = parseFloat(cached);
 
-  // 2. Intentar con la API oficial y estable (DolarAPI)
   try {
     let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
     let data = await res.json();
@@ -345,7 +358,6 @@ async function fetchExchangeRate() {
     }
   } catch (e) { console.warn("Fallo dolarapi, intentando pydolarve..."); }
 
-  // 3. Intentar con Pydolarve como respaldo
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
@@ -358,7 +370,6 @@ async function fetchExchangeRate() {
     }
   } catch (e) { console.warn("Fallo pydolarve también."); }
 
-  // 4. Si todo falla, usar caché o valor por defecto
   if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
 }
 
@@ -522,7 +533,6 @@ function selectCategory(catId, catName) {
     `;
   });
 
-  // 👇 AGREGAR BOTÓN "SIGUIENTE" AL FINAL DE LA LISTA
   const catNameLower = catName.toLowerCase();
   let btnText = "Siguiente paso ➔";
   if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
@@ -600,7 +610,6 @@ function toggleExtra(name, on){
   updateModalPrice(); 
 }
 
-// ===== FUNCIONES DE SUGERENCIA Y AVANCE =====
 function suggestDrink() {
   const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
   if (drinkCat) {
@@ -636,7 +645,6 @@ function skipStep(catId) {
     state.wizardStep = "upsell";
     askForMore();
   } else {
-    // Si saltan el plato fuerte (raro, pero posible)
     state.wizardStep = "drink";
     suggestDrink();
   }
@@ -801,6 +809,7 @@ function renderPayments() {
   updatePayDetails();
 }
 
+// ===== ACTUALIZACIÓN DE DATOS DE PAGO CON BOTÓN COPIAR =====
 function updatePayDetails() {
   const p = CONFIG.payments.find(x => x.id === $("#paySelect").value);
   const box = $("#payDetails");
@@ -813,7 +822,39 @@ function updatePayDetails() {
   }
   
   if (p.details) {
-    box.innerHTML = Object.entries(p.details).filter(([k,v])=>v).map(([k,v]) => `<b>${k}:</b> ${v}`).join(" · ");
+    let htmlDetails = '';
+    let copyText = `Datos de Pago (${p.label}):\n`;
+    
+    if (p.type === 'pagomovil') {
+      if(p.details.banco) { htmlDetails += `<div><b>Banco:</b> ${esc(p.details.banco)}</div>`; copyText += `Banco: ${p.details.banco}\n`; }
+      if(p.details.cedula) { htmlDetails += `<div><b>Cédula:</b> ${esc(p.details.cedula)}</div>`; copyText += `Cédula: ${p.details.cedula}\n`; }
+      if(p.details.telefono) { htmlDetails += `<div><b>Teléfono:</b> ${esc(p.details.telefono)}</div>`; copyText += `Teléfono: ${p.details.telefono}\n`; }
+    } else {
+      Object.entries(p.details).forEach(([k,v]) => {
+        if(v) {
+          let label = DETAIL_LABELS[k] || k;
+          htmlDetails += `<div><b>${label}:</b> ${esc(v)}</div>`;
+          copyText += `${label}: ${v}\n`;
+        }
+      });
+    }
+    
+    const isDel = $("input[name='otype']:checked").value === 'delivery';
+    const sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+    const del = isDel ? CONFIG.deliveryFee : 0;
+    const totalUsd = sub + del;
+    const totalBs = (totalUsd * (EXCHANGE_RATE || 1)).toFixed(2);
+    
+    copyText += `\nTotal a pagar: Bs. ${totalBs}`;
+    
+    box.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background:var(--surface-2); padding:14px; border-radius:12px;">
+        ${htmlDetails}
+      </div>
+      <button class="btn-start" style="background:var(--brand-soft); color:var(--brand); border:1px solid var(--brand); font-size:13px; padding:10px; margin-top:0; width:100%;" onclick="copyToClipboard('${esc(copyText.replace(/\n/g, '\\n'))}')">
+        📋 Copiar datos y total (Bs. ${totalBs})
+      </button>
+    `;
   }
   
   field.classList.remove("hidden");
@@ -831,6 +872,9 @@ function updateOrderType() {
       <div class="trow"><span>Delivery</span><b>${money(del)}</b></div>
       <div class="trow total"><span>Total</span><span>${money(sub+del)}</span></div>
     </div>`;
+    
+  // Actualizar los datos de pago para que el botón de copiar tenga el total correcto
+  updatePayDetails();
 }
 
 function handleProofUpload(e) {
@@ -897,7 +941,7 @@ async function submitOrder() {
 
   let msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Tel:* ${phone}\n*Tipo:* ${isDel?'Delivery':'Retiro'}\n*Pago:* ${payMethod}\n\n`;
   state.cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${i.unit*i.qty.toFixed(2)})\n`; });
-  msg += `\n*Total:* $${total.toFixed(2)}`;
+  msg += `\n*Total:* $${total.toFixed(2)} (Bs. ${(total * EXCHANGE_RATE).toFixed(2)})`;
 
   const orderData = {
     code, status: 'recibido',
