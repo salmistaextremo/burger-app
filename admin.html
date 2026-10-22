@@ -37,10 +37,81 @@ textarea{resize:vertical;min-height:80px}
 .notif-banner:hover{background:var(--brand-d);}
 .notif-banner.hidden{display:none !important;}
 
-/* PANTALLA LOGIN */
+/* =========================================
+   PANTALLA LOGIN Y ANIMACIÓN SVG
+   ========================================= */
 .auth-screen{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:var(--surface);width:100%;max-width:400px;border-radius:20px;padding:32px 24px;box-shadow:var(--shadow-lg);text-align:center}
-.auth-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:grid;place-items:center;font-size:30px;margin:0 auto 16px;color:#fff}
+.auth-logo-container{width:140px;height:140px;margin:0 auto 10px;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+
+/* Contenedor principal que hace el salto */
+.auth-burger-wrapper {
+  animation: jumpWhole 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform-origin: center bottom;
+  z-index: 2;
+}
+
+.auth-burger-svg{width:100px;height:100px;}
+
+/* Elementos individuales que se separan */
+.burger-part {
+  transform-origin: 60px 60px; /* Centro del viewBox */
+  transition: transform 0.2s ease;
+}
+
+.bun-top { animation: partTop 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+.lettuce { animation: partLettuce 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+.tomato  { animation: partTomato 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+.cheese  { animation: partCheese 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+.patty   { animation: partPatty 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+.bun-btm { animation: partBottom 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); }
+
+.auth-burger-shadow{width:60px;height:12px;background:rgba(0,0,0,0.15);border-radius:50%;position:absolute;bottom:5px;animation:shadowPulse 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1); z-index:1; filter: blur(3px);}
+
+/* ====== KEYFRAMES DE ANIMACIÓN ====== */
+
+/* 1. El salto completo */
+@keyframes jumpWhole {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  10% { transform: translateY(0) scale(1.1, 0.85); } /* Preparación */
+  45% { transform: translateY(-45px) scale(0.95, 1.05) rotate(3deg); } /* Salto */
+  85% { transform: translateY(0) scale(1.05, 0.9); } /* Aterrizaje */
+}
+
+/* 2. La sombra */
+@keyframes shadowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  10% { transform: scale(1.1); opacity: 1; }
+  45% { transform: scale(0.3); opacity: 0.1; } /* Se encoge al saltar */
+  85% { transform: scale(1.1); opacity: 1; }
+}
+
+/* 3. Separación de las partes (Pico máximo al 45%) */
+@keyframes partTop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  45% { transform: translateY(-25px) rotate(-8deg); }
+}
+@keyframes partLettuce {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  45% { transform: translateY(-12px) translateX(-12px) rotate(-4deg); }
+}
+@keyframes partTomato {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  45% { transform: translateY(-5px) translateX(15px) rotate(5deg); }
+}
+@keyframes partCheese {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  45% { transform: translateY(8px) translateX(12px) rotate(8deg); }
+}
+@keyframes partPatty {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  45% { transform: translateY(18px) translateX(-5px) rotate(-3deg); }
+}
+@keyframes partBottom {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(28px); }
+}
+
 .auth-box h2{margin:0 0 8px;font-size:22px;font-weight:800;}
 .auth-box p{margin:0 0 24px;font-size:13.5px;color:var(--muted);}
 .auth-box .field{margin-bottom:16px;text-align:left}
@@ -314,7 +385,52 @@ textarea{resize:vertical;min-height:80px}
 
 <div id="authScreen" class="auth-screen">
   <div id="loginBox" class="auth-box">
-    <div class="auth-logo">🍔</div>
+    
+    <!-- 👇 ANIMACIÓN DE LA HAMBURGUESA EXPLOSIVA 👇 -->
+    <div class="auth-logo-container">
+      <div class="auth-burger-wrapper">
+        <svg class="auth-burger-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          
+          <!-- Pan Superior -->
+          <g class="burger-part bun-top">
+            <path d="M 20 45 C 20 15, 100 15, 100 45 Z" fill="#F59E0B" />
+            <ellipse cx="45" cy="25" rx="3" ry="1.5" fill="#FFF" transform="rotate(-20 45 25)" />
+            <ellipse cx="65" cy="20" rx="3" ry="1.5" fill="#FFF" transform="rotate(10 65 20)" />
+            <ellipse cx="80" cy="30" rx="3" ry="1.5" fill="#FFF" transform="rotate(30 80 30)" />
+            <ellipse cx="55" cy="35" rx="3" ry="1.5" fill="#FFF" transform="rotate(-10 55 35)" />
+          </g>
+
+          <!-- Lechuga -->
+          <g class="burger-part lettuce">
+            <path d="M 15 50 Q 25 45, 35 50 T 55 50 T 75 50 T 95 50 T 105 50 L 105 55 L 15 55 Z" fill="#22C55E" />
+          </g>
+
+          <!-- Tomate -->
+          <g class="burger-part tomato">
+            <rect x="20" y="55" width="80" height="8" rx="4" fill="#EF4444" />
+          </g>
+
+          <!-- Queso -->
+          <g class="burger-part cheese">
+            <path d="M 20 63 L 100 63 L 95 73 L 85 67 L 75 73 L 65 67 L 55 73 L 45 67 L 35 73 L 25 67 Z" fill="#FBBF24" />
+          </g>
+
+          <!-- Carne -->
+          <g class="burger-part patty">
+            <rect x="15" y="73" width="90" height="14" rx="6" fill="#78350F" />
+          </g>
+
+          <!-- Pan Inferior -->
+          <g class="burger-part bun-btm">
+            <rect x="20" y="87" width="80" height="14" rx="6" fill="#F59E0B" />
+          </g>
+
+        </svg>
+      </div>
+      <div class="auth-burger-shadow"></div>
+    </div>
+    <!-- 👆 FIN DE LA ANIMACIÓN 👆 -->
+
     <h2>Admin Panel</h2>
     <p>Inicia sesión con tu cuenta de administrador.</p>
     <div class="auth-error" id="loginError">Correo o contraseña incorrectos.</div>
@@ -383,14 +499,12 @@ function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("
 
 // 👇 OBTENER TASA DE CAMBIO (Prioriza Manual)
 async function fetchExchangeRate() {
-  // 1. Revisar si hay una tasa manual en la base de datos
   if (DB.config.exchange_rate && DB.config.exchange_rate > 0) {
     EXCHANGE_RATE = DB.config.exchange_rate;
     console.log("Usando tasa manual:", EXCHANGE_RATE);
     return;
   }
 
-  // 2. Si no hay manual, buscar en APIs
   const cached = localStorage.getItem('bcv_rate');
   if (cached) EXCHANGE_RATE = parseFloat(cached);
 
@@ -416,7 +530,7 @@ async function fetchExchangeRate() {
     }
   } catch (e) { console.warn("Fallo pydolarve"); }
 
-  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50; // Fallback
+  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
 }
 
 // ==========================================
@@ -535,7 +649,7 @@ async function checkAuth() {
     setupPushNotifications();
     try {
       await dbLoad(); 
-      await fetchExchangeRate(); // 👈 Esperar a obtener la tasa manual o automática
+      await fetchExchangeRate(); 
       render(); setupNav(); setupOrderListener(); setupPolling();
       window.currentAdminUser = session.user.email; 
       if (DB.config) {
@@ -610,7 +724,7 @@ async function dbSaveConfig() {
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
     hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
-    exchange_rate: DB.config.exchange_rate // 👈 Guardar tasa manual
+    exchange_rate: DB.config.exchange_rate
   }); 
 }
 
@@ -920,7 +1034,6 @@ function openProofModal(url) {
   document.getElementById("modal").classList.remove("hidden");
 }
 
-// 👇 PESTAÑA NEGOCIO CON TASA MANUAL 👇
 function renderBusiness() {
   let openTime = "11:00", closeTime = "23:00";
   if (DB.config.hours) { openTime = DB.config.hours.open || "11:00"; closeTime = DB.config.hours.close || "23:00"; }
@@ -935,7 +1048,6 @@ function renderBusiness() {
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
         
-        <!-- 👇 NUEVO CAMPO TASA MANUAL 👇 -->
         <div class="field full" style="background: var(--brand-soft); padding: 16px; border-radius: 12px; border: 1px solid #FFE0D0;">
           <label style="color: var(--brand-d); font-size: 14px;">Tasa de Cambio Manual (Bs/$)</label>
           <input type="number" id="bExchangeRate" step="0.01" value="${DB.config.exchange_rate || ''}" placeholder="Ej: 36.50" style="font-weight: bold; font-size: 16px;">
@@ -974,7 +1086,7 @@ async function saveBusiness() {
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   toast('✅ Negocio y Tasa actualizados');
-  render(); // Volver a renderizar para mostrar el cambio
+  render();
 }
 
 let editingPaymentIndex = null;
