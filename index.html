@@ -29,7 +29,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 #app{max-width:520px;margin:0 auto;width:100%;height:100vh;background:var(--bg);position:relative;display:flex;flex-direction:column;box-shadow:0 0 80px rgba(0,0,0,0.04);overflow:hidden}
 .hidden{display:none !important}
 
-/* ====== PANTALLA DE BIENVENIDA ====== */
+/* ====== PANTALLA DE BIENVENIDA Y CIERRE ====== */
 .welcome-screen{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;animation:fade .4s}
 @keyframes floatHamburger {
   0% { transform: translateY(0px) rotate(0deg); }
@@ -204,7 +204,19 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 </head>
 <body>
 
-<div id="welcomeScreen" class="welcome-screen">
+<!-- PANTALLA DE TIENDA CERRADA -->
+<div id="closedScreen" class="welcome-screen hidden" style="background: var(--surface-2);">
+  <div class="welcome-avatar" style="background: var(--surface); color: var(--muted); font-size: 50px; animation: none; box-shadow: none;">😴</div>
+  <h1 class="welcome-title">Actualmente cerrado</h1>
+  <p class="welcome-sub">Lo sentimos, en este momento no estamos recibiendo pedidos. Nuestro horario de atención es:</p>
+  <div style="background: #fff; padding: 20px; border-radius: 16px; border: 1px solid var(--line); margin-bottom: 24px; width: 100%; max-width: 320px; text-align: center;">
+    <div id="closedScheduleText" style="font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.6;"></div>
+  </div>
+  <button class="btn-start" style="background: var(--ink); box-shadow: none;" onclick="exitApp()">Cerrar Aplicación</button>
+</div>
+
+<!-- PANTALLA 1: BIENVENIDA -->
+<div id="welcomeScreen" class="welcome-screen hidden">
   <div class="welcome-avatar" id="welcomeBot">🍔</div>
   <h1 class="welcome-title">¡Bienvenido a <span id="welcomeBrand">Rapid Burger</span>!</h1>
   <p class="welcome-sub">Soy tu asistente. Escribe tu nombre y te guiaré paso a paso para armar tu pedido perfecto.</p>
@@ -349,7 +361,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 <script>
 var CONFIG = {
   brand: "Rapid Burger", logo: "", whatsapp: "584121234567",
-  payments: [], deliveryFee: 2.00, currency: "$"
+  payments: [], deliveryFee: 2.00, currency: "$",
+  hours: null, days: null, helpHoursText: ""
 };
 
 var DB = { cats: [], menu: [] };
@@ -377,6 +390,14 @@ function money(n) {
 
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 function scrollToBottom(){ var c = $("#chatContainer"); c.scrollTop = c.scrollHeight; }
+
+function exitApp() {
+  window.close();
+  // Fallback por si el navegador bloquea window.close()
+  setTimeout(() => {
+    document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;color:#666;text-align:center;padding:20px;"><h2>Gracias por visitarnos.<br>Ya puedes cerrar esta pestaña.</h2></div>';
+  }, 100);
+}
 
 function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
@@ -451,6 +472,9 @@ async function loadData() {
       CONFIG.whatsapp = configRes.data.whatsapp || CONFIG.whatsapp;
       CONFIG.payments = configRes.data.payments || [];
       CONFIG.deliveryFee = configRes.data.deliveryfee || CONFIG.deliveryFee;
+      CONFIG.hours = configRes.data.hours;
+      CONFIG.days = configRes.data.days;
+      CONFIG.helpHoursText = configRes.data.helphourstext;
     }
     
     $("#welcomeBrand").textContent = CONFIG.brand;
@@ -479,6 +503,61 @@ async function loadData() {
     console.warn("Usando datos por defecto por error de conexión:", e);
     DB.cats = DEFAULT_CATS; 
   }
+}
+
+// 👇 VERIFICACIÓN DE HORARIO
+function checkStoreStatus() {
+  if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return true; // Si no hay horario, se asume abierto
+
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Domingo, 1 = Lunes...
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+
+  const activeDays = CONFIG.days || [1,2,3,4,5,6,0]; // Si no hay días, abrir todos
+  const isWorkingDay = activeDays.includes(currentDay);
+
+  let [openH, openM] = CONFIG.hours.open.split(':').map(Number);
+  let [closeH, closeM] = CONFIG.hours.close.split(':').map(Number);
+  
+  let openMins = openH * 60 + openM;
+  let closeMins = closeH * 60 + closeM;
+
+  let isOpenTime = false;
+  if (closeMins > openMins) {
+    // Horario normal (ej. 11:00 a 23:00)
+    isOpenTime = currentMins >= openMins && currentMins < closeMins;
+  } else {
+    // Horario nocturno (ej. 18:00 a 02:00)
+    isOpenTime = currentMins >= openMins || currentMins < closeMins;
+  }
+
+  const isOpen = isWorkingDay && isOpenTime;
+
+  if (!isOpen) {
+    // Generar texto del horario
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const sortedDays = [...activeDays].sort((a,b) => a - b);
+    let label = "";
+    if (sortedDays.length === 7) label = "Todos los días";
+    else if (sortedDays.join(',') === '1,2,3,4,5') label = "Lunes a Viernes";
+    else if (sortedDays.join(',') === '1,2,3,4,5,6') label = "Lunes a Sábado";
+    else label = sortedDays.map(d => dayNames[d]).join(', ');
+
+    let finalText = CONFIG.helpHoursText;
+    if (!finalText || finalText.trim() === '') {
+      finalText = `${label}: ${CONFIG.hours.open} a ${CONFIG.hours.close}`;
+    }
+    
+    // Formatear saltos de línea si existen
+    finalText = finalText.replace(/\n/g, '<br>');
+
+    $("#closedScheduleText").innerHTML = finalText;
+    $("#closedScreen").classList.remove("hidden");
+    $("#welcomeScreen").classList.add("hidden");
+    return false;
+  }
+
+  return true;
 }
 
 function setupWelcome() {
@@ -1192,29 +1271,38 @@ async function submitOrder() {
 // INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
-  setupWelcome();
   
-  const savedCode = localStorage.getItem('ff_current_order_code');
-  if (savedCode) {
-    supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
-      if (data) {
-        if (data.status === 'entregado') {
-          if (!data.rating && !localStorage.getItem('rated_' + savedCode)) {
+  // 👇 VERIFICAR HORARIO ANTES DE PERMITIR EL ACCESO
+  const isOpen = checkStoreStatus();
+  
+  if (isOpen) {
+    setupWelcome();
+    
+    // Verificar si hay un pedido en curso al recargar
+    const savedCode = localStorage.getItem('ff_current_order_code');
+    if (savedCode) {
+      supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
+        if (data) {
+          if (data.status === 'entregado') {
+            if (!data.rating && !localStorage.getItem('rated_' + savedCode)) {
+              $("#welcomeScreen").classList.add("hidden");
+              $("#app").classList.remove("hidden");
+              showTrackingView(savedCode);
+            } else {
+              localStorage.removeItem('ff_current_order_code');
+            }
+          } else {
             $("#welcomeScreen").classList.add("hidden");
             $("#app").classList.remove("hidden");
             showTrackingView(savedCode);
-          } else {
-            localStorage.removeItem('ff_current_order_code');
           }
         } else {
-          $("#welcomeScreen").classList.add("hidden");
-          $("#app").classList.remove("hidden");
-          showTrackingView(savedCode);
+          localStorage.removeItem('ff_current_order_code');
         }
-      } else {
-        localStorage.removeItem('ff_current_order_code');
-      }
-    });
+      });
+    } else {
+       $("#welcomeScreen").classList.remove("hidden");
+    }
   }
 });
 </script>
