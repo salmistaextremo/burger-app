@@ -56,7 +56,7 @@ textarea{resize:vertical;min-height:80px}
 .sb-brand-text h1{font-size:14px;font-weight:800;}
 .sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
 
-/* NAVEGACIÓN */
+/* NAVEGACIÓN ESCRITORIO */
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar {display: none;}
 .sb-nav button{position:relative; display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s;flex-shrink:0;}
@@ -64,37 +64,13 @@ textarea{resize:vertical;min-height:80px}
 .sb-nav button:hover{background:var(--surface-2);color:var(--ink)}
 .sb-nav button.active{background:var(--brand-soft);color:var(--brand-d);font-weight:600}
 
-/* 👇 NUEVO ESTILO DEL CONTADOR (BADGE) EN LA ESQUINA INFERIOR DERECHA 👇 */
 .sb-nav button .count {
-  position: absolute;
-  bottom: 4px;
-  right: 6px;
-  margin-left: 0;
-  font-size: 9px;
-  font-weight: 800;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 4px;
-  border-radius: 4px;
-  background: var(--surface-2);
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--line);
-  line-height: 1;
+  position: absolute; bottom: 4px; right: 6px; margin-left: 0; font-size: 9px; font-weight: 800;
+  min-width: 14px; height: 14px; padding: 0 4px; border-radius: 4px; background: var(--surface-2);
+  color: var(--muted); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); line-height: 1;
 }
-.sb-nav button.active .count {
-  background: var(--brand);
-  color: #fff;
-  border-color: var(--brand);
-}
-.sb-nav button .count.new {
-  background: var(--danger);
-  color: #fff;
-  border-color: var(--danger);
-  animation: pulse-badge 2s infinite;
-}
+.sb-nav button.active .count { background: var(--brand); color: #fff; border-color: var(--brand); }
+.sb-nav button .count.new { background: var(--danger); color: #fff; border-color: var(--danger); animation: pulse-badge 2s infinite; }
 @keyframes pulse-badge{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 
 .sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
@@ -238,83 +214,119 @@ textarea{resize:vertical;min-height:80px}
 
 /* HEADER MÓVIL */
 .mobile-header { display: none; background: var(--surface); padding: 12px 16px; border-bottom: 1px solid var(--line); justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 90; }
-.mobile-header .mh-brand { font-weight: 800; font-size: 16px; color: var(--brand); }
-.mobile-header .mh-actions { display: flex; gap: 8px; }
-.mobile-header .mh-btn { padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-.mobile-header .mh-btn.install { background: var(--brand-soft); color: var(--brand); border: 1px solid #FFE0D0; }
-.mobile-header .mh-btn.logout { background: var(--danger-soft); color: var(--danger); }
+.mh-brand { font-weight: 800; font-size: 18px; color: var(--brand); flex: 1; text-align: left; }
+.mh-actions { display: flex; gap: 8px; align-items: center; }
+.mh-btn { padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.mh-btn.install { background: var(--brand-soft); color: var(--brand); border: 1px solid #FFE0D0; }
+.mh-btn.logout { background: var(--danger-soft); color: var(--danger); }
+
+/* Clases utilitarias para vista móvil */
+.mobile-only { display: none; }
 
 /* =========================================
    REDISTRIBUCIÓN Y OPTIMIZACIÓN MÓVIL
    ========================================= */
 @media(max-width:860px){
-  .app{flex-direction:column; min-height: 100vh; padding-bottom: 70px; }
-  
-  /* Sidebar transformado a Bottom Nav */
-  .sidebar{
-    width:100%; height:70px; position:fixed; bottom:0; left:0; 
-    flex-direction:row; padding:0; border-right:none; border-top:1px solid var(--line); 
-    background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); z-index: 100;
-  }
-  
-  .sb-brand { display: none; }
-  
-  .sb-nav { flex-direction:row; width: 100%; justify-content: space-around; overflow: visible; padding: 0; }
-  
-  .sb-nav button {
-    flex-direction:column; justify-content:center; padding: 8px 0; font-size: 10px; gap: 4px; flex: 1;
-  }
-  .sb-nav button .ico { font-size: 22px; margin: 0; }
-  
-  /* Posición del contador en el menú inferior */
-  .sb-nav button .count {
-    bottom: 4px;
-    right: 10px;
-    font-size: 8.5px;
-    min-width: 12px;
-    height: 12px;
-  }
-  
-  .sb-footer { display: none; }
-  .mobile-header { display: flex; }
+  .app { flex-direction: column; padding-bottom: 0; }
+  .sidebar { display: none; } /* Ocultar barra lateral por completo */
+  .mobile-header { display: flex; } /* Mostrar header superior */
   
   .main{padding:16px; width: 100%;}
   
-  /* 👇 REDISTRIBUCIÓN DEL DASHBOARD (TARJETAS HORIZONTALES) 👇 */
-  .welcome-card { padding: 20px; margin-bottom: 16px; }
-  .welcome-card h1 { font-size: 20px; }
+  /* Bienvenida */
+  .welcome-card { padding: 20px; margin-bottom: 16px; text-align: left; }
+  .welcome-card h1 { font-size: 20px; margin-bottom: 4px; }
   .welcome-card p { font-size: 13px; }
 
+  /* Cuadrícula de Navegación Móvil (2x3) */
+  .mobile-only { display: block; }
+  .mobile-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .mobile-nav-grid button {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-2);
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    transition: 0.2s;
+  }
+  .mobile-nav-grid button.active {
+    background: var(--brand-soft);
+    color: var(--brand-d);
+    border-color: var(--brand);
+  }
+  .mobile-nav-grid button .ico { font-size: 22px; line-height: 1; }
+  
+  /* Badges de la cuadrícula */
+  .mobile-nav-grid button .count {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 8.5px;
+    font-weight: 800;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+  }
+  .mobile-nav-grid button.active .count { background: var(--brand); color: white; border-color: var(--brand); }
+  .mobile-nav-grid button .count.new { background: var(--danger); color: white; border-color: var(--danger); }
+
+  /* Tarjetas de Estadísticas (3 columnas) */
   .stats-grid { 
-    grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px; 
     margin-bottom: 20px;
   }
-  
   .stat-card { 
-    flex-direction: column; 
-    padding: 12px 6px; 
-    text-align: center; 
-    gap: 4px; 
-    border-radius: 12px;
+    flex-direction: column; padding: 12px 6px; text-align: center; gap: 4px; border-radius: 12px;
   }
-  
-  .stat-icon { 
-    width: 36px; 
-    height: 36px; 
-    font-size: 18px; 
-    border-radius: 10px;
-    margin-bottom: 2px;
-  }
-  
+  .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; margin-bottom: 2px; }
   .stat-info p { font-size: 9px; margin-bottom: 2px; letter-spacing: 0; }
   .stat-info h3 { font-size: 18px; margin: 0; }
+
+  /* Paneles de información extra */
+  .info-panel { padding: 16px; margin-bottom: 16px; }
+  .info-panel h3 { font-size: 15px; margin-bottom: 10px; }
+  .info-panel p { font-size: 13px; margin-bottom: 6px; }
   
   /* Tablas y Formularios */
   .form-grid{grid-template-columns:1fr}
   .report-filters{flex-direction:column;align-items:stretch;}
-  .modal { padding: 10px; }
-  .modal-box { max-height: 95vh; }
+  
+  /* Botón flotante para volver al inicio en otras vistas */
+  .back-to-home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
 }
 </style>
 </head>
@@ -324,9 +336,9 @@ textarea{resize:vertical;min-height:80px}
   🔔 Haz clic aquí para activar las notificaciones y sonidos de nuevos pedidos
 </div>
 
-<!-- HEADER EXCLUSIVO PARA MÓVILES -->
+<!-- HEADER EXCLUSIVO PARA MÓVILES (Admin | Instalar | Salir) -->
 <header class="mobile-header">
-  <div class="mh-brand">Admin RB</div>
+  <div class="mh-brand">Admin</div>
   <div class="mh-actions">
     <button id="btnInstallAppMobile" class="mh-btn install hidden" onclick="installApp()">
       📲 Instalar
@@ -350,6 +362,7 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <div class="app hidden" id="appContainer">
+  <!-- SIDEBAR (Solo visible en Escritorio) -->
   <aside class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
@@ -373,6 +386,7 @@ textarea{resize:vertical;min-height:80px}
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
   </aside>
+  
   <main class="main" id="main"></main>
 </div>
 
@@ -681,14 +695,56 @@ function setupNav() {
   });
 }
 
+function switchTab(tab) {
+  state.tab = tab;
+  render();
+  window.scrollTo(0,0);
+}
+
 function render() {
   var m = $("#main");
-  if (state.tab === "home") renderHome(m);
-  else if (state.tab === "products") renderProducts(m);
-  else if (state.tab === "categories") renderCategories(m);
-  else if (state.tab === "orders") renderOrders(m);
-  else if (state.tab === "reports") renderReports(m);
-  else if (state.tab === "business") renderBusiness(m);
+  
+  // Generar el menú móvil (solo se verá en pantallas pequeñas)
+  let mobileNav = `
+    <div class="mobile-only mobile-nav-grid">
+      <button class="${state.tab === 'home' ? 'active' : ''}" onclick="switchTab('home')">
+        <span class="ico">🏠</span>Inicio
+      </button>
+      <button class="${state.tab === 'products' ? 'active' : ''}" onclick="switchTab('products')">
+        <span class="ico">🍔</span>Productos
+        <span class="count">${DB.menu.length}</span>
+      </button>
+      <button class="${state.tab === 'categories' ? 'active' : ''}" onclick="switchTab('categories')">
+        <span class="ico">📁</span>Categorías
+        <span class="count">${DB.cats.length}</span>
+      </button>
+      <button class="${state.tab === 'orders' ? 'active' : ''}" onclick="switchTab('orders')">
+        <span class="ico">🧾</span>Pedidos
+        <span class="count">${DB.orders.length}</span>
+      </button>
+      <button class="${state.tab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+        <span class="ico">📈</span>Reportes
+      </button>
+      <button class="${state.tab === 'business' ? 'active' : ''}" onclick="switchTab('business')">
+        <span class="ico">🏪</span>Negocio
+      </button>
+    </div>
+  `;
+
+  // Si no estamos en inicio, añadir botón de volver
+  let backBtn = state.tab !== 'home' ? `<button class="back-to-home-btn" onclick="switchTab('home')">← Volver al inicio</button>` : '';
+
+  let content = "";
+  if (state.tab === "home") content = renderHome();
+  else if (state.tab === "products") content = renderProducts();
+  else if (state.tab === "categories") content = renderCategories();
+  else if (state.tab === "orders") content = renderOrders();
+  else if (state.tab === "reports") content = renderReports();
+  else if (state.tab === "business") content = renderBusiness();
+
+  // Inyectar contenido y menú móvil
+  m.innerHTML = `${mobileNav} ${backBtn} ${content}`;
+  
   updateCounts();
 }
 
@@ -698,18 +754,19 @@ function updateCounts() {
   updateAppBadge();
 }
 
-function renderHome(m) {
+function renderHome() {
   var adminName = window.currentAdminUser || "Admin";
   const pendingOrders = DB.orders.filter(o => o.status === 'recibido' || !o.status).length;
+  const totalEarnings = DB.orders.reduce((sum, o) => sum + Number(o.total), 0);
 
   let alertHtml = "";
   if (pendingOrders > 0) {
     alertHtml = `
-      <div class="card" style="margin-bottom:24px; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); background:var(--brand-soft); cursor:pointer; transition:transform 0.2s;" onclick="document.querySelector('.sb-nav button[data-tab=\\'orders\\']').click();">
+      <div class="card" style="margin-bottom:16px; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); background:var(--brand-soft); cursor:pointer; transition:transform 0.2s;" onclick="switchTab('orders');">
         <div class="card-body" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px;">
           <div>
-            <h3 style="margin:0 0 4px; color:var(--brand-d); font-size:16px;">🔔 Tienes ${pendingOrders} pedido(s) pendiente(s)</h3>
-            <p style="margin:0; font-size:13px; color:var(--ink-2);">Haz clic aquí para gestionar los pedidos nuevos.</p>
+            <h3 style="margin:0 0 4px; color:var(--brand-d); font-size:15px;">🔔 Tienes ${pendingOrders} pedido(s) pendiente(s)</h3>
+            <p style="margin:0; font-size:12px; color:var(--ink-2);">Haz clic aquí para gestionar los pedidos nuevos.</p>
           </div>
           <span style="font-size:24px; color:var(--brand);">➔</span>
         </div>
@@ -717,24 +774,62 @@ function renderHome(m) {
     `;
   }
 
-  m.innerHTML = `
+  // Generar lista de métodos de pago
+  let paymentsHtml = (DB.config.payments || []).map(p => `
+    <span style="background: var(--surface-2); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); display: inline-block; margin: 0 6px 6px 0;">
+      ${p.icon} ${esc(p.label)}
+    </span>
+  `).join("");
+
+  return `
     <div class="welcome-card">
       <h1>¡Hola, ${esc(adminName)}!</h1>
       <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
     </div>
+    
     ${alertHtml}
+    
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div><div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div><div class="stat-info"><p>Pedidos Totales</p><h3>${DB.orders.length}</h3></div></div>
-    </div>`;
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div>
+        <div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div>
+        <div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#DCFCE7;color:#16A34A">🧾</div>
+        <div class="stat-info"><p>Pedidos Totales</p><h3>${DB.orders.length}</h3></div>
+      </div>
+    </div>
+    
+    <div class="card info-panel">
+      <div class="card-body">
+        <h3 class="card-title" style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 12px; color: var(--brand);">Información del Negocio</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+          <p><b>Nombre:</b> ${esc(DB.config.brand)}</p>
+          <p><b>WhatsApp:</b> ${esc(DB.config.whatsapp)}</p>
+          <p><b>Horario de hoy:</b> ${esc(DB.config.hours?.open || 'N/A')} a ${esc(DB.config.hours?.close || 'N/A')}</p>
+          <p><b>Ganancias Totales:</b> <span style="color: var(--brand); font-size: 16px; font-weight: 800;">${money(totalEarnings)}</span></p>
+        </div>
+
+        <h3 class="card-title" style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 20px; margin-bottom: 12px; color: var(--brand);">Métodos de Pago Activos</h3>
+        <div>
+          ${paymentsHtml || '<span style="font-size:12px; color:var(--muted)">No hay métodos configurados.</span>'}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function renderOrders(m) {
-  m.innerHTML = `
+function renderOrders() {
+  if(DB.orders.length === 0) return `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>`;
+  
+  return `
     <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
-    ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
-    `<div class="order-list">${DB.orders.map(o => {
+    <div class="order-list">${DB.orders.map(o => {
       const isPending = o.status !== 'entregado';
       const cardClass = isPending ? 'order-card pending' : 'order-card';
       const badgeStyle = o.status === 'entregado' ? 'background:var(--ok-soft); color:var(--ok);' : 'background:var(--brand); color:#fff;';
@@ -792,7 +887,7 @@ function renderOrders(m) {
           </select>
         </div>
       </div>`;
-    }).join("")}</div>`}
+    }).join("")}</div>
   `;
 }
 
@@ -810,7 +905,7 @@ function openProofModal(url) {
   document.getElementById("modal").classList.remove("hidden");
 }
 
-function renderBusiness(m) {
+function renderBusiness() {
   let openTime = "11:00";
   let closeTime = "23:00";
   if (DB.config.hours) {
@@ -831,7 +926,7 @@ function renderBusiness(m) {
     </label>
   `).join('');
 
-  m.innerHTML = `
+  return `
     <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
       <div class="form-grid">
@@ -1058,8 +1153,8 @@ function selectEmoji(emoji) {
   closeEmojiPicker();
 }
 
-function renderProducts(m) {
-  m.innerHTML = `
+function renderProducts() {
+  return `
     <div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button></div>
     <div class="p-list">${DB.menu.map(p => {
       const isAvail = p.available !== false;
@@ -1075,7 +1170,8 @@ function renderProducts(m) {
             <button onclick="deleteProduct('${p.id}')" style="color:var(--danger)">✕</button>
           </div>
         </div>`;
-    }).join("")}</div>`;
+    }).join("")}</div>
+  `;
 }
 
 async function toggleAvailability(id) {
@@ -1085,7 +1181,7 @@ async function toggleAvailability(id) {
   try {
     await dbSaveMenu();
     toast(`Producto marcado como ${p.available ? 'Disponible' : 'Agotado'}`);
-    renderProducts(document.getElementById('main'));
+    render();
   } catch (err) {
     p.available = !p.available;
     toast("Error al cambiar disponibilidad", "error");
@@ -1240,8 +1336,8 @@ async function saveProduct() {
   }
 }
 
-function renderCategories(m) {
-  m.innerHTML = `
+function renderCategories() {
+  return `
     <div class="page-head">
       <div><h1 class="page-title">Categorías</h1></div>
       <button class="btn btn-primary" onclick="openCategoryEditor()">＋ Nueva categoría</button>
@@ -1254,7 +1350,8 @@ function renderCategories(m) {
           <div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div>
         </div>
       `).join("")}
-    </div>`;
+    </div>
+  `;
 }
 
 let editingCategoryId = null;
@@ -1313,11 +1410,11 @@ async function deleteCategory(id) {
   dbLoad().then(() => { render(); toast("Categoría eliminada"); });
 }
 
-function renderReports(m) {
+function renderReports() {
   const hoy = new Date();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
   const ultimoDia = hoy.toISOString().split('T')[0];
-  m.innerHTML = `
+  return `
     <div class="page-head"><div><h1 class="page-title">Reportes</h1></div></div>
     <div class="card" style="margin-bottom:24px"><div class="card-body">
       <div class="report-filters">
@@ -1327,7 +1424,8 @@ function renderReports(m) {
       </div>
       <div class="report-actions" id="rep-actions" style="display:none"><button class="btn btn-ghost" onclick="exportarCSV()">📊 Excel/CSV</button><button class="btn btn-ghost" onclick="window.print()">📄 PDF</button></div>
     </div></div>
-    <div id="report-content"></div>`;
+    <div id="report-content"></div>
+  `;
 }
 
 function generarReporte() {
