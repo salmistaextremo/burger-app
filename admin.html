@@ -209,7 +209,6 @@ textarea{resize:vertical;min-height:80px}
   line-height: 1.4;
 }
 
-/* NUEVO: Estilo para el botón de comprobante */
 .proof-btn {
   display: inline-flex;
   align-items: center;
@@ -518,12 +517,20 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
   }
 }
 
+// ==========================================
+// 👇 LÓGICA DE NOTIFICACIONES RESTAURADA
+// ==========================================
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
+  
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
+      
+      // 1. Reproducir sonido (si está habilitado)
       if (notificationsEnabled) playNotificationSound();
+      
+      // 2. Mostrar notificación Push local vía Service Worker
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification('🔔 ¡Nuevo Pedido!', {
@@ -531,10 +538,15 @@ function setupOrderListener() {
             icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
             badge: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
             vibrate: [200, 100, 200, 100, 200, 100, 200],
-            requireInteraction: true, renotify: true, silent: false, tag: 'nuevo-pedido'
+            requireInteraction: true, 
+            renotify: true, 
+            silent: false, 
+            tag: 'nuevo-pedido'
           });
         });
       }
+      
+      // 3. Mostrar Toast y actualizar datos
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
       dbLoad().then(() => {
         updateAppBadge();
@@ -545,6 +557,7 @@ function setupOrderListener() {
       const updatedOrder = payload.new;
       const oldOrder = payload.old;
       
+      // Si el cliente califica el pedido, avisar
       if (updatedOrder.rating && (!oldOrder.rating || oldOrder.rating !== updatedOrder.rating)) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
@@ -649,10 +662,7 @@ function renderOrders(m) {
       }
 
       const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '...';
-      // 👈 El botón de comprobante ahora es más visible y dice "Ver Pago"
-      const proofBtnHtml = o.proof_url 
-  ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` 
-  : `<span style="font-size:11px; color:var(--muted); margin-left:8px;">Sin comprobante</span>`;
+      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` : '';
 
       return `
       <div class="${cardClass}">
@@ -664,7 +674,6 @@ function renderOrders(m) {
         <div class="order-customer">
             <b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>
             ${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}<br>
-            <!-- 👈 Aquí se muestra el método de pago -->
             <span style="font-weight:600; color:var(--brand);">Pago: ${esc(o.payment_method || 'No especificado')}</span>
         </div>
         <div class="order-items">
@@ -698,7 +707,6 @@ function renderOrders(m) {
   `;
 }
 
-// 👈 Abrir el comprobante en un modal
 function openProofModal(url) {
   document.getElementById("modal").innerHTML = `
     <div class="modal-box" style="max-width: 500px; background: #000;">
