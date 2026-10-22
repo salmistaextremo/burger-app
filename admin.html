@@ -367,18 +367,57 @@ var DEFAULT_CONFIG = {
   hours: { open: "11:00", close: "23:00" }, 
   days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00",
-  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
+  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
+  exchange_rate: null
 };
 
 var EXCHANGE_RATE = null;
 var state = { tab: "home" };
-var pollingInterval = null; // Variable para el intervalo de respaldo
+var pollingInterval = null; 
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
+
+// 👇 OBTENER TASA DE CAMBIO (Prioriza Manual)
+async function fetchExchangeRate() {
+  // 1. Revisar si hay una tasa manual en la base de datos
+  if (DB.config.exchange_rate && DB.config.exchange_rate > 0) {
+    EXCHANGE_RATE = DB.config.exchange_rate;
+    console.log("Usando tasa manual:", EXCHANGE_RATE);
+    return;
+  }
+
+  // 2. Si no hay manual, buscar en APIs
+  const cached = localStorage.getItem('bcv_rate');
+  if (cached) EXCHANGE_RATE = parseFloat(cached);
+
+  try {
+    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    let data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      localStorage.setItem('bcv_rate', EXCHANGE_RATE);
+      return;
+    }
+  } catch (e) { console.warn("Fallo dolarapi"); }
+
+  try {
+    let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
+    if (res.ok) {
+      let data = await res.json();
+      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
+        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
+        localStorage.setItem('bcv_rate', EXCHANGE_RATE);
+        return;
+      }
+    }
+  } catch (e) { console.warn("Fallo pydolarve"); }
+
+  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50; // Fallback
+}
 
 // ==========================================
 // LÓGICA DE INSTALACIÓN PWA
@@ -415,7 +454,7 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 }
 
 // ==========================================
-// LÓGICA DE NOTIFICACIONES Y AUDIO
+// NOTIFICACIONES
 // ==========================================
 let audioCtx;
 let notificationsEnabled = false;
@@ -485,7 +524,7 @@ function updateAppBadge() {
 }
 
 // ==========================================
-// AUTENTICACIÓN Y CARGA DE DATOS
+// AUTENTICACIÓN
 // ==========================================
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
@@ -495,7 +534,9 @@ async function checkAuth() {
     checkNotificationState();
     setupPushNotifications();
     try {
-      await dbLoad(); render(); setupNav(); setupOrderListener(); setupPolling(); fetchExchangeRate();
+      await dbLoad(); 
+      await fetchExchangeRate(); // 👈 Esperar a obtener la tasa manual o automática
+      render(); setupNav(); setupOrderListener(); setupPolling();
       window.currentAdminUser = session.user.email; 
       if (DB.config) {
         document.getElementById("sbBrandName").textContent = DB.config.brand;
@@ -546,7 +587,7 @@ async function dbLoad() {
 
     if (configRes.data) {
       const config = configRes.data;
-      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
+      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext, exchange_rate: config.exchange_rate };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
       if (!DB.config.days) DB.config.days = DEFAULT_CONFIG.days;
@@ -568,7 +609,8 @@ async function dbSaveConfig() {
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
-    hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days
+    hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
+    exchange_rate: DB.config.exchange_rate // 👈 Guardar tasa manual
   }); 
 }
 
@@ -595,7 +637,7 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
 }
 
 // ==========================================
-// ⚡ SISTEMA DE TIEMPO REAL (WEBSOCKET)
+// TIEMPO REAL Y POLLING
 // ==========================================
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
@@ -623,7 +665,6 @@ function setupOrderListener() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      
       const existingOrder = DB.orders.find(o => o.id === updatedOrder.id);
       const isNewRating = updatedOrder.rating && (!existingOrder || existingOrder.rating !== updatedOrder.rating);
       
@@ -649,17 +690,11 @@ function setupOrderListener() {
     .subscribe();
 }
 
-// ==========================================
-// ⚡ RESPALDO: POLLING (Consulta cada 10s)
-// ==========================================
-// Esto garantiza que si el WebSocket falla (por red o RLS), los datos se actualicen.
 function setupPolling() {
   if (pollingInterval) clearInterval(pollingInterval);
   
   pollingInterval = setInterval(async () => {
-    // Solo hacer polling si la pestaña está visible (para ahorrar recursos)
     if (document.hidden) return; 
-    
     try {
       const { data: freshOrders, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
       if (error || !freshOrders) return;
@@ -667,21 +702,12 @@ function setupPolling() {
       let newOrderFound = false;
       let newRatingFound = false;
 
-      // Comparar la base de datos fresca con la copia local
       freshOrders.forEach(fresh => {
         const local = DB.orders.find(o => o.id === fresh.id);
-        
-        // 1. Detectar pedido nuevo
-        if (!local) {
-          newOrderFound = true;
-        } 
-        // 2. Detectar calificación nueva
-        else if (fresh.rating && !local.rating) {
-          newRatingFound = true;
-        }
+        if (!local) newOrderFound = true;
+        else if (fresh.rating && !local.rating) newRatingFound = true;
       });
 
-      // Si hay cambios, actualizamos y notificamos
       if (newOrderFound) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
@@ -709,17 +735,13 @@ function setupPolling() {
         toast(`⭐ ¡Nueva calificación recibida!`);
       }
 
-      // Si hubo cambios, recargamos la base de datos local y re-renderizamos
       if (newOrderFound || newRatingFound) {
         DB.orders = freshOrders;
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
       }
-
-    } catch (err) {
-      console.log("Polling error (silencioso):", err);
-    }
-  }, 10000); // 10 segundos
+    } catch (err) {}
+  }, 10000); 
 }
 
 function setupNav() {
@@ -818,6 +840,7 @@ function renderHome() {
           <p><b>Nombre:</b> ${esc(DB.config.brand)}</p>
           <p><b>WhatsApp:</b> ${esc(DB.config.whatsapp)}</p>
           <p><b>Horario de hoy:</b> ${esc(DB.config.hours?.open || 'N/A')} a ${esc(DB.config.hours?.close || 'N/A')}</p>
+          <p><b>Tasa de Cambio:</b> <span style="color: var(--brand); font-weight: 800;">Bs. ${EXCHANGE_RATE || 'Cargando...'}</span> ${DB.config.exchange_rate ? '(Manual)' : '(Automática)'}</p>
           <p><b>Ganancias Totales:</b> <span style="color: var(--brand); font-size: 16px; font-weight: 800;">${money(totalEarnings)}</span></p>
         </div>
         <h3 class="card-title" style="border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-top: 20px; margin-bottom: 12px; color: var(--brand);">Métodos de Pago Activos</h3>
@@ -897,6 +920,7 @@ function openProofModal(url) {
   document.getElementById("modal").classList.remove("hidden");
 }
 
+// 👇 PESTAÑA NEGOCIO CON TASA MANUAL 👇
 function renderBusiness() {
   let openTime = "11:00", closeTime = "23:00";
   if (DB.config.hours) { openTime = DB.config.hours.open || "11:00"; closeTime = DB.config.hours.close || "23:00"; }
@@ -910,6 +934,14 @@ function renderBusiness() {
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        
+        <!-- 👇 NUEVO CAMPO TASA MANUAL 👇 -->
+        <div class="field full" style="background: var(--brand-soft); padding: 16px; border-radius: 12px; border: 1px solid #FFE0D0;">
+          <label style="color: var(--brand-d); font-size: 14px;">Tasa de Cambio Manual (Bs/$)</label>
+          <input type="number" id="bExchangeRate" step="0.01" value="${DB.config.exchange_rate || ''}" placeholder="Ej: 36.50" style="font-weight: bold; font-size: 16px;">
+          <div style="font-size: 12px; color: var(--brand-d); margin-top: 6px;">Si escribes un valor aquí, el sistema lo usará en lugar de buscar en internet. Déjalo vacío para usar la tasa automática.</div>
+        </div>
+
         <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
@@ -928,14 +960,21 @@ async function saveBusiness() {
   const openTime = document.getElementById('bOpenTime').value;
   const closeTime = document.getElementById('bCloseTime').value;
   const helpText = document.getElementById('bHelpHours').value;
+  const rateInput = document.getElementById('bExchangeRate').value;
+  
+  DB.config.exchange_rate = rateInput ? parseFloat(rateInput) : null;
+  if (DB.config.exchange_rate) EXCHANGE_RATE = DB.config.exchange_rate;
+
   const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
   if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
   DB.config.hours = { open: openTime, close: closeTime };
   DB.config.helpHoursText = helpText;
   DB.config.days = checkedDays;
+  
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
-  toast('✅ Negocio actualizado');
+  toast('✅ Negocio y Tasa actualizados');
+  render(); // Volver a renderizar para mostrar el cambio
 }
 
 let editingPaymentIndex = null;
