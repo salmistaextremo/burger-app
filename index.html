@@ -343,7 +343,6 @@ function fallbackCopy(text) {
   t.remove();
 }
 
-// ===== TASA DE CAMBIO CORREGIDA Y ROBUSTA =====
 async function fetchExchangeRate() {
   const cached = localStorage.getItem('bcv_rate');
   if (cached) EXCHANGE_RATE = parseFloat(cached);
@@ -610,46 +609,7 @@ function toggleExtra(name, on){
   updateModalPrice(); 
 }
 
-function suggestDrink() {
-  const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
-  if (drinkCat) {
-    addBotMsg(`¡Excelente elección! 😋 ¿Y para tomar? Te sugiero algo de nuestra sección de <b>${esc(drinkCat.name)}</b> 🥤.`);
-    setTimeout(() => selectCategory(drinkCat.id, drinkCat.name), 1200);
-  } else {
-    state.wizardStep = "upsell";
-    askForMore();
-  }
-}
-
-function suggestDessert() {
-  const dessertCat = findCategoryByKeywords(['postre', 'dulce', 'torta', 'helado']);
-  if (dessertCat) {
-    addBotMsg(`¡Genial! 🥤 ¿Se te antoja un postre para cerrar con broche de oro? Te muestro los <b>${esc(dessertCat.name)}</b> 🍰.`);
-    setTimeout(() => selectCategory(dessertCat.id, dessertCat.name), 1200);
-  } else {
-    state.wizardStep = "upsell";
-    askForMore();
-  }
-}
-
-function skipStep(catId) {
-  const catName = getCategoryName(catId);
-  addUserMsg("Prefiero no elegir aquí / Siguiente");
-  $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
-
-  const catNameLower = catName.toLowerCase();
-  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
-    state.wizardStep = "dessert";
-    suggestDessert();
-  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
-    state.wizardStep = "upsell";
-    askForMore();
-  } else {
-    state.wizardStep = "drink";
-    suggestDrink();
-  }
-}
-
+// 👇 AQUÍ SE MODIFICÓ LA LÓGICA PARA NO CAMBIAR DE CATEGORÍA AUTOMÁTICAMENTE
 function addToCartAndAdvance(catId) {
   const m = state.modal; const p = m.product;
   const key = p.id + "|" + m.extras.sort().join(",") + "|" + m.notes;
@@ -663,20 +623,42 @@ function addToCartAndAdvance(catId) {
   closeModal();
   
   addUserMsg(`${m.qty}x ${p.name}`);
+  
+  // NO eliminamos la opción de la categoría para que pueda pedir más
+  addBotMsg(`¡Agregado a tu pedido! 😋 ¿Quieres algo más de esta categoría o pasamos a la siguiente?`);
+}
+
+// 👇 ESTA FUNCIÓN ES LA QUE AHORA HACE EL CAMBIO REAL DE PASO
+function skipStep(catId) {
+  const catName = getCategoryName(catId);
+  addUserMsg("Siguiente paso / Omitir");
   $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
 
-  const catName = getCategoryName(catId);
   const catNameLower = catName.toLowerCase();
   
   if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
     state.wizardStep = "dessert";
-    setTimeout(suggestDessert, 600);
-  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
+    const dessertCat = findCategoryByKeywords(['postre', 'dulce', 'torta', 'helado']);
+    if (dessertCat) {
+      addBotMsg(`¡Genial! 🥤 ¿Se te antoja un postre para cerrar con broche de oro? Te muestro los <b>${esc(dessertCat.name)}</b> 🍰.`);
+      setTimeout(() => selectCategory(dessertCat.id, dessertCat.name), 800);
+    } else {
+      askForMore();
+    }
+  } 
+  else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
     state.wizardStep = "upsell";
-    setTimeout(askForMore, 600);
-  } else {
+    askForMore();
+  } 
+  else {
     state.wizardStep = "drink";
-    setTimeout(suggestDrink, 600);
+    const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
+    if (drinkCat) {
+      addBotMsg(`¡Excelente elección! 😋 ¿Y para tomar? Te sugiero algo de nuestra sección de <b>${esc(drinkCat.name)}</b> 🥤.`);
+      setTimeout(() => selectCategory(drinkCat.id, drinkCat.name), 800);
+    } else {
+      askForMore();
+    }
   }
 }
 
@@ -809,7 +791,6 @@ function renderPayments() {
   updatePayDetails();
 }
 
-// ===== ACTUALIZACIÓN DE DATOS DE PAGO CON BOTÓN COPIAR =====
 function updatePayDetails() {
   const p = CONFIG.payments.find(x => x.id === $("#paySelect").value);
   const box = $("#payDetails");
@@ -873,7 +854,6 @@ function updateOrderType() {
       <div class="trow total"><span>Total</span><span>${money(sub+del)}</span></div>
     </div>`;
     
-  // Actualizar los datos de pago para que el botón de copiar tenga el total correcto
   updatePayDetails();
 }
 
