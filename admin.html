@@ -55,15 +55,46 @@ textarea{resize:vertical;min-height:80px}
 .sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sb-brand-text h1{font-size:14px;font-weight:800;}
 .sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* NAVEGACIÓN */
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar {display: none;}
-.sb-nav button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s;flex-shrink:0;}
+.sb-nav button{position:relative; display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s;flex-shrink:0;}
 .sb-nav button .ico{font-size:17px;width:20px;text-align:center}
 .sb-nav button:hover{background:var(--surface-2);color:var(--ink)}
 .sb-nav button.active{background:var(--brand-soft);color:var(--brand-d);font-weight:600}
-.sb-nav button .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--surface-2);color:var(--muted);padding:2px 7px;border-radius:99px}
-.sb-nav button.active .count{background:var(--brand);color:#fff}
-.sb-nav button .count.new{background:var(--danger);color:#fff;animation:pulse-badge 2s infinite;}
+
+/* 👇 NUEVO ESTILO DEL CONTADOR (BADGE) EN LA ESQUINA INFERIOR DERECHA 👇 */
+.sb-nav button .count {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  margin-left: 0;
+  font-size: 9px;
+  font-weight: 800;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  line-height: 1;
+}
+.sb-nav button.active .count {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+.sb-nav button .count.new {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+  animation: pulse-badge 2s infinite;
+}
 @keyframes pulse-badge{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 
 .sb-footer{padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
@@ -205,7 +236,7 @@ textarea{resize:vertical;min-height:80px}
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty .big{font-size:52px;opacity:.35;margin-bottom:14px;}
 
-/* HEADER MÓVIL (Solo visible en pantallas pequeñas) */
+/* HEADER MÓVIL */
 .mobile-header { display: none; background: var(--surface); padding: 12px 16px; border-bottom: 1px solid var(--line); justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 90; }
 .mobile-header .mh-brand { font-weight: 800; font-size: 16px; color: var(--brand); }
 .mobile-header .mh-actions { display: flex; gap: 8px; }
@@ -214,19 +245,19 @@ textarea{resize:vertical;min-height:80px}
 .mobile-header .mh-btn.logout { background: var(--danger-soft); color: var(--danger); }
 
 /* =========================================
-   REDISTRIBUCIÓN MÓVIL (BOTTOM NAV)
+   REDISTRIBUCIÓN Y OPTIMIZACIÓN MÓVIL
    ========================================= */
 @media(max-width:860px){
-  .app{flex-direction:column; min-height: 100vh; padding-bottom: 70px; /* Espacio para el menú abajo */ }
+  .app{flex-direction:column; min-height: 100vh; padding-bottom: 70px; }
   
-  /* Ocultar sidebar original y transformarlo a Bottom Nav */
+  /* Sidebar transformado a Bottom Nav */
   .sidebar{
     width:100%; height:70px; position:fixed; bottom:0; left:0; 
     flex-direction:row; padding:0; border-right:none; border-top:1px solid var(--line); 
     background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); z-index: 100;
   }
   
-  .sb-brand { display: none; } /* Ocultar logo superior */
+  .sb-brand { display: none; }
   
   .sb-nav { flex-direction:row; width: 100%; justify-content: space-around; overflow: visible; padding: 0; }
   
@@ -234,26 +265,54 @@ textarea{resize:vertical;min-height:80px}
     flex-direction:column; justify-content:center; padding: 8px 0; font-size: 10px; gap: 4px; flex: 1;
   }
   .sb-nav button .ico { font-size: 22px; margin: 0; }
+  
+  /* Posición del contador en el menú inferior */
   .sb-nav button .count {
-    position: absolute; top: 4px; right: 50%; transform: translateX(15px); margin: 0; padding: 2px 6px; font-size: 10px;
+    bottom: 4px;
+    right: 10px;
+    font-size: 8.5px;
+    min-width: 12px;
+    height: 12px;
   }
   
-  .sb-footer { display: none; } /* Ocultar footer del sidebar */
+  .sb-footer { display: none; }
+  .mobile-header { display: flex; }
   
-  .mobile-header { display: flex; } /* Mostrar header móvil con botones */
+  .main{padding:16px; width: 100%;}
   
-  .main{padding:20px 16px; width: 100%;}
-  
-  /* Ajustes de las estadísticas */
-  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+  /* 👇 REDISTRIBUCIÓN DEL DASHBOARD (TARJETAS HORIZONTALES) 👇 */
   .welcome-card { padding: 20px; margin-bottom: 16px; }
   .welcome-card h1 { font-size: 20px; }
+  .welcome-card p { font-size: 13px; }
+
+  .stats-grid { 
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+    gap: 8px; 
+    margin-bottom: 20px;
+  }
+  
+  .stat-card { 
+    flex-direction: column; 
+    padding: 12px 6px; 
+    text-align: center; 
+    gap: 4px; 
+    border-radius: 12px;
+  }
+  
+  .stat-icon { 
+    width: 36px; 
+    height: 36px; 
+    font-size: 18px; 
+    border-radius: 10px;
+    margin-bottom: 2px;
+  }
+  
+  .stat-info p { font-size: 9px; margin-bottom: 2px; letter-spacing: 0; }
+  .stat-info h3 { font-size: 18px; margin: 0; }
   
   /* Tablas y Formularios */
   .form-grid{grid-template-columns:1fr}
   .report-filters{flex-direction:column;align-items:stretch;}
-  
-  /* Ajustar modales para que se vean bien en móviles */
   .modal { padding: 10px; }
   .modal-box { max-height: 95vh; }
 }
