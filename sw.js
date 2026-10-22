@@ -1,4 +1,17 @@
 // sw.js
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// 👇 ESTE ES EL EVENTO QUE FALTABA PARA QUE SEA INSTALABLE
+self.addEventListener('fetch', (event) => {
+  // Solo necesita existir. Puedes dejarlo vacío o manejar caché aquí.
+});
+
 self.addEventListener('push', function(event) {
   const options = {
     body: event.data ? event.data.text() : '¡Tienes un nuevo pedido!',
@@ -8,9 +21,7 @@ self.addEventListener('push', function(event) {
     requireInteraction: true,
     renotify: true,
     silent: false,
-    data: {
-      url: '/admin.html'
-    }
+    data: { url: '/admin.html' }
   };
 
   event.waitUntil(
@@ -22,14 +33,12 @@ self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-      // Busca si ya hay una pestaña del admin abierta
       for (let i = 0; i < clientList.length; i++) {
         let client = clientList[i];
         if (client.url.includes('/admin.html') && 'focus' in client) {
           return client.focus();
         }
       }
-      // Si no, abre una nueva
       if (clients.openWindow) {
         return clients.openWindow('/admin.html');
       }
