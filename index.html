@@ -271,7 +271,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://nhwqaqhesbksimtizomt.supabase.co'; // Asegúrate de que tu URL esté bien
+  // 👇 CORREGIDO: URL de Supabase con la letra 'a' correcta
+  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
@@ -295,7 +296,14 @@ function money(n){ return CONFIG.currency + Number(n).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 function scrollToBottom(){ var c = $("#chatContainer"); c.scrollTop = c.scrollHeight; }
 
-// CATEGORÍAS BASE
+// CATEGORÍAS BASE (Respaldo en caso de que falle la conexión)
+const DEFAULT_CATS = [
+  { id: '1', name: 'Hamburguesas', icon: '🍔' },
+  { id: '2', name: 'Perros Calientes', icon: '🌭' },
+  { id: '3', name: 'Bebidas', icon: '🥤' },
+  { id: '4', name: 'Postres', icon: '🍰' }
+];
+
 function getCategoryName(id) {
   const cat = DB.cats.find(c => c.id === id);
   return cat ? cat.name.toLowerCase() : '';
@@ -328,9 +336,25 @@ async function loadData() {
       $("#brandLogo").innerHTML = `<img src="${esc(CONFIG.logo)}">`;
     }
 
-    if (catsRes.data) DB.cats = catsRes.data;
-    if (prodsRes.data) DB.menu = prodsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
-  } catch(e) { console.error("Error cargando:", e); }
+    if (catsRes.data && catsRes.data.length > 0) {
+      DB.cats = catsRes.data;
+    } else {
+      DB.cats = DEFAULT_CATS; // Respaldo
+    }
+
+    if (prodsRes.data && prodsRes.data.length > 0) {
+      DB.menu = prodsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+    } else {
+      DB.menu = [
+        { id: 'p1', cat: '1', name: 'Hamburguesa Clásica', price: 5.00, emoji: '🍔', desc: 'Carne, queso y vegetales' },
+        { id: 'p2', cat: '3', name: 'Refresco', price: 1.50, emoji: '🥤', desc: 'Bebida fría' },
+        { id: 'p3', cat: '4', name: 'Helado', price: 2.00, emoji: '🍦', desc: 'Postre dulce' }
+      ];
+    }
+  } catch(e) { 
+    console.warn("Usando datos por defecto por error de conexión:", e);
+    DB.cats = DEFAULT_CATS; 
+  }
 }
 
 // --- BIENVENIDA ---
