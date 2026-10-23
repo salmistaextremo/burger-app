@@ -238,4 +238,1083 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <button class="icon-btn btn-back" onclick="goBack()" title="Regresar">
       <span style="font-size:18px; line-height:1;">←</span> Regresar
     </button>
-  </
+  </header>
+
+  <div id="chatContainer" class="chat-container">
+    <!-- Chat -->
+  </div>
+</div>
+
+<div id="viewCart" class="view-overlay hidden">
+  <div class="view-hdr" style="justify-content: space-between;">
+    <button class="back-btn" onclick="closeView('viewCart')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
+    <h2>Tu Pedido</h2>
+    <div style="width:80px"></div>
+  </div>
+  <div class="view-body" id="cartBody"></div>
+</div>
+
+<div id="viewCheckout" class="view-overlay hidden">
+  <div class="view-hdr">
+    <button class="back-btn" onclick="closeView('viewCheckout')"><span style="font-size:18px; line-height:1;">←</span> Regresar</button>
+    <h2>Finalizar Pedido</h2>
+  </div>
+  <div class="view-body">
+    <div class="field"><label>Nombre y apellido *</label><input id="f-name" type="text"></div>
+    <div class="field"><label>Teléfono / WhatsApp *</label><input id="f-phone" type="tel"></div>
+    
+    <div class="field">
+      <label>¿Cómo lo quieres? *</label>
+      <div class="seg">
+        <label><input type="radio" name="otype" value="delivery" checked onchange="updateOrderType()"><span>🛵 Delivery</span></label>
+        <label><input type="radio" name="otype" value="pickup" onchange="updateOrderType()"><span>🏪 Retiro</span></label>
+      </div>
+    </div>
+
+    <div id="addressBlock">
+      <div class="field"><label>Dirección de entrega *</label><textarea id="f-addr" placeholder="Calle, número, sector..."></textarea></div>
+      <div class="field"><label>Punto de referencia</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
+      <button type="button" class="btn-start" style="background:var(--surface-2);color:var(--ink);box-shadow:none;border:1px dashed var(--line-2);font-size:13px;padding:12px;margin-bottom:12px" onclick="getLocation()" id="btnLocation">
+        📍 Capturar ubicación GPS
+      </button>
+      <div id="gpsSuccessLink" class="hidden" style="text-align:center; margin-bottom:16px;">
+        <a href="#" target="_blank" id="gpsExternalLink" style="font-size:12px; color:var(--brand); text-decoration:underline; font-weight:600;">Ver mi ubicación en Google Maps</a>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Método de pago *</label>
+      <select id="paySelect"></select>
+      <div id="payDetails" style="margin-top:10px; font-size:13px; color:var(--ink-2); line-height:1.6;"></div>
+      <div id="proofField" style="margin-top:16px" class="hidden">
+        <label>Comprobante de pago</label>
+        <div id="proofPickerWrap">
+          <div class="proof-picker" onclick="document.getElementById('proofFile').click()">
+            <input type="file" accept="image/*" id="proofFile" onchange="handleProofUpload(event)">
+            <div style="text-align:center"><span style="font-size:24px">📷</span><p style="margin:4px 0 0;font-size:12px;font-weight:600">Subir comprobante</p></div>
+          </div>
+        </div>
+        <div id="proofPreviewWrap" class="hidden">
+          <div class="proof-preview">
+            <img id="proofImg">
+            <button class="proof-remove" onclick="clearProof()">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field"><label>Notas para la cocina</label><textarea id="f-notes" placeholder="Ej: sin cebolla..."></textarea></div>
+    <div id="checkoutSummary"></div>
+    <button class="btn-primary btn-wa" onclick="submitOrder()" id="btnConfirm">📲 Confirmar y enviar por WhatsApp</button>
+  </div>
+</div>
+
+<div id="viewTracking" class="view-overlay hidden">
+  <div class="view-hdr" style="justify-content: space-between;">
+    <button class="back-btn" onclick="closeView('viewTracking'); startChatWizard();">← Volver al menú</button>
+    <h2>Estado del Pedido</h2>
+    <div style="width:80px"></div>
+  </div>
+  <div class="view-body">
+    <div class="track-card" id="trackCardContent"></div>
+  </div>
+</div>
+
+<!-- BOTONERA INFERIOR -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-btn active" onclick="showCategoriesView()"><span class="ni">📁</span>Categorías</button>
+  <button class="nav-btn" onclick="goToCart()"><span class="ni">🛒</span>Carrito<span id="cartBadge" class="nav-badge hidden">0</span></button>
+  <button class="nav-btn" onclick="goToTracking()"><span class="ni">🛵</span>Mi Pedido</button>
+  <button class="nav-btn" onclick="openHelp()"><span class="ni">💬</span>Ayuda</button>
+  <button class="nav-btn" onclick="focusAssistant()"><span class="ni">🍔</span>Asistente</button>
+</nav>
+
+<div id="modal" class="modal hidden"></div>
+
+<div id="ratingModal" class="rating-modal hidden">
+  <div class="rating-box" id="ratingBoxContent">
+    <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
+    <h2>¡Buen provecho!</h2>
+    <p>¿Cómo estuvo tu pedido? Tu opinión nos ayuda a mejorar.</p>
+    <div class="stars-container" id="starsContainer">
+      <span class="star" onclick="setRating(1)">★</span>
+      <span class="star" onclick="setRating(2)">★</span>
+      <span class="star" onclick="setRating(3)">★</span>
+      <span class="star" onclick="setRating(4)">★</span>
+      <span class="star" onclick="setRating(5)">★</span>
+    </div>
+    <textarea id="ratingComment" placeholder="Déjanos un comentario (opcional)..."></textarea>
+    <button class="btn-primary" onclick="submitRating()" id="btnSubmitRating">Enviar calificación</button>
+    <button class="btn-start" style="background: transparent; color: var(--muted); box-shadow: none; font-weight: 600; margin-top: 8px; padding: 10px;" onclick="closeRatingModal()">Ahora no</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://nhwqaahesbksimtizomt.supabase.co'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od3FhYWhlc2Jrc2ltdGl6b210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<script>
+var CONFIG = {
+  brand: "Rapid Burger", logo: "", whatsapp: "584121234567",
+  payments: [], deliveryFee: 2.00, currency: "$",
+  hours: null, days: null, helpHoursText: "",
+  exchange_rate: null
+};
+
+var DB = { cats: [], menu: [] };
+var EXCHANGE_RATE = null;
+var DETAIL_LABELS = { banco:"Banco", telefono:"Teléfono", cedula:"Cédula / RIF", cuenta:"Número de cuenta", titular:"Titular", rif:"RIF", email:"Correo" };
+
+var state = { 
+  clientName: "", cart: [], proofImage: null, userLocationUrl: null,
+  wizardStep: "food", trackingChannel: null, trackingInterval: null,
+  currentCatId: null, currentCatName: null, appChannel: null
+};
+
+var currentRating = 0;
+var ratingOrderCode = null;
+
+function $(s, r){ r = r || document; return r.querySelector(s); }
+function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function money(n) {
+  const rate = EXCHANGE_RATE || 36.50; 
+  const usdStr = CONFIG.currency + Number(n).toFixed(2);
+  const bsStr = (n * rate).toFixed(2);
+  return `${usdStr}<span class="price-ves">Bs. ${bsStr}</span>`;
+}
+
+function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
+function scrollToBottom(){ var c = $("#chatContainer"); c.scrollTop = c.scrollHeight; }
+
+function exitApp() {
+  window.close();
+  setTimeout(() => {
+    document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;color:#666;text-align:center;padding:20px;"><h2>Gracias por visitarnos.<br>Ya puedes cerrar esta pestaña.</h2></div>';
+  }, 100);
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  t.remove();
+}
+
+async function fetchExchangeRate() {
+  if (CONFIG.exchange_rate && CONFIG.exchange_rate > 0) {
+    EXCHANGE_RATE = parseFloat(CONFIG.exchange_rate);
+    return;
+  }
+
+  const cached = localStorage.getItem('bcv_rate');
+  if (cached) EXCHANGE_RATE = parseFloat(cached);
+
+  try {
+    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+    let data = await res.json();
+    if (data && data.promedio) {
+      EXCHANGE_RATE = parseFloat(data.promedio);
+      localStorage.setItem('bcv_rate', EXCHANGE_RATE);
+      return;
+    }
+  } catch (e) { console.warn("Fallo dolarapi, intentando pydolarve..."); }
+
+  try {
+    let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
+    if (res.ok) {
+      let data = await res.json();
+      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
+        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
+        localStorage.setItem('bcv_rate', EXCHANGE_RATE);
+        return;
+      }
+    }
+  } catch (e) { console.warn("Fallo pydolarve también."); }
+
+  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
+}
+
+const DEFAULT_CATS = [
+  { id: '1', name: 'Hamburguesas', icon: '🍔' },
+  { id: '2', name: 'Perros Calientes', icon: '🌭' },
+  { id: '3', name: 'Bebidas', icon: '🥤' },
+  { id: '4', name: 'Postres', icon: '🍰' }
+];
+
+function getCategoryName(id) {
+  const cat = DB.cats.find(c => c.id === id);
+  return cat ? cat.name.toLowerCase() : '';
+}
+function findCategoryByKeywords(keys) {
+  return DB.cats.find(c => keys.some(k => c.name.toLowerCase().includes(k)));
+}
+
+async function loadData() {
+  try {
+    const [configRes, catsRes, prodsRes] = await Promise.all([
+      supabaseClient.from('config').select('*').eq('id', 1).single(),
+      supabaseClient.from('categories').select('*'),
+      supabaseClient.from('products').select('*')
+    ]);
+
+    if (configRes.data) {
+      CONFIG.brand = configRes.data.brand || CONFIG.brand;
+      CONFIG.logo = configRes.data.logo || "";
+      CONFIG.whatsapp = configRes.data.whatsapp || CONFIG.whatsapp;
+      CONFIG.payments = configRes.data.payments || [];
+      CONFIG.deliveryFee = configRes.data.deliveryfee || CONFIG.deliveryFee;
+      CONFIG.hours = configRes.data.hours;
+      CONFIG.days = configRes.data.days;
+      CONFIG.helpHoursText = configRes.data.helphourstext;
+      CONFIG.exchange_rate = configRes.data.exchange_rate;
+    }
+    
+    $("#welcomeBrand").textContent = CONFIG.brand;
+    $("#brandName").textContent = CONFIG.brand;
+    if (CONFIG.logo) {
+      $("#welcomeBot").innerHTML = `<img src="${esc(CONFIG.logo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      $("#brandLogo").innerHTML = `<img src="${esc(CONFIG.logo)}">`;
+    }
+
+    if (catsRes.data && catsRes.data.length > 0) {
+      DB.cats = catsRes.data;
+    } else {
+      DB.cats = DEFAULT_CATS;
+    }
+
+    if (prodsRes.data && prodsRes.data.length > 0) {
+      DB.menu = prodsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+    } else {
+      DB.menu = [
+        { id: 'p1', cat: '1', name: 'Hamburguesa Clásica', price: 5.00, emoji: '🍔', desc: 'Carne, queso y vegetales' },
+        { id: 'p2', cat: '3', name: 'Refresco', price: 1.50, emoji: '🥤', desc: 'Bebida fría' },
+        { id: 'p3', cat: '4', name: 'Helado', price: 2.00, emoji: '🍦', desc: 'Postre dulce' }
+      ];
+    }
+  } catch(e) { 
+    console.warn("Usando datos por defecto por error de conexión:", e);
+    DB.cats = DEFAULT_CATS; 
+  }
+}
+
+function checkStoreStatus() {
+  if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return true;
+
+  const now = new Date();
+  const currentDay = now.getDay();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+
+  const activeDays = CONFIG.days || [1,2,3,4,5,6,0];
+  const isWorkingDay = activeDays.includes(currentDay);
+
+  let [openH, openM] = CONFIG.hours.open.split(':').map(Number);
+  let [closeH, closeM] = CONFIG.hours.close.split(':').map(Number);
+  
+  let openMins = openH * 60 + openM;
+  let closeMins = closeH * 60 + closeM;
+
+  let isOpenTime = false;
+  if (closeMins > openMins) {
+    isOpenTime = currentMins >= openMins && currentMins < closeMins;
+  } else {
+    isOpenTime = currentMins >= openMins || currentMins < closeMins;
+  }
+
+  const isOpen = isWorkingDay && isOpenTime;
+
+  if (!isOpen) {
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const sortedDays = [...activeDays].sort((a,b) => a - b);
+    let label = "";
+    if (sortedDays.length === 7) label = "Todos los días";
+    else if (sortedDays.join(',') === '1,2,3,4,5') label = "Lunes a Viernes";
+    else if (sortedDays.join(',') === '1,2,3,4,5,6') label = "Lunes a Sábado";
+    else label = sortedDays.map(d => dayNames[d]).join(', ');
+
+    let finalText = CONFIG.helpHoursText;
+    if (!finalText || finalText.trim() === '') {
+      finalText = `${label}: ${CONFIG.hours.open} a ${CONFIG.hours.close}`;
+    }
+    
+    finalText = finalText.replace(/\n/g, '<br>');
+
+    $("#closedScheduleText").innerHTML = finalText;
+    $("#closedScreen").classList.remove("hidden");
+    $("#welcomeScreen").classList.add("hidden");
+    return false;
+  }
+
+  return true;
+}
+
+function generateCategoriesHtml() {
+  let html = "";
+  DB.cats.forEach(c => {
+    html += `
+      <div class="opt-cat" onclick="selectCategory('${c.id}', '${esc(c.name)}')">
+        <span class="emoji">${c.icon || '📁'}</span>
+        <span class="name">${esc(c.name)}</span>
+      </div>
+    `;
+  });
+  return html;
+}
+
+function generateProductsHtml(catId, catName) {
+  const prods = DB.menu.filter(p => p.cat === catId && p.available !== false);
+  if (!prods.length) return `<p style="font-size:14px; color:var(--muted); text-align:center; width:100%;">No hay productos disponibles por ahora.</p>`;
+
+  let html = "";
+  prods.forEach(p => {
+    html += `
+      <div class="prod-opt" onclick="openProductModal('${p.id}', '${catId}')">
+        <div class="p-img-banner">
+          ${p.img ? `<img src="${esc(p.img)}" loading="lazy" decoding="async" alt="${esc(p.name)}">` : `<span>${p.emoji}</span>`}
+        </div>
+        <div class="p-details">
+          <div class="p-info">
+            <div class="p-name">${esc(p.name)}</div>
+            <div class="p-desc">${esc(p.desc || '')}</div>
+          </div>
+          <div class="p-price-row">
+            <div class="p-price">${money(p.price)}</div>
+            <div class="p-add">+</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  const catNameLower = catName.toLowerCase();
+  let btnText = "Siguiente paso ➔";
+  
+  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
+    btnText = "Ir a los postres ➔";
+  } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
+    btnText = "Finalizar pedido ➔";
+  } else if (catNameLower.includes('hamburguesa') || catNameLower.includes('perro') || catNameLower.includes('pollo') || catNameLower.includes('chawarma')) {
+    btnText = "Ir a las bebidas ➔";
+  }
+  
+  html += `<button class="action-btn secondary" onclick="skipStep('${catId}')">${btnText}</button>`;
+  return html;
+}
+
+function setupWelcome() {
+  const nameInput = $("#nameInput");
+  const startBtn = $("#startBtn");
+
+  nameInput.addEventListener("input", () => {
+    startBtn.disabled = nameInput.value.trim().length === 0;
+  });
+  nameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !startBtn.disabled) startBtn.click();
+  });
+
+  startBtn.addEventListener("click", () => {
+    const name = nameInput.value.trim();
+    if (!name) return;
+    state.clientName = name;
+    localStorage.setItem('ff_client_name', name);
+    
+    $("#welcomeScreen").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    
+    startChatWizard();
+  });
+}
+
+function addBotMsg(html) {
+  $("#chatContainer").insertAdjacentHTML("beforeend", `
+    <div class="chat-msg bot">
+      <div class="msg-avatar">🍔</div>
+      <div class="msg-bubble">${html}</div>
+    </div>
+  `);
+  scrollToBottom();
+}
+
+function addUserMsg(text) {
+  $("#chatContainer").insertAdjacentHTML("beforeend", `
+    <div class="chat-msg user">
+      <div class="msg-bubble">${esc(text)}</div>
+    </div>
+  `);
+  scrollToBottom();
+}
+
+function renderOptions(html) {
+  $("#chatContainer").insertAdjacentHTML("beforeend", `<div class="options-container">${html}</div>`);
+  scrollToBottom();
+}
+
+function startChatWizard() {
+  state.currentCatId = null;
+  state.currentCatName = null;
+  $("#chatContainer").innerHTML = "";
+  addBotMsg(`¡Hola <b>${esc(state.clientName)}</b>! 🎉 Qué bueno verte. Para empezar, elige qué se te antoja:`);
+  showCategories();
+}
+
+function showCategories() {
+  state.currentCatId = null;
+  state.currentCatName = null;
+  renderOptions(generateCategoriesHtml());
+}
+
+function selectCategory(catId, catName) {
+  state.currentCatId = catId;
+  state.currentCatName = catName;
+  
+  addUserMsg(catName);
+  $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
+  
+  const html = generateProductsHtml(catId, catName);
+  renderOptions(html);
+}
+
+function openProductModal(id, catId) {
+  const p = DB.menu.find(x => x.id === id);
+  state.modal = { product: p, qty: 1, extras: [], notes: "" };
+  renderModal(catId);
+  $("#modal").classList.remove("hidden");
+}
+
+function closeModal() { $("#modal").classList.add("hidden"); state.modal = null; }
+
+function renderModal(catId) {
+  const m = state.modal; const p = m.product;
+  const extrasHtml = p.extras.map(e => `
+    <label class="opt">
+      <span>${esc(e.name)} +${money(e.price)}</span>
+      <span style="display:flex;gap:10px">
+        <input type="checkbox" ${m.extras.includes(e.name) ? 'checked' : ''} onchange="toggleExtra('${esc(e.name)}', this.checked)">
+        <span class="box">✓</span>
+      </span>
+    </label>
+  `).join("");
+
+  $("#modal").innerHTML = `
+    <div class="sheet">
+      <div class="sheet-hero">
+        <span class="sheet-hero-emoji">${p.emoji}</span>
+        ${p.img ? `<img src="${esc(p.img)}" loading="lazy">` : ''}
+        <button class="sheet-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="sheet-body">
+        <h2>${esc(p.name)}</h2>
+        <p class="desc">${esc(p.desc)}</p>
+        ${extrasHtml}
+        <div class="field"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla" value="${esc(m.notes)}"></div>
+        <div class="qty-row">
+          <div class="qty"><button onclick="updateModalQty(-1)">−</button><span id="mQtyDisplay">${m.qty}</span><button onclick="updateModalQty(1)">+</button></div>
+          <div style="font-size:24px;font-weight:900;color:var(--brand); display:flex; flex-direction:column; text-align: right;" id="mUnit">${money((p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty)}</div>
+        </div>
+        <button class="btn-primary" onclick="addToCartAndAdvance('${catId}')">Agregar al pedido</button>
+      </div>
+    </div>`;
+}
+
+function updateModalQty(delta) {
+  var m = state.modal; if (!m) return;
+  m.qty = Math.max(1, m.qty + delta);
+  $("#mQtyDisplay").textContent = m.qty;
+  updateModalPrice();
+}
+
+function updateModalPrice() {
+  var m = state.modal; if (!m) return;
+  var p = m.product;
+  var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty;
+  $("#mUnit").innerHTML = money(price);
+}
+
+function toggleExtra(name, on){ 
+  if(on) { if(!state.modal.extras.includes(name)) state.modal.extras.push(name); } 
+  else { state.modal.extras = state.modal.extras.filter(x=>x!==name); }
+  updateModalPrice(); 
+}
+
+function addToCartAndAdvance(catId) {
+  const m = state.modal; const p = m.product;
+  const key = p.id + "|" + m.extras.sort().join(",") + "|" + m.notes;
+  const unit = p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0);
+  
+  const found = state.cart.find(i => i.key === key);
+  if (found) found.qty += m.qty;
+  else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, img: p.img, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
+  
+  updateBadge();
+  closeModal();
+  
+  addUserMsg(`${m.qty}x ${p.name}`);
+  addBotMsg(`¡Agregado a tu pedido! 😋 ¿Quieres algo más de esta categoría o pasamos a la siguiente?`);
+}
+
+function skipStep(catId) {
+  const catName = getCategoryName(catId);
+  addUserMsg("Siguiente paso");
+  $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
+
+  const catNameLower = catName.toLowerCase();
+  
+  if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
+    state.wizardStep = "dessert";
+    const dessertCat = findCategoryByKeywords(['postre', 'dulce', 'torta', 'helado']);
+    if (dessertCat) {
+      addBotMsg(`¡Genial! 🥤 ¿Se te antoja un postre para cerrar con broche de oro? Te muestro los <b>${esc(dessertCat.name)}</b> 🍰.`);
+      setTimeout(() => selectCategory(dessertCat.id, dessertCat.name), 800);
+    } else {
+      askForMore();
+    }
+  } 
+  else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
+    state.wizardStep = "upsell";
+    askForMore();
+  } 
+  else {
+    state.wizardStep = "drink";
+    const drinkCat = findCategoryByKeywords(['bebida', 'refresco', 'jugo', 'malta']);
+    if (drinkCat) {
+      addBotMsg(`¡Excelente elección! 😋 ¿Y para tomar? Te sugiero algo de nuestra sección de <b>${esc(drinkCat.name)}</b> 🥤.`);
+      setTimeout(() => selectCategory(drinkCat.id, drinkCat.name), 800);
+    } else {
+      askForMore();
+    }
+  }
+}
+
+function askForMore() {
+  state.currentCatId = null;
+  state.currentCatName = null;
+  addBotMsg(`¡Felicidades <b>${esc(state.clientName)}</b>! 🎉 Ya tienes tu pedido completo. ¿Quieres pedir algo más o prefieres ir al carrito?`);
+  
+  let html = `
+    <button class="action-btn primary" onclick="goToCart()">🛒 Ir al carrito</button>
+    <button class="action-btn secondary" onclick="continueOrdering()">➕ Pedir algo más</button>
+  `;
+  renderOptions(html);
+}
+
+function continueOrdering() {
+  addUserMsg("Quiero pedir algo más");
+  $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
+  addBotMsg("¡Claro que sí! ¿Qué más se te antoja?");
+  setTimeout(() => showCategories(), 400);
+}
+
+function updateBadge() {
+  const n = state.cart.reduce((a,i)=>a+i.qty,0);
+  const b = $("#cartBadge");
+  b.textContent = n;
+  b.classList.toggle("hidden", n === 0);
+}
+
+// === LÓGICA DE NAVEGACIÓN Y LIMPIEZA ===
+function stopTracking() {
+  if (state.trackingChannel) { supabaseClient.removeChannel(state.trackingChannel); state.trackingChannel = null; }
+  if (state.trackingInterval) { clearInterval(state.trackingInterval); state.trackingInterval = null; }
+}
+
+function showCategoriesView() {
+  stopTracking();
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
+  startChatWizard();
+}
+
+function focusAssistant() {
+  stopTracking();
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
+  if ($("#chatContainer").innerHTML.trim() === "") {
+    startChatWizard();
+  } else {
+    addBotMsg("¿En qué más te puedo ayudar? Puedes elegir una categoría abajo o ver tu carrito.");
+    if (!$("#chatContainer").querySelector(".options-container")) {
+      showCategories();
+    }
+    scrollToBottom();
+  }
+}
+
+function openHelp() {
+  stopTracking();
+  $("#viewTracking").classList.add("hidden");
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  
+  let msg = `¡Hola! Somos <b>${CONFIG.brand}</b> 🍔. ¿Necesitas ayuda con tu pedido?`;
+  let html = `<button class="action-btn primary" onclick="window.open('https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda')">💬 Chatear con un asesor</button>`;
+  $("#chatContainer").insertAdjacentHTML("beforeend", `
+    <div class="chat-msg bot">
+      <div class="msg-avatar">🍔</div>
+      <div class="msg-bubble">${msg}</div>
+    </div>
+  `);
+  renderOptions(html);
+}
+
+function goBack() {
+  stopTracking();
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewCart").classList.add("hidden");
+  $("#viewTracking").classList.add("hidden");
+  startChatWizard();
+}
+
+function goToCart() {
+  stopTracking();
+  $("#viewTracking").classList.add("hidden");
+  if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
+  renderCart();
+  $("#viewCart").classList.remove("hidden");
+}
+
+function goToTracking() {
+  const savedCode = localStorage.getItem('ff_current_order_code');
+  if (!savedCode) {
+    toast("No tienes ningún pedido en curso");
+    return;
+  }
+  $("#viewCart").classList.add("hidden");
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.remove("hidden");
+  showTrackingView(savedCode);
+}
+
+function closeView(id) { 
+  if (id === 'viewTracking') stopTracking();
+  $("#" + id).classList.add("hidden"); 
+}
+
+function renderCart() {
+  const body = $("#cartBody");
+  let html = state.cart.map(i => `
+    <div class="cart-item">
+      <div class="ci-emoji">${i.img ? `<img src="${esc(i.img)}" loading="lazy">` : i.emoji}</div>
+      <div class="ci-info">
+        <h4>${esc(i.name)}</h4>
+        ${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}
+      </div>
+      <div class="ci-right">
+        <div class="ci-price">${money(i.unit * i.qty)}</div>
+        <div class="qty">
+          <button onclick="changeQty('${i.key}',-1)">−</button>
+          <span>${i.qty}</span>
+          <button onclick="changeQty('${i.key}',1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  const sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+
+  html += `
+    <div class="totals">
+      <div class="trow total" style="border-top: none; margin-top: 0; padding-top: 0; font-size: 20px;">
+        <span>Total productos</span>
+        <div class="text-right">${money(sub)}</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goToCheckout()">Continuar con el pedido →</button>
+  `;
+  body.innerHTML = html;
+}
+
+function changeQty(key, d) {
+  const it = state.cart.find(i => i.key === key); if(!it) return;
+  it.qty += d; 
+  if(it.qty <= 0) state.cart = state.cart.filter(i=>i.key!==key);
+  updateBadge(); 
+  renderCart();
+  if (state.cart.length === 0) closeView('viewCart');
+}
+
+function goToCheckout() {
+  closeView('viewCart');
+  $("#f-name").value = state.clientName;
+  renderPayments();
+  updateOrderType();
+  $("#viewCheckout").classList.remove("hidden");
+}
+
+function renderPayments() {
+  const sel = $("#paySelect");
+  sel.innerHTML = CONFIG.payments.map((p, i) => `<option value="${p.id}" ${i===0?'selected':''}>${p.icon} ${p.label}</option>`).join("");
+  sel.onchange = updatePayDetails;
+  updatePayDetails();
+}
+
+function updatePayDetails() {
+  const p = CONFIG.payments.find(x => x.id === $("#paySelect").value);
+  const box = $("#payDetails");
+  const field = $("#proofField");
+  
+  if (!p || ["efectivo", "tarjeta", "otro"].includes(p.type)) {
+    box.innerHTML = "";
+    field.classList.add("hidden");
+    return;
+  }
+  
+  if (p.details) {
+    let htmlDetails = '';
+    let copyText = `Datos de Pago (${p.label}):\n`;
+    
+    if (p.type === 'pagomovil') {
+      if(p.details.banco) { htmlDetails += `<div><b>Banco:</b> ${esc(p.details.banco)}</div>`; copyText += `Banco: ${p.details.banco}\n`; }
+      if(p.details.cedula) { htmlDetails += `<div><b>Cédula:</b> ${esc(p.details.cedula)}</div>`; copyText += `Cédula: ${p.details.cedula}\n`; }
+      if(p.details.telefono) { htmlDetails += `<div><b>Teléfono:</b> ${esc(p.details.telefono)}</div>`; copyText += `Teléfono: ${p.details.telefono}\n`; }
+    } else {
+      Object.entries(p.details).forEach(([k,v]) => {
+        if(v) {
+          let label = DETAIL_LABELS[k] || k;
+          htmlDetails += `<div><b>${label}:</b> ${esc(v)}</div>`;
+          copyText += `${label}: ${v}\n`;
+        }
+      });
+    }
+    
+    const isDel = $("input[name='otype']:checked").value === 'delivery';
+    const sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+    const del = isDel ? CONFIG.deliveryFee : 0;
+    const totalUsd = sub + del;
+    const totalBs = (totalUsd * (EXCHANGE_RATE || 1)).toFixed(2);
+    
+    copyText += `\nTotal a pagar: Bs. ${totalBs}`;
+    
+    box.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background:var(--surface-2); padding:14px; border-radius:12px;">
+        ${htmlDetails}
+      </div>
+      <button class="btn-start" style="background:var(--brand-soft); color:var(--brand); border:1px solid var(--brand); font-size:13px; padding:10px; margin-top:0; width:100%;" onclick="copyToClipboard('${esc(copyText.replace(/\n/g, '\\n'))}')">
+        📋 Copiar datos y total (Bs. ${totalBs})
+      </button>
+    `;
+  }
+  
+  field.classList.remove("hidden");
+}
+
+function updateOrderType() {
+  const isDel = $("input[name='otype']:checked").value === 'delivery';
+  $("#addressBlock").style.display = isDel ? "block" : "none";
+  
+  const sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+  const del = isDel ? CONFIG.deliveryFee : 0;
+  
+  let summaryHtml = `
+    <div class="totals" style="margin-top:12px">
+      <div class="trow"><span>Subtotal</span><div class="text-right">${money(sub)}</div></div>`;
+      
+  if (isDel) {
+    summaryHtml += `<div class="trow"><span>Delivery</span><div class="text-right">${money(del)}</div></div>`;
+  }
+  
+  summaryHtml += `<div class="trow total"><span>Total</span><div class="text-right">${money(sub+del)}</div></div>
+    </div>`;
+    
+  $("#checkoutSummary").innerHTML = summaryHtml;
+    
+  updatePayDetails();
+}
+
+function handleProofUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    state.proofImage = ev.target.result;
+    $("#proofImg").src = state.proofImage;
+    $("#proofPickerWrap").classList.add("hidden");
+    $("#proofPreviewWrap").classList.remove("hidden");
+  }; reader.readAsDataURL(file);
+}
+function clearProof() {
+  state.proofImage = null;
+  $("#proofFile").value = "";
+  $("#proofPickerWrap").classList.remove("hidden");
+  $("#proofPreviewWrap").classList.add("hidden");
+}
+
+function getLocation() {
+  const btn = $("#btnLocation");
+  const successLink = $("#gpsSuccessLink");
+  const externalLink = $("#gpsExternalLink");
+  
+  btn.textContent = "⏳ Obteniendo ubicación...";
+  btn.disabled = true;
+  
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      
+      btn.textContent = "✅ Ubicación capturada";
+      btn.style.color = "var(--ok)";
+      btn.style.borderColor = "var(--ok)";
+      btn.disabled = false;
+      
+      if (successLink && externalLink) {
+        externalLink.href = state.userLocationUrl;
+        successLink.classList.remove("hidden");
+      }
+      toast("GPS capturado correctamente");
+    }, 
+    () => { 
+      toast("Error al obtener ubicación. Activa el GPS."); 
+      btn.textContent = "📍 Reintentar capturar GPS"; 
+      btn.disabled = false;
+    }
+  );
+}
+
+function showTrackingView(code) {
+  $("#viewCheckout").classList.add("hidden");
+  $("#viewTracking").classList.remove("hidden");
+  
+  const trackContent = $("#trackCardContent");
+  trackContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--muted);">Cargando estado del pedido...</div>`;
+  
+  let lastStatus = null;
+
+  async function fetchLatestOrder() {
+    const {data, error} = await supabaseClient.from('orders').select('*').eq('code', code).single();
+    if (data) {
+      if (lastStatus !== data.status) {
+        renderTracking(data);
+        lastStatus = data.status;
+      }
+      
+      if (data.status === 'entregado' && !localStorage.getItem('rated_' + code)) {
+        if ($("#ratingModal").classList.contains("hidden")) {
+           openRatingModal(code);
+        }
+      }
+    }
+  }
+
+  fetchLatestOrder();
+  
+  if (state.trackingChannel) supabaseClient.removeChannel(state.trackingChannel);
+  
+  state.trackingChannel = supabaseClient.channel('client-track-' + code)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => {
+      fetchLatestOrder();
+    })
+    .subscribe();
+    
+  if (state.trackingInterval) clearInterval(state.trackingInterval);
+  state.trackingInterval = setInterval(fetchLatestOrder, 5000);
+}
+
+function renderTracking(order) {
+  const steps = order.type === 'delivery' ? [
+    { key: 'recibido', label: 'Recibido', desc: 'Esperando confirmación', icon: '🧾' },
+    { key: 'pagado', label: 'Pago Verificado', desc: 'Pago confirmado', icon: '💳' },
+    { key: 'preparando', label: 'En Preparación', desc: 'Cocinando tu pedido', icon: '👨‍🍳' },
+    { key: 'camino', label: 'En Camino', desc: 'El repartidor va hacia ti', icon: '🛵' },
+    { key: 'entregado', label: 'Entregado', desc: '¡Buen provecho!', icon: '✅' }
+  ] : [
+    { key: 'recibido', label: 'Recibido', desc: 'Esperando confirmación', icon: '🧾' },
+    { key: 'pagado', label: 'Pago Verificado', desc: 'Pago confirmado', icon: '💳' },
+    { key: 'preparando', label: 'En Preparación', desc: 'Cocinando tu pedido', icon: '👨‍🍳' },
+    { key: 'listo', label: 'Listo para Retirar', desc: 'Puedes pasar a buscarlo', icon: '🛍️' },
+    { key: 'entregado', label: 'Retirado', desc: '¡Gracias por tu compra!', icon: '✅' }
+  ];
+
+  let currentIndex = steps.findIndex(s => s.key === order.status);
+  if (currentIndex === -1) currentIndex = 0;
+  
+  const progress = (currentIndex / (steps.length - 1)) * 100;
+  
+  let html = `
+    <div class="tc-code">Pedido</div>
+    <div class="tc-num">${esc(order.code)}</div>
+    <div class="tc-status"><span style="font-size:16px">${steps[currentIndex].icon}</span> ${steps[currentIndex].label}</div>
+    <div class="bar"><i style="width:${progress}%"></i></div>
+    <div class="steps">
+  `;
+  
+  steps.forEach((s, i) => {
+    let stepClass = i < currentIndex ? 'done' : (i === currentIndex ? 'current' : '');
+    html += `
+      <div class="step ${stepClass}">
+        <div class="dot">${i < currentIndex ? '✓' : s.icon}</div>
+        <div>
+          <h5>${s.label}</h5>
+          <p>${s.desc}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `</div>`;
+  $("#trackCardContent").innerHTML = html;
+}
+
+function openRatingModal(code) {
+  ratingOrderCode = code;
+  currentRating = 0;
+  updateStarsUI(0);
+  $("#ratingComment").value = "";
+  $("#ratingModal").classList.remove("hidden");
+  stopTracking();
+}
+
+function closeRatingModal() {
+  $("#ratingModal").classList.add("hidden");
+  localStorage.removeItem('ff_current_order_code');
+  goBack(); 
+}
+
+function setRating(val) {
+  currentRating = val;
+  updateStarsUI(val);
+}
+
+function updateStarsUI(val) {
+  const stars = document.querySelectorAll('#starsContainer .star');
+  stars.forEach((star, index) => {
+    if (index < val) star.classList.add('active');
+    else star.classList.remove('active');
+  });
+}
+
+async function submitRating() {
+  if (currentRating === 0) {
+    toast("Por favor, selecciona al menos 1 estrella");
+    return;
+  }
+  const comment = $("#ratingComment").value.trim();
+  const btn = $("#btnSubmitRating");
+  btn.disabled = true; btn.textContent = "Enviando...";
+  
+  const { error } = await supabaseClient.from('orders').update({
+    rating: currentRating,
+    review_text: comment
+  }).eq('code', ratingOrderCode);
+  
+  if (!error) {
+    localStorage.setItem('rated_' + ratingOrderCode, 'true');
+    $("#ratingBoxContent").innerHTML = `
+      <div style="padding: 20px 10px; animation: bounceIn 0.5s ease;">
+        <div style="font-size: 64px; margin-bottom: 16px; animation: float 2s infinite;">🎉</div>
+        <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 800;">¡Gracias por tu opinión!</h2>
+        <p style="margin: 0 0 24px; color: var(--muted);">Tu calificación nos ayuda a mejorar el servicio.</p>
+        <button class="btn-primary" onclick="closeRatingModal()" style="width: 100%; margin-top: 0;">Volver al menú</button>
+      </div>
+    `;
+  } else {
+    toast("Error al enviar calificación");
+    btn.disabled = false; btn.textContent = "Enviar calificación";
+  }
+}
+
+async function submitOrder() {
+  const name = $("#f-name").value.trim();
+  const phone = $("#f-phone").value.trim();
+  const isDel = $("input[name='otype']:checked").value === 'delivery';
+  const addr = $("#f-addr").value.trim();
+  const notes = $("#f-notes").value.trim();
+  const payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
+
+  if (!name || !phone || (isDel && !addr)) { toast("Completa los campos obligatorios"); return; }
+
+  const btn = $("#btnConfirm"); btn.disabled = true; btn.textContent = "Enviando...";
+
+  let proofUrl = null;
+  if (state.proofImage) {
+    try {
+      const res = await fetch(state.proofImage);
+      const blob = await res.blob();
+      const fileName = `proof-${Date.now()}.jpg`;
+      const { error } = await supabaseClient.storage.from('productos').upload(fileName, blob);
+      if (!error) {
+        const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
+        proofUrl = data.publicUrl;
+      }
+    } catch(e) {}
+  }
+
+  const sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+  const del = isDel ? CONFIG.deliveryFee : 0;
+  const total = sub + del;
+  const code = 'A-' + Math.floor(1000 + Math.random() * 9000);
+
+  let msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Tel:* ${phone}\n*Tipo:* ${isDel?'Delivery':'Retiro'}\n*Pago:* ${payMethod}\n\n`;
+  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.name} ($${i.unit*i.qty.toFixed(2)})\n`; });
+  msg += `\n*Total:* $${total.toFixed(2)} (Bs. ${(total * EXCHANGE_RATE).toFixed(2)})`;
+
+  const orderData = {
+    code, status: 'recibido',
+    customer: { name, phone, address: addr, locationUrl: state.userLocationUrl },
+    items: state.cart, total, type: isDel ? 'delivery' : 'pickup',
+    payment_method: payMethod, notes, proof_url: proofUrl
+  };
+
+  const { error } = await supabaseClient.from('orders').insert([orderData]);
+  if (error) alert("Error al guardar pedido: " + error.message);
+
+  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+  
+  state.cart = []; state.proofImage = null; updateBadge();
+  $("#viewCheckout").classList.add("hidden");
+  
+  localStorage.setItem('ff_current_order_code', code);
+  showTrackingView(code);
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadData(); 
+  await fetchExchangeRate(); 
+  
+  const isOpen = checkStoreStatus();
+  
+  if (isOpen) {
+    setupWelcome();
+    
+    const savedCode = localStorage.getItem('ff_current_order_code');
+    if (savedCode) {
+      supabaseClient.from('orders').select('status, rating').eq('code', savedCode).single().then(({data}) => {
+        if (data) {
+          if (data.status === 'entregado') {
+            if (!data.rating && !localStorage.getItem('rated_' + savedCode)) {
+              $("#welcomeScreen").classList.add("hidden");
+              $("#app").classList.remove("hidden");
+              showTrackingView(savedCode);
+            } else {
+              localStorage.removeItem('ff_current_order_code');
+            }
+          } else {
+            $("#welcomeScreen").classList.add("hidden");
+            $("#app").classList.remove("hidden");
+            showTrackingView(savedCode);
+          }
+        } else {
+          localStorage.removeItem('ff_current_order_code');
+        }
+      });
+    } else {
+       $("#welcomeScreen").classList.remove("hidden");
+    }
+  }
+});
+</script>
+</body>
+</html>
