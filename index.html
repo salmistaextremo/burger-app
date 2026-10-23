@@ -363,7 +363,7 @@ var CONFIG = {
   brand: "Rapid Burger", logo: "", whatsapp: "584121234567",
   payments: [], deliveryFee: 2.00, currency: "$",
   hours: null, days: null, helpHoursText: "",
-  exchange_rate: null // 👈 Tasa manual
+  exchange_rate: null
 };
 
 var DB = { cats: [], menu: [] };
@@ -413,16 +413,12 @@ function fallbackCopy(text) {
   t.remove();
 }
 
-// 👇 OBTENER TASA DE CAMBIO (Prioriza Manual)
 async function fetchExchangeRate() {
-  // 1. Revisar si hay una tasa manual en la base de datos
   if (CONFIG.exchange_rate && CONFIG.exchange_rate > 0) {
     EXCHANGE_RATE = parseFloat(CONFIG.exchange_rate);
-    console.log("Usando tasa manual:", EXCHANGE_RATE);
     return;
   }
 
-  // 2. Si no hay manual, buscar en APIs
   const cached = localStorage.getItem('bcv_rate');
   if (cached) EXCHANGE_RATE = parseFloat(cached);
 
@@ -483,7 +479,7 @@ async function loadData() {
       CONFIG.hours = configRes.data.hours;
       CONFIG.days = configRes.data.days;
       CONFIG.helpHoursText = configRes.data.helphourstext;
-      CONFIG.exchange_rate = configRes.data.exchange_rate; // 👈 Guardar tasa manual
+      CONFIG.exchange_rate = configRes.data.exchange_rate;
     }
     
     $("#welcomeBrand").textContent = CONFIG.brand;
@@ -514,7 +510,6 @@ async function loadData() {
   }
 }
 
-// 👇 VERIFICACIÓN DE HORARIO
 function checkStoreStatus() {
   if (!CONFIG.hours || !CONFIG.hours.open || !CONFIG.hours.close) return true;
 
@@ -565,7 +560,6 @@ function checkStoreStatus() {
   return true;
 }
 
-// 👇 FUNCIONES DE RENDERIZADO
 function generateCategoriesHtml() {
   let html = "";
   DB.cats.forEach(c => {
@@ -606,12 +600,14 @@ function generateProductsHtml(catId, catName) {
 
   const catNameLower = catName.toLowerCase();
   let btnText = "Siguiente paso ➔";
+  
+  // 👇 AQUÍ ESTÁ EL CAMBIO DE LOS BOTONES 👇
   if (catNameLower.includes('bebida') || catNameLower.includes('refresco') || catNameLower.includes('jugo')) {
-    btnText = "Omitir bebida / Ir a postres ➔";
+    btnText = "Ir a los postres ➔";
   } else if (catNameLower.includes('postre') || catNameLower.includes('dulce') || catNameLower.includes('torta') || catNameLower.includes('helado')) {
-    btnText = "Omitir postre / Finalizar pedido ➔";
+    btnText = "Finalizar pedido ➔";
   } else if (catNameLower.includes('hamburguesa') || catNameLower.includes('perro') || catNameLower.includes('pollo') || catNameLower.includes('chawarma')) {
-    btnText = "Omitir plato / Ir a bebidas ➔";
+    btnText = "Ir a las bebidas ➔";
   }
   
   html += `<button class="action-btn secondary" onclick="skipStep('${catId}')">${btnText}</button>`;
@@ -771,7 +767,7 @@ function addToCartAndAdvance(catId) {
 
 function skipStep(catId) {
   const catName = getCategoryName(catId);
-  addUserMsg("Siguiente paso / Omitir");
+  addUserMsg("Siguiente paso");
   $("#chatContainer").querySelectorAll(".options-container").forEach(el => el.remove());
 
   const catNameLower = catName.toLowerCase();
@@ -1089,7 +1085,6 @@ function getLocation() {
   );
 }
 
-// 👇 FUNCIONES DEL SEGUIMIENTO EN TIEMPO REAL
 function showTrackingView(code) {
   $("#viewCheckout").classList.add("hidden");
   $("#viewTracking").classList.remove("hidden");
@@ -1174,7 +1169,6 @@ function renderTracking(order) {
   $("#trackCardContent").innerHTML = html;
 }
 
-// 👇 FUNCIONES DE CALIFICACIÓN
 function openRatingModal(code) {
   ratingOrderCode = code;
   currentRating = 0;
@@ -1287,10 +1281,9 @@ async function submitOrder() {
   showTrackingView(code);
 }
 
-// INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadData(); // Primero cargar datos (incluida la tasa manual)
-  await fetchExchangeRate(); // Luego calcular la tasa
+  await loadData(); 
+  await fetchExchangeRate(); 
   
   const isOpen = checkStoreStatus();
   
