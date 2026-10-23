@@ -282,6 +282,7 @@ textarea{resize:vertical;min-height:80px}
 .mh-brand { font-weight: 800; font-size: 18px; color: var(--brand); }
 .mh-actions { display: flex; gap: 6px; align-items: center; }
 .mh-btn { padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; text-decoration: none; }
+.mh-btn.support { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
 .mh-btn.client { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
 .mh-btn.install { background: var(--brand-soft); color: var(--brand); border: 1px solid #FFE0D0; }
 .mh-btn.logout { background: var(--danger-soft); color: var(--danger); }
@@ -368,8 +369,12 @@ textarea{resize:vertical;min-height:80px}
   🔔 Haz clic aquí para activar las notificaciones y sonidos de nuevos pedidos
 </div>
 
+<!-- HEADER MÓVIL CON BOTÓN DE SOPORTE -->
 <header class="mobile-header">
-  <div class="mh-brand">Admin</div>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <div class="mh-brand">Admin</div>
+    <button class="mh-btn support" onclick="openSupportModal()">🛠️ Soporte</button>
+  </div>
   <div class="mh-actions">
     <button class="mh-btn client" onclick="window.open('index.html', '_blank')">👁️ Cliente</button>
     <button id="btnInstallAppMobile" class="mh-btn install hidden" onclick="installApp()">📲 Instalar</button>
@@ -435,6 +440,10 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
     </nav>
     <div class="sb-footer">
+      <!-- BOTÓN SOPORTE ESCRITORIO -->
+      <button onclick="openSupportModal()" style="background: var(--surface-2); color: var(--ink-2); margin-bottom: 4px;">
+        <span>🛠️</span> Soporte Técnico
+      </button>
       <button id="btnInstallAppDesktop" class="hidden" onclick="installApp()" style="background: var(--brand-soft); color: var(--brand-d); font-weight: 700; margin-bottom: 8px; border: 1px solid #FFE0D0;">
         <span>📲</span> Instalar Aplicación
       </button>
@@ -446,6 +455,29 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <div id="modal" class="modal hidden"></div>
+
+<!-- MODAL DE SOPORTE TÉCNICO -->
+<div id="supportModal" class="modal hidden">
+  <div class="modal-box" style="max-width: 400px; text-align: center;">
+    <div class="modal-head">
+      <h2>Soporte Técnico</h2>
+      <button class="modal-close" onclick="closeSupportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size: 48px; margin-bottom: 16px;">🛠️</div>
+      <h3 style="margin-bottom: 8px; font-size: 20px;">Julio Morales</h3>
+      <p style="color: var(--muted); margin-bottom: 20px;">Soporte Técnico Oficial</p>
+      <div style="background: var(--surface-2); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <span style="font-weight: 700; font-size: 16px;">+58 04243547882</span>
+        <button class="btn btn-primary btn-sm" onclick="copyToClipboard('+584243547882');">📋 Copiar</button>
+      </div>
+      <a href="https://wa.me/584243547882" target="_blank" class="btn btn-wa" style="width: 100%; display: flex; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; text-decoration: none; color: white; background: #25D366;">
+        💬 Escribir por WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -476,6 +508,27 @@ function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.queryS
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  t.remove();
+}
+
+// 👇 FUNCIONES DEL MODAL DE SOPORTE
+function openSupportModal() {
+  document.getElementById("supportModal").classList.remove("hidden");
+}
+function closeSupportModal() {
+  document.getElementById("supportModal").classList.add("hidden");
+}
 
 // 👇 OBTENER TASA DE CAMBIO (Prioriza Manual)
 async function fetchExchangeRate() {
