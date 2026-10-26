@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F8FA">
+<!-- PWA: Hace que la app se pueda instalar en el celular del repartidor -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Rapid Burger — Panel Repartidor</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Repartidor Rapid Burger","short_name":"Delivery","start_url":"./repartidor.html","display":"standalone","background_color":"#F7F8FA","theme_color":"#FF5A1F","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+:root{
+  --bg:#F7F8FA; --surface:#FFFFFF; --line:#E5E7EB; --ink:#111827; --muted:#9CA3AF;
+  --brand:#FF5A1F; --brand-soft:#FFF0EA; --ok:#10B981; --danger:#EF4444;
+  --shadow:0 4px 16px rgba(17,24,39,0.06);
+  --font:'Outfit', sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+#app{max-width:520px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:90px;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-box{background:var(--surface);width:100%;max-width:380px;border-radius:24px;padding:32px 24px;text-align:center;box-shadow:var(--shadow);}
+.login-icon{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg, #FF7A45, var(--brand));display:grid;place-items:center;font-size:32px;margin:0 auto 16px;color:white;}
+.login-box h2{margin:0 0 8px;font-size:22px;font-weight:900;}
+.login-box p{margin:0 0 24px;font-size:14px;color:var(--muted);}
+.field{text-align:left;margin-bottom:16px;}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+.field input{width:100%;padding:14px;border-radius:12px;border:2px solid var(--line);font-size:15px;font-family:inherit;outline:none;}
+.field input:focus{border-color:var(--brand);}
+.btn-login{width:100%;padding:16px;border-radius:14px;border:none;background:var(--brand);color:#fff;font-size:16px;font-weight:800;cursor:pointer;}
+
+/* HEADER */
+.header{background:var(--surface);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);}
+.header-info h1{font-size:18px;font-weight:900;margin:0;}
+.header-info p{font-size:12px;color:var(--muted);margin:2px 0 0;}
+.btn-logout{background:transparent;border:none;color:var(--danger);font-weight:700;font-size:13px;cursor:pointer;}
+
+/* PEDIDOS */
+.content{padding:20px;}
+.order-card{background:var(--surface);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.order-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px dashed var(--line);padding-bottom:12px;}
+.order-code{font-size:20px;font-weight:900;color:var(--brand);}
+.order-status{font-size:11px;font-weight:800;padding:4px 8px;border-radius:6px;background:#FEF3C7;color:#D97706;}
+.order-info{font-size:14px;line-height:1.6;margin-bottom:12px;}
+.order-info b{font-weight:700;}
+.order-items{background:var(--bg);padding:12px;border-radius:12px;font-size:13px;margin-bottom:16px;line-height:1.5;}
+.btn-actions{display:flex;gap:10px;}
+.btn-map{flex:1;padding:12px;border-radius:12px;border:2px solid var(--brand);background:transparent;color:var(--brand);font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;}
+.btn-delivered{flex:1;padding:12px;border-radius:12px;border:none;background:var(--ok);color:white;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:200;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .big{font-size:48px;margin-bottom:16px;opacity:.5;}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-icon">🛵</div>
+    <h2>Panel Repartidor</h2>
+    <p>Ingresa tus credenciales para ver tus entregas.</p>
+    <div class="field"><label>Correo / Usuario</label><input type="email" id="dEmail" placeholder="correo@ejemplo.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="dPass" placeholder="••••••••"></div>
+    <button class="btn-login" onclick="loginDriver()">Iniciar Sesión</button>
+  </div>
+</div>
+
+<!-- PANEL PRINCIPAL -->
+<div id="app" class="hidden">
+  <header class="header">
+    <div class="header-info">
+      <h1 id="dName">Repartidor</h1>
+      <p>Pedidos en camino</p>
+    </div>
+    <button class="btn-logout" onclick="logoutDriver()">Cerrar Sesión</button>
+  </header>
+  
+  <div class="content" id="ordersList">
+    <!-- Aquí se cargan los pedidos -->
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ATENCIÓN: Asegúrate de que estas llaves sean las mismas de tu index.html
+  const SUPABASE_URL = 'https://aqwdjuktzvsorsgowxak.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxd2RqdWt0enZzb3JzZ293eGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentDriver = null;
+  let refreshInterval = null;
+
+  function toast(msg) { 
+    var t = document.getElementById("toast"); 
+    t.textContent = msg; t.classList.add("show"); 
+    setTimeout(() => t.classList.remove("show"), 3000); 
+  }
+
+  async function loginDriver() {
+    const email = document.getElementById("dEmail").value.trim();
+    const pass = document.getElementById("dPass").value.trim();
+    if (!email || !pass) return toast("Llena todos los campos");
+
+    // Verificamos el usuario en la tabla de conductores
+    const { data, error } = await supabaseClient.from('drivers').select('*').eq('email', email).eq('password', pass).single();
+
+    if (error || !data) {
+      return toast("❌ Correo o contraseña incorrectos");
+    }
+    
+    if (!data.active) {
+      return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
+    }
+
+    currentDriver = data;
+    localStorage.setItem('driver_session', JSON.stringify(data));
+    startPanel();
+  }
+
+  function logoutDriver() {
+    localStorage.removeItem('driver_session');
+    currentDriver = null;
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("app").classList.add("hidden");
+    if (refreshInterval) clearInterval(refreshInterval);
+  }
+
+  function startPanel() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("dName").textContent = currentDriver.name;
+    loadOrders();
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
+  }
+
+  async function loadOrders() {
+    // Buscamos pedidos que estén "En camino" (Delivery) o "Listo" (Retiro)
+    const { data: orders, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .in('status', ['camino', 'listo'])
+      .order('created_at', { ascending: true });
+
+    const list = document.getElementById("ordersList");
+
+    if (error || !orders || orders.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = orders.map(o => {
+      const c = o.customer;
+      const isDelivery = o.type === 'delivery';
+      
+      let mapBtn = '';
+      if (isDelivery && c.locationUrl) {
+        mapBtn = `<a href="${c.locationUrl}" target="_blank" class="btn-map">📍 Ver Mapa</a>`;
+      }
+
+      return `
+        <div class="order-card">
+          <div class="order-head">
+            <span class="order-code">${o.code}</span>
+            <span class="order-status">${isDelivery ? 'En Camino' : 'Para Retirar'}</span>
+          </div>
+          
+          <div class="order-info">
+            <b>Cliente:</b> ${c.name}<br>
+            <b>Tel:</b> <a href="tel:${c.phone}" style="color:var(--brand)">${c.phone}</a><br>
+            ${isDelivery ? `<b>Dirección:</b> ${c.address || 'Sin dirección'}<br><b>Ref:</b> ${c.ref || 'N/A'}` : `<b>Tipo:</b> Retiro en Tienda`}
+          </div>
+
+          <div class="order-items">
+            ${o.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+          </div>
+
+          <div class="btn-actions">
+            ${mapBtn}
+            <button class="btn-delivered" onclick="markDelivered('${o.id}')">✅ Entregado</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function markDelivered(orderId) {
+    if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
+    
+    // Actualizamos el estado en Supabase
+    const { error } = await supabaseClient.from('orders').update({ status: 'entregado' }).eq('id', orderId);
+    
+    if (error) {
+      toast("Error al actualizar el pedido");
+    } else {
+      toast("✅ Pedido marcado como entregado");
+      loadOrders(); // Recargar la lista
+    }
+  }
+
+  // AUTO-LOGIN SI YA HAY SESIÓN GUARDADA
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('driver_session');
+    if (saved) {
+      try {
+        currentDriver = JSON.parse(saved);
+        startPanel();
+      } catch(e) { localStorage.removeItem('driver_session'); }
+    }
+  });
+</script>
+</body>
+</html>
