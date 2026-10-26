@@ -305,7 +305,7 @@ textarea{resize:vertical;min-height:80px}
       <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
       
       <!-- BOTÓN PARA INSTALAR APP -->
-      <button id="btnInstallApp" onclick="installPWA()" style="display:none; color:var(--ok);"><span>📲</span>Instalar App</button>
+      <button id="btnInstallApp" onclick="installPWA()" style="color:var(--ok);"><span>📲</span>Instalar App</button>
       
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
@@ -324,23 +324,23 @@ textarea{resize:vertical;min-height:80px}
 </script>
 
 <script>
-// Lógica para instalar la App (PWA)
+// Lógica para instalar la App (PWA) con fallback
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  const btn = document.getElementById('btnInstallApp');
-  if (btn) btn.style.display = 'flex';
 });
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        document.getElementById('btnInstallApp').style.display = 'none';
+        deferredPrompt = null;
       }
-      deferredPrompt = null;
     });
+  } else {
+    // Fallback si el navegador no soporta la instalación automática
+    alert("Para instalar la app en tu teléfono:\n\n1. Abre el menú de tu navegador (los 3 puntos).\n2. Selecciona 'Añadir a pantalla de inicio' o 'Instalar aplicación'.");
   }
 }
 
@@ -663,18 +663,11 @@ function renderHome(m) {
     `;
   }
 
-  // Instalar App Button si está disponible
-  let installBtnHtml = deferredPrompt ? `
-    <button class="btn btn-primary" onclick="installPWA()" style="width:100%; margin-bottom:24px; background:var(--ok); box-shadow:0 4px 12px rgba(16,185,129,.28);">
-      📲 Instalar App en tu teléfono
-    </button>` : "";
-
   m.innerHTML = `
     <div class="welcome-card">
       <h1>¡Hola, ${esc(adminName)}!</h1>
       <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
     </div>
-    ${installBtnHtml}
     ${alertHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
