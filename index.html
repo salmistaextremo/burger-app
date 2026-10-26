@@ -403,12 +403,15 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // 🚨 ATENCIÓN: REEMPLAZA ESTAS DOS LÍNEAS CON LAS CREDENCIALES DE TU NUEVO PROYECTO EN SUPABASE
   const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
+  
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <script>
+// ... (El resto de la lógica JavaScript es idéntica, aplicando el String() correspondiente)
 var CONFIG = {
   brand: "Rapid Burger", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
