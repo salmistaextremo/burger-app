@@ -404,19 +404,18 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // 🚨 ATENCIÓN: REEMPLAZA ESTAS DOS LÍNEAS CON LAS CREDENCIALES DE TU NUEVO PROYECTO EN SUPABASE
-  const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
+  const SUPABASE_URL = 'PEGA_AQUI_TU_NUEVA_URL_DE_SUPABASE'; 
+  const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_NUEVA_ANON_KEY';
   
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <script>
-// ... (El resto de la lógica JavaScript es idéntica, aplicando el String() correspondiente)
 var CONFIG = {
   brand: "Rapid Burger", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, hours: { open: "11:00", close: "23:00" }, days: [1, 2, 3, 4, 5, 6, 0],
-  helpHoursText: "11:00 a 23:00", payments: [],
+  helpHoursText: "11:00 a 23:00", payments: [], manualRate: 0,
   stages: {
     delivery: [
       { key:"recibido", label:"Pedido recibido", desc:"Esperando confirmación", icon:"🧾" },
@@ -466,17 +465,16 @@ async function loadSharedData(){
       CONFIG.hours = config.hours || CONFIG.hours;
       CONFIG.days = config.days || CONFIG.days;
       CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
+      CONFIG.manualRate = config.manual_rate || 0;
     }
 
     if (catsRes.data) {
       CATS.length = 0; CATS.push({ id:"todos", name:"Todo", icon:"✨" });
-      // ✅ CORRECCIÓN: Convertir el ID de la categoría a String
       catsRes.data.forEach(x => CATS.push({ ...x, id: String(x.id) }));
     }
 
     if (productsRes.data) {
       MENU.length = 0;
-      // ✅ CORRECCIÓN: Convertir el category_id del producto a String
       productsRes.data.forEach(p => MENU.push({ ...p, cat: String(p.category_id), desc: p.description, extras: p.extras || [], available: p.available !== false }));
     }
 
@@ -552,8 +550,14 @@ function exitApp() {
   }, 100);
 }
 
-// CARGA DE TASA CON CACHÉ Y TIMEOUT
+// CARGA DE TASA CON CACHÉ, TIMEOUT Y TASA MANUAL
 async function fetchExchangeRate() {
+  // 🔧 LÓGICA DE TASA MANUAL: Si el admin configuró una tasa, se usa esa.
+  if (CONFIG.manualRate && Number(CONFIG.manualRate) > 0) {
+    EXCHANGE_RATE = Number(CONFIG.manualRate);
+    updateRateBadge(); refreshCurrentView(); return;
+  }
+
   if (EXCHANGE_RATE) {
     updateRateBadge();
     refreshCurrentView();
