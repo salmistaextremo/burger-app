@@ -191,7 +191,6 @@ textarea{resize:vertical;min-height:80px}
 .order-card.pending .order-items { background: #FFFFFF; }
 .order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
 
-/* ESTILOS PARA LAS CALIFICACIONES */
 .order-review { margin-top: 12px; padding: 12px; background: var(--star-bg); border: 1px solid var(--star-line); border-radius: 10px; animation: fadeIn 0.4s ease; }
 .order-review .stars { color: var(--star); font-size: 16px; letter-spacing: 2px; margin-bottom: 4px; }
 .order-review .comment { font-size: 13px; color: var(--ink-2); font-style: italic; line-height: 1.4; }
@@ -325,7 +324,6 @@ textarea{resize:vertical;min-height:80px}
       <div class="sb-logo" id="sbLogo">⚙️</div>
       <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Rapid Burger</p></div>
       
-      <!-- Botones de acción en la cabecera (Solo visibles en móvil) -->
       <div class="sb-brand-actions">
         <button id="btnInstallAppMobile" class="btn-header-install" onclick="installPWA()">Instalar</button>
         <button class="btn-header-logout" onclick="doLogout()">Salir</button>
@@ -358,7 +356,6 @@ textarea{resize:vertical;min-height:80px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ✅ NUEVAS CREDENCIALES DE SUPABASE
   const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -408,6 +405,7 @@ var DEFAULT_CONFIG = {
 
 var EXCHANGE_RATE = null;
 var state = { tab: "home" };
+var pollingInterval = null; // Para el respaldo de la PWA
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
@@ -524,6 +522,7 @@ async function checkAuth() {
         document.getElementById("sbBrandName").textContent = DB.config.brand;
         document.getElementById("sbLogo").innerHTML = DB.config.logo ? `<img src="${esc(DB.config.logo)}">` : "⚙️";
       }
+      startPolling(); // Iniciar respaldo para PWA
     } catch(error) { console.error("Error cargando datos:", error); }
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
@@ -548,6 +547,7 @@ function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
   supabaseClient.auth.signOut().then(() => {
     if (window.adminOrderChannel) { supabaseClient.removeChannel(window.adminOrderChannel); window.adminOrderChannel = null; }
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     if ("clearAppBadge" in navigator) navigator.clearAppBadge();
     localStorage.removeItem('admin_notif_unlocked');
     document.title = "Panel Admin — Rapid Burger";
@@ -618,10 +618,10 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
 }
 
 // =========================================
-// ACTUALIZACIÓN EN TIEMPO REAL (CORREGIDO)
+// ACTUALIZACIÓN EN TIEMPO REAL (CORREGIDO PARA PWA)
 // =========================================
 function setupOrderListener() {
-  if (window.adminOrderChannel) return;
+  if (window.adminOrderChannel) { supabaseClient.removeChannel(window.adminOrderChannel); window.adminOrderChannel = null; }
   
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
@@ -642,7 +642,6 @@ function setupOrderListener() {
       }
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
       
-      // Agregamos el pedido localmente y recargamos toda la data (para asegurar)
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
@@ -650,17 +649,15 @@ function setupOrderListener() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      console.log("🔄 Actualización recibida (Calificación o Estado):", updatedOrder);
+      console.log("🔄 Actualización recibida:", updatedOrder);
 
-      // 1. Actualizamos el pedido en el array local de inmediato
       const index = DB.orders.findIndex(o => o.id === updatedOrder.id);
       if (index !== -1) {
         DB.orders[index] = { ...DB.orders[index], ...updatedOrder };
       } else {
-        DB.orders.unshift(updatedOrder); // Si por alguna razón no estaba, lo agregamos
+        DB.orders.unshift(updatedOrder);
       }
 
-      // 2. Si se detecta una nueva calificación, disparamos la notificación
       if (updatedOrder.rating) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
@@ -676,18 +673,60 @@ function setupOrderListener() {
         toast(`⭐ ¡Pedido ${updatedOrder.code} calificado con ${updatedOrder.rating} estrellas!`);
       }
 
-      // 3. Forzamos un redibujado de la vista para mostrar los cambios
-      if (state.tab === 'orders') {
-        renderOrders($("#main"));
-      } else if (state.tab === 'home') {
-        renderHome($("#main"));
-      }
+      if (state.tab === 'orders') renderOrders($("#main"));
+      else if (state.tab === 'home') renderHome($("#main"));
+      
       updateAppBadge();
     })
     .subscribe((status) => {
-      console.log("Estado de la conexión Realtime Supabase:", status);
+      console.log("📡 Estado de conexión Realtime Supabase:", status);
     });
 }
+
+// =========================================
+// FUNCIÓN PARA CUANDO LA APP VUELVE A PRIMER PLANO
+// =========================================
+function handleAppVisibility() {
+  if (document.visibilityState === 'visible') {
+    console.log("App en primer plano. Sincronizando datos...");
+    
+    // 1. Descargamos cualquier pedido nuevo que se haya hecho mientras la app estaba dormida
+    dbLoad().then(() => {
+      // 2. Reiniciamos el canal de WebSockets para asegurar conexión
+      setupOrderListener();
+      
+      // 3. Redibujamos la vista si es necesario
+      if (state.tab === 'orders') renderOrders($("#main"));
+      else if (state.tab === 'home') renderHome($("#main"));
+      else render(); // Refresca cualquier otra pestaña
+      
+      toast("🔄 Datos sincronizados");
+    });
+  }
+}
+
+// =========================================
+// RESPALDO (POLLING) PARA PWA
+// =========================================
+function startPolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  
+  pollingInterval = setInterval(() => {
+    // Solo hace la consulta si la app está visible para ahorrar datos
+    if (document.visibilityState === 'visible') {
+      dbLoad().then(() => {
+        if (state.tab === 'orders' || state.tab === 'home') {
+          render(); // Redibuja silenciosamente
+        }
+      });
+    }
+  }, 30000); // Cada 30 segundos
+}
+
+// =========================================
+// INICIALIZACIÓN
+// =========================================
+document.addEventListener('visibilitychange', handleAppVisibility);
 
 function setupNav() {
   $$(".sb-nav button").forEach(b => { 
