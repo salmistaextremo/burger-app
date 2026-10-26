@@ -11,7 +11,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 <style>
-/* ... Estilos existentes ... */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#F0F1F4;
@@ -53,6 +52,8 @@ textarea{resize:vertical;min-height:80px}
 .sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sb-brand-text h1{font-size:14px;font-weight:800;}
 .sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
+.logout-btn-mobile{display:none;}
+
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar {display: none;}
 .sb-nav button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:.15s;flex-shrink:0;}
@@ -203,19 +204,65 @@ textarea{resize:vertical;min-height:80px}
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty .big{font-size:52px;opacity:.35;margin-bottom:14px;}
 
+/* =========================================
+   DISEÑO RESPONSIVO (MÓVILES Y TABLETS)
+   ========================================= */
 @media(max-width:860px){
   .app{flex-direction:column}
-  .sidebar{width:100%;height:auto;position:static;flex-direction:row;padding:12px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-  .sidebar::-webkit-scrollbar {display: none;}
-  .sb-brand{padding:0 12px 0 0;border:none;margin:0;flex:none}
-  .sb-brand-text{display:none}
-  .sb-nav{flex-direction:row;gap:4px;flex:none;overflow:visible;}
-  .sb-nav button{padding:9px 14px;white-space:nowrap;}
-  .sb-footer{flex-direction:row;border:none;padding:0;margin-left:auto;}
-  .main{padding:20px 16px}
-  .form-grid{grid-template-columns:1fr}
-  .report-filters{flex-direction:column;align-items:stretch;}
-  .welcome-card{padding:20px;}
+  
+  /* Barra Superior Fija */
+  .sidebar{
+    width:100%; height:auto; position:sticky; top:0; z-index:100;
+    flex-direction:column; padding:0; border-right:none; border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  
+  /* Header del Logo */
+  .sb-brand{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 16px; margin:0; border:none;
+  }
+  .sb-brand-text{display:block;}
+  .sb-brand-text h1{font-size:16px;}
+  .logout-btn-mobile{display:block; font-size:20px; color:var(--danger); padding:8px;}
+  
+  /* Navegación Deslizable */
+  .sb-nav{
+    flex-direction:row; overflow-x:auto; gap:8px;
+    padding:0 16px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  .sb-nav::-webkit-scrollbar{display:none;}
+  .sb-nav button{
+    padding:8px 16px; background:var(--surface-2); border-radius:99px;
+    white-space:nowrap; font-size:13px; font-weight:600;
+  }
+  .sb-nav button.active{ background:var(--brand); color:#fff; }
+  .sb-nav button.active .count{ background:#fff; color:var(--brand); }
+  
+  /* Ocultar footer en móvil para ahorrar espacio */
+  .sb-footer{display:none;}
+  
+  /* Contenido Principal */
+  .main{padding:16px;}
+  
+  /* Tarjeta de Bienvenida */
+  .welcome-card{padding:20px; margin-bottom:16px;}
+  .welcome-card h1{font-size:22px; word-break:break-word;}
+  
+  /* Tarjetas de Estadísticas (2 Columnas) */
+  .stats-grid{
+    grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;
+  }
+  .stat-card{
+    flex-direction:column; align-items:flex-start; padding:16px;
+  }
+  .stat-icon{width:40px; height:40px; font-size:20px; margin-bottom:8px;}
+  .stat-info h3{font-size:20px;}
+  
+  /* Listas y Formularios */
+  .p-list{grid-template-columns:1fr;}
+  .report-filters{flex-direction:column; align-items:stretch;}
+  .form-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -242,6 +289,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
       <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Rapid Burger</p></div>
+      <button class="logout-btn-mobile" onclick="doLogout()">🚪</button>
     </div>
     <nav class="sb-nav">
       <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
@@ -254,9 +302,9 @@ textarea{resize:vertical;min-height:80px}
     </nav>
     <div class="sb-footer">
       <a href="index.html" target="_blank"><span>👁️</span>Ver app cliente</a>
-      <!-- 🔧 NUEVO: Botón de Soporte Técnico (Cambia el número por el tuyo) -->
-      <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico%20para%20mi%20sistema" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
-      <!-- 🔧 NUEVO: Botón para instalar la PWA -->
+      <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
+      
+      <!-- BOTÓN PARA INSTALAR APP -->
       <button id="btnInstallApp" onclick="installPWA()" style="display:none; color:var(--ok);"><span>📲</span>Instalar App</button>
       
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
@@ -276,7 +324,7 @@ textarea{resize:vertical;min-height:80px}
 </script>
 
 <script>
-// 🔧 Lógica para instalar la App (PWA)
+// Lógica para instalar la App (PWA)
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -307,8 +355,8 @@ var DEFAULT_CONFIG = {
 };
 
 var EXCHANGE_RATE = null;
-
 var state = { tab: "home" };
+
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -615,11 +663,18 @@ function renderHome(m) {
     `;
   }
 
+  // Instalar App Button si está disponible
+  let installBtnHtml = deferredPrompt ? `
+    <button class="btn btn-primary" onclick="installPWA()" style="width:100%; margin-bottom:24px; background:var(--ok); box-shadow:0 4px 12px rgba(16,185,129,.28);">
+      📲 Instalar App en tu teléfono
+    </button>` : "";
+
   m.innerHTML = `
     <div class="welcome-card">
       <h1>¡Hola, ${esc(adminName)}!</h1>
       <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
     </div>
+    ${installBtnHtml}
     ${alertHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
@@ -741,7 +796,6 @@ function renderBusiness(m) {
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
         
-        <!-- 🔧 NUEVO: Tasa de Cambio Manual -->
         <div class="field full">
           <label>Tasa de Cambio Manual (Bs/USD)</label>
           <input type="number" step="0.01" id="bManualRate" value="${DB.config.manualRate || 0}" placeholder="Ej: 36.50">
@@ -796,7 +850,6 @@ async function saveBusiness() {
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
   
-  // Actualizar la tasa en memoria si se cambió manualmente
   if (manualRate > 0) { EXCHANGE_RATE = manualRate; }
   else { fetchExchangeRate(); }
 
