@@ -52,7 +52,6 @@ textarea{resize:vertical;min-height:80px}
 .sb-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sb-brand-text h1{font-size:14px;font-weight:800;}
 .sb-brand-text p{font-size:11px;color:var(--muted);margin-top:1px}
-.logout-btn-mobile{display:none;}
 
 .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar {display: none;}
@@ -217,25 +216,34 @@ textarea{resize:vertical;min-height:80px}
     background:var(--surface);
   }
   
-  /* Header del Logo */
+  /* Header del Logo con Botones */
   .sb-brand{
-    display:flex; justify-content:center; align-items:center; gap:12px;
+    display:flex; justify-content:space-between; align-items:center;
     padding:12px 16px; margin:0; border:none;
   }
   .sb-brand-text{display:block;}
   .sb-brand-text h1{font-size:16px;}
-  .logout-btn-mobile{
-    display:block; font-size:12px; font-weight:700; color:var(--danger);
-    padding:6px 12px; border-radius:8px; background:var(--danger-soft);
-    margin-left:auto;
-  }
+  .sb-brand-text p{font-size:11px;}
   
-  /* Navegación Distribuida (Grid) */
+  /* Contenedor de botones de la cabecera */
+  .sb-brand-actions {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .btn-header-install {
+    color: var(--brand-d); font-size: 12px; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px; background: var(--brand-soft);
+  }
+  .btn-header-logout {
+    color: var(--danger); font-size: 12px; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px; background: var(--danger-soft);
+  }
+
+  /* Navegación Distribuida (Grid de 4 columnas) */
   .sb-nav{
-    display:grid;
+    display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 0 12px 12px;
+    padding: 0 12px 16px;
     overflow: visible;
     flex: none;
   }
@@ -245,23 +253,25 @@ textarea{resize:vertical;min-height:80px}
     padding: 10px 4px;
     background: var(--surface-2);
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 600;
     white-space: normal;
     text-align: center;
     position: relative;
+    line-height: 1.2;
   }
-  .sb-nav button .ico{ font-size: 20px; margin-bottom: 4px; width: auto; }
+  .sb-nav button .ico{ font-size: 22px; margin-bottom: 4px; width: auto; }
   .sb-nav button .count{
     position: absolute;
-    top: 4px; right: 4px;
-    margin: 0; padding: 1px 5px;
+    top: 6px; right: 6px;
+    margin: 0; padding: 2px 5px;
     font-size: 9px;
     min-width: 16px; height: 16px;
   }
   .sb-nav button.active{ background: var(--brand); color: #fff; }
   .sb-nav button.active .count{ background: #fff; color: var(--brand); }
   
-  /* Ocultar footer en móvil para ahorrar espacio */
+  /* Ocultar footer original ya que sus botones están en la cabecera y en la grilla */
   .sb-footer{display:none;}
   
   /* Contenido Principal */
@@ -269,7 +279,7 @@ textarea{resize:vertical;min-height:80px}
   
   /* Tarjeta de Bienvenida */
   .welcome-card{padding:20px; margin-bottom:16px;}
-  .welcome-card h1{font-size:22px; word-break:break-word;}
+  .welcome-card h1{font-size:22px; word-break:break-all;}
   
   /* Tarjetas de Estadísticas (2 Columnas) */
   .stats-grid{
@@ -311,8 +321,14 @@ textarea{resize:vertical;min-height:80px}
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
       <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Rapid Burger</p></div>
-      <button class="logout-btn-mobile" onclick="doLogout()">Salir</button>
+      
+      <!-- Botones de acción en la cabecera (Solo visibles en móvil) -->
+      <div class="sb-brand-actions">
+        <button class="btn-header-install" onclick="installPWA()">Instalar</button>
+        <button class="btn-header-logout" onclick="doLogout()">Salir</button>
+      </div>
     </div>
+    
     <nav class="sb-nav">
       <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
       <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
@@ -321,7 +337,9 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="drivers"><span class="ico">🛵</span>Repartidores</button>
       <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
+      <button onclick="window.open('index.html', '_blank')"><span class="ico">👁️</span>App Cliente</button>
     </nav>
+    
     <div class="sb-footer">
       <a href="index.html" target="_blank"><span>👁️</span>Ver app cliente</a>
       <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
@@ -636,11 +654,13 @@ function setupOrderListener() {
 function setupNav() {
   $$(".sb-nav button").forEach(b => { 
     b.onclick = () => { 
-      state.tab = b.dataset.tab; 
-      $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
-      if (state.tab === 'orders') document.title = "Panel Admin — Rapid Burger";
-      render(); 
-      window.scrollTo(0,0); 
+      if (b.dataset.tab) {
+        state.tab = b.dataset.tab; 
+        $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
+        if (state.tab === 'orders') document.title = "Panel Admin — Rapid Burger";
+        render(); 
+        window.scrollTo(0,0); 
+      }
     }; 
   });
 }
