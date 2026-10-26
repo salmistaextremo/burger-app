@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel Admin — Burguer Express</title>
+<title>Panel Admin — Rapid Burger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="manifest" href='data:application/manifest+json,{"name":"Admin Burguer","short_name":"Admin","start_url":"/admin.html","display":"standalone","background_color":"#ffffff","theme_color":"#FF6B2C","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Admin Rapid Burger","short_name":"Admin","start_url":"/admin.html","display":"standalone","background_color":"#ffffff","theme_color":"#FF6B2C","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
 <meta name="theme-color" content="#FF6B2C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 <style>
+/* ... Estilos existentes ... */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#F0F1F4;
@@ -189,42 +190,11 @@ textarea{resize:vertical;min-height:80px}
 .order-card.pending .order-items { background: #FFFFFF; }
 .order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
 
-.order-review {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--star-bg);
-  border: 1px solid var(--star-line);
-  border-radius: 10px;
-}
-.order-review .stars {
-  color: var(--star);
-  font-size: 16px;
-  letter-spacing: 2px;
-  margin-bottom: 4px;
-}
-.order-review .comment {
-  font-size: 13px;
-  color: var(--ink-2);
-  font-style: italic;
-  line-height: 1.4;
-}
+.order-review { margin-top: 12px; padding: 12px; background: var(--star-bg); border: 1px solid var(--star-line); border-radius: 10px; }
+.order-review .stars { color: var(--star); font-size: 16px; letter-spacing: 2px; margin-bottom: 4px; }
+.order-review .comment { font-size: 13px; color: var(--ink-2); font-style: italic; line-height: 1.4; }
 
-.proof-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--brand-soft);
-  color: var(--brand);
-  font-size: 11.5px;
-  font-weight: 700;
-  margin-left: 8px;
-  transition: 0.2s;
-  cursor: pointer;
-  border: 1px solid #FFE0D0;
-  text-decoration: none;
-}
+.proof-btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; background: var(--brand-soft); color: var(--brand); font-size: 11.5px; font-weight: 700; margin-left: 8px; transition: 0.2s; cursor: pointer; border: 1px solid #FFE0D0; text-decoration: none; }
 .proof-btn:hover { background: var(--brand); color: #fff; }
 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;box-shadow:var(--shadow-lg);}
@@ -271,7 +241,7 @@ textarea{resize:vertical;min-height:80px}
   <aside class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo" id="sbLogo">⚙️</div>
-      <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Burguer Express</p></div>
+      <div class="sb-brand-text"><h1>Admin Panel</h1><p id="sbBrandName">Rapid Burger</p></div>
     </div>
     <nav class="sb-nav">
       <button data-tab="home" class="active"><span class="ico">🏠</span>Inicio</button>
@@ -284,6 +254,11 @@ textarea{resize:vertical;min-height:80px}
     </nav>
     <div class="sb-footer">
       <a href="index.html" target="_blank"><span>👁️</span>Ver app cliente</a>
+      <!-- 🔧 NUEVO: Botón de Soporte Técnico (Cambia el número por el tuyo) -->
+      <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico%20para%20mi%20sistema" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
+      <!-- 🔧 NUEVO: Botón para instalar la PWA -->
+      <button id="btnInstallApp" onclick="installPWA()" style="display:none; color:var(--ok);"><span>📲</span>Instalar App</button>
+      
       <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Cerrar sesión</button>
     </div>
   </aside>
@@ -295,19 +270,39 @@ textarea{resize:vertical;min-height:80px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
+  const SUPABASE_URL = 'https://aqwdjuktzvsorsgowxak.supabase.co'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxd2RqdWt0enZzb3JzZ293eGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjM1OTYsImV4cCI6MjEwNzgzOTU5Nn0.Hx6HH3Nh9YrwoYJgWhUGx-kXolfIpQpLoL89fQiWaC8';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <script>
+// 🔧 Lógica para instalar la App (PWA)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('btnInstallApp');
+  if (btn) btn.style.display = 'flex';
+});
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        document.getElementById('btnInstallApp').style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
+}
+
 var DB = { config: null, cats: [], menu: [], orders: [] };
 var DEFAULT_CONFIG = {
-  brand: "Burguer Express", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
+  brand: "Rapid Burger", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
   hours: { open: "11:00", close: "23:00" }, 
   days: [1, 2, 3, 4, 5, 6, 0],
-  helpHoursText: "11:00 a 23:00",
+  helpHoursText: "11:00 a 23:00", manualRate: 0,
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
 };
 
@@ -321,6 +316,10 @@ function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
 
 async function fetchExchangeRate() {
+  if (DB.config.manualRate && Number(DB.config.manualRate) > 0) {
+    EXCHANGE_RATE = Number(DB.config.manualRate);
+    return;
+  }
   try {
     let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
@@ -402,7 +401,7 @@ function updateAppBadge() {
     else navigator.clearAppBadge().catch(console.error);
   }
   if (pendingOrders > 0 && document.hidden) document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
-  else document.title = `Panel Admin — Burguer Express`;
+  else document.title = `Panel Admin — Rapid Burger`;
   
   const orderCountEl = $("#cnt-orders");
   if (orderCountEl) {
@@ -451,7 +450,7 @@ function doLogout() {
     if (window.adminOrderChannel) { supabaseClient.removeChannel(window.adminOrderChannel); window.adminOrderChannel = null; }
     if ("clearAppBadge" in navigator) navigator.clearAppBadge();
     localStorage.removeItem('admin_notif_unlocked');
-    document.title = "Panel Admin — Burguer Express";
+    document.title = "Panel Admin — Rapid Burger";
     toast("Sesión cerrada");
     document.getElementById("loginUser").value = "";
     document.getElementById("loginPass").value = "";
@@ -469,7 +468,7 @@ async function dbLoad() {
 
     if (configRes.data) {
       const config = configRes.data;
-      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext };
+      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext, manualRate: config.manual_rate || 0 };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
       if (!DB.config.days) DB.config.days = DEFAULT_CONFIG.days;
@@ -478,8 +477,8 @@ async function dbLoad() {
       await supabaseClient.from('config').insert([{ id: 1, brand: DB.config.brand }]);
     }
 
-    if (catsRes.data) DB.cats = catsRes.data;
-    if (productsRes.data) DB.menu = productsRes.data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+    if (catsRes.data) DB.cats = catsRes.data.map(c => ({ ...c, id: String(c.id) }));
+    if (productsRes.data) DB.menu = productsRes.data.map(p => ({ ...p, cat: String(p.category_id), desc: p.description, extras: p.extras || [], available: p.available !== false }));
     if (ordersRes.data) DB.orders = ordersRes.data;
     
     updateAppBadge();
@@ -491,7 +490,8 @@ async function dbSaveConfig() {
     id: 1, brand: DB.config.brand, logo: DB.config.logo, whatsapp: DB.config.whatsapp, 
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
-    hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days
+    hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
+    manual_rate: DB.config.manualRate
   }); 
 }
 
@@ -501,7 +501,7 @@ async function dbSaveMenu() {
   const dbProducts = DB.menu.map(p => ({ category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji, badge: p.badge || null, img: p.img || null, description: p.desc, extras: p.extras, available: p.available !== false }));
   const { data, error } = await supabaseClient.from('products').insert(dbProducts).select();
   if (error) throw error;
-  if (data) DB.menu = data.map(p => ({ ...p, cat: p.category_id, desc: p.description, extras: p.extras || [], available: p.available !== false }));
+  if (data) DB.menu = data.map(p => ({ ...p, cat: String(p.category_id), desc: p.description, extras: p.extras || [], available: p.available !== false }));
 }
 
 async function dbUpdateOrderStatus(orderId, newStatus) {
@@ -571,7 +571,7 @@ function setupNav() {
     b.onclick = () => { 
       state.tab = b.dataset.tab; 
       $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
-      if (state.tab === 'orders') document.title = "Panel Admin — Burguer Express";
+      if (state.tab === 'orders') document.title = "Panel Admin — Rapid Burger";
       render(); 
       window.scrollTo(0,0); 
     }; 
@@ -741,6 +741,13 @@ function renderBusiness(m) {
         <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
         <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
         
+        <!-- 🔧 NUEVO: Tasa de Cambio Manual -->
+        <div class="field full">
+          <label>Tasa de Cambio Manual (Bs/USD)</label>
+          <input type="number" step="0.01" id="bManualRate" value="${DB.config.manualRate || 0}" placeholder="Ej: 36.50">
+          <div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si pones un valor mayor a 0, la app usará esta tasa fija en lugar de buscar la tasa del BCV automáticamente.</div>
+        </div>
+
         <div class="field full">
           <label>Texto de horario para el cliente (opcional)</label>
           <textarea id="bHelpHours" rows="3" placeholder="Ej: Lunes a Jueves: 11:00 AM - 11:00 PM&#10;Viernes y Sábado: 11:00 AM - 1:00 AM&#10;Domingo: 12:00 PM - 10:00 PM">${esc(DB.config.helpHoursText || '')}</textarea>
@@ -776,6 +783,7 @@ async function saveBusiness() {
   const openTime = document.getElementById('bOpenTime').value;
   const closeTime = document.getElementById('bCloseTime').value;
   const helpText = document.getElementById('bHelpHours').value;
+  const manualRate = parseFloat(document.getElementById('bManualRate').value) || 0;
   
   const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
   if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
@@ -783,9 +791,15 @@ async function saveBusiness() {
   DB.config.hours = { open: openTime, close: closeTime };
   DB.config.helpHoursText = helpText;
   DB.config.days = checkedDays;
+  DB.config.manualRate = manualRate;
 
   await dbSaveConfig();
   document.getElementById("sbBrandName").textContent = DB.config.brand;
+  
+  // Actualizar la tasa en memoria si se cambió manualmente
+  if (manualRate > 0) { EXCHANGE_RATE = manualRate; }
+  else { fetchExchangeRate(); }
+
   toast('✅ Negocio actualizado');
 }
 
@@ -1211,9 +1225,6 @@ async function deleteCategory(id) {
   dbLoad().then(() => { render(); toast("Categoría eliminada"); });
 }
 
-// ==========================================
-// NUEVO CRUD DE REPARTIDORES
-// ==========================================
 async function renderDrivers(m) {
   const { data: drivers, error } = await supabaseClient.from('drivers').select('*').order('created_at', { ascending: false });
   
