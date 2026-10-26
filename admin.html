@@ -191,7 +191,8 @@ textarea{resize:vertical;min-height:80px}
 .order-card.pending .order-items { background: #FFFFFF; }
 .order-total{display:flex;justify-content:space-between;font-weight:800;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
 
-.order-review { margin-top: 12px; padding: 12px; background: var(--star-bg); border: 1px solid var(--star-line); border-radius: 10px; }
+/* ESTILOS PARA LAS CALIFICACIONES */
+.order-review { margin-top: 12px; padding: 12px; background: var(--star-bg); border: 1px solid var(--star-line); border-radius: 10px; animation: fadeIn 0.4s ease; }
 .order-review .stars { color: var(--star); font-size: 16px; letter-spacing: 2px; margin-bottom: 4px; }
 .order-review .comment { font-size: 13px; color: var(--ink-2); font-style: italic; line-height: 1.4; }
 
@@ -233,7 +234,7 @@ textarea{resize:vertical;min-height:80px}
   .btn-header-install {
     color: var(--brand-d); font-size: 12px; font-weight: 700;
     padding: 6px 10px; border-radius: 8px; background: var(--brand-soft);
-    display: block; /* Ahora siempre visible */
+    display: block;
   }
   .btn-header-logout {
     color: var(--danger); font-size: 12px; font-weight: 700;
@@ -326,7 +327,6 @@ textarea{resize:vertical;min-height:80px}
       
       <!-- Botones de acción en la cabecera (Solo visibles en móvil) -->
       <div class="sb-brand-actions">
-        <!-- Ya NO está oculto por defecto -->
         <button id="btnInstallAppMobile" class="btn-header-install" onclick="installPWA()">Instalar</button>
         <button class="btn-header-logout" onclick="doLogout()">Salir</button>
       </div>
@@ -340,8 +340,6 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="drivers"><span class="ico">🛵</span>Repartidores</button>
       <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
-      
-      <!-- Cambiado a etiqueta <a> para evitar que el JS le quite el clic -->
       <a href="index.html" target="_blank" class="nav-link-btn"><span class="ico">👁️</span>App Cliente</a>
     </nav>
     
@@ -372,33 +370,25 @@ textarea{resize:vertical;min-height:80px}
 // =========================================
 let deferredPrompt;
 
-// 1. Registrar el Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Service Worker registrado:', reg.scope))
-      .catch(err => console.log('Error al registrar SW:', err));
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('Error al registrar SW:', err));
   });
 }
 
-// 2. Capturar el evento
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 });
 
-// 3. Ejecutar la instalación
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('El usuario aceptó la instalación');
-      }
+      if (choiceResult.outcome === 'accepted') { console.log('Instalación aceptada'); }
       deferredPrompt = null;
     });
   } else {
-    // Fallback si el navegador no soporta la instalación automática
     alert("Para instalar la app en tu teléfono:\n\n1. Abre el menú de tu navegador (los 3 puntos).\n2. Selecciona 'Añadir a pantalla de inicio' o 'Instalar aplicación'.");
   }
 }
@@ -423,7 +413,7 @@ function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
-function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 2500); }
+function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 3000); }
 
 async function fetchExchangeRate() {
   if (DB.config.manualRate && Number(DB.config.manualRate) > 0) {
@@ -650,11 +640,18 @@ function setupOrderListener() {
         if (state.tab === 'orders' || state.tab === 'home') render();
       });
     })
+    // 👇 ACTUALIZACIÓN EN TIEMPO REAL PARA CALIFICACIONES
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      const oldOrder = payload.old;
       
-      if (updatedOrder.rating && (!oldOrder.rating || oldOrder.rating !== updatedOrder.rating)) {
+      // 1. Actualizamos el pedido en el array local inmediatamente
+      const index = DB.orders.findIndex(o => o.id === updatedOrder.id);
+      if (index !== -1) {
+        DB.orders[index] = { ...DB.orders[index], ...updatedOrder };
+      }
+
+      // 2. Si el pedido tiene una nueva calificación, notificamos
+      if (updatedOrder.rating) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
           navigator.serviceWorker.ready.then(registration => {
@@ -666,12 +663,20 @@ function setupOrderListener() {
             });
           });
         }
-        toast(`⭐ ¡Pedido ${updatedOrder.code} calificado!`);
+        toast(`⭐ ¡Pedido ${updatedOrder.code} calificado con ${updatedOrder.rating} estrellas!`);
+        
+        // 3. Refrescamos la vista de pedidos o inicio para mostrar la calificación
+        if (state.tab === 'orders') {
+          renderOrders($("#main"));
+        } else if (state.tab === 'home') {
+          renderHome($("#main"));
+        }
+      } else {
+        // Si es un cambio de estado normal (sin calificación), actualizamos la vista
+        if (state.tab === 'orders' || state.tab === 'home') {
+          render();
+        }
       }
-      
-      dbLoad().then(() => {
-        if (state.tab === 'orders' || state.tab === 'home') render();
-      });
     })
     .subscribe();
 }
