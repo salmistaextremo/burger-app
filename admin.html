@@ -436,6 +436,7 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="products"><span class="ico">🍔</span>Productos<span class="count" id="cnt-products">0</span></button>
       <button data-tab="categories"><span class="ico">📁</span>Categorías<span class="count" id="cnt-categories">0</span></button>
       <button data-tab="orders"><span class="ico">🧾</span>Pedidos<span class="count" id="cnt-orders">0</span></button>
+      <button data-tab="drivers"><span class="ico">🛵</span>Repartidores</button>
       <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
     </nav>
@@ -936,6 +937,19 @@ function render() {
   updateCounts();
 }
 
+  function render() {
+  var m = $("#main");
+  if (state.tab === "home") renderHome(m);
+  else if (state.tab === "products") renderProducts(m);
+  else if (state.tab === "categories") renderCategories(m);
+  else if (state.tab === "orders") renderOrders(m);
+  // 👇 AGREGA ESTA LÍNEA 👇
+  else if (state.tab === "drivers") renderDrivers(m);
+  else if (state.tab === "reports") renderReports(m);
+  else if (state.tab === "business") renderBusiness(m);
+  updateCounts();
+}
+
 function updateCounts() {
   $("#cnt-products").textContent = DB.menu.length;
   $("#cnt-categories").textContent = DB.cats.length;
@@ -1419,6 +1433,106 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("loginPass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
   supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') checkAuth(); });
 });
+
+  // ==========================================
+// BONUS: GESTIÓN DE REPARTIDORES
+// ==========================================
+async function renderDrivers(m) {
+  const { data: drivers, error } = await supabaseClient.from('drivers').select('*').order('created_at', { ascending: false });
+  
+  m.innerHTML = `
+    <div class="page-head">
+      <div><h1 class="page-title">Repartidores</h1></div>
+      <button class="btn btn-primary" onclick="openDriverEditor()">＋ Nuevo Repartidor</button>
+    </div>
+    <div class="p-list">
+      ${(!drivers || drivers.length === 0) ? `<div class="empty"><div class="big">🛵</div><p>No hay repartidores registrados.</p></div>` : 
+        drivers.map(d => `
+        <div class="p-card ${d.active ? '' : 'unavailable'}" style="align-items: center;">
+          <div class="p-thumb" style="background:${d.active ? 'var(--brand-soft)' : 'var(--line)'}; font-size:24px; color:${d.active ? 'var(--brand)' : 'var(--muted)'}">
+            ${d.active ? '🛵' : '🚫'}
+          </div>
+          <div class="p-info">
+            <h4>${esc(d.name)}</h4>
+            <p>Email: ${esc(d.email)}</p>
+            <p style="font-size: 11px; color: var(--muted);">Pass: ${esc(d.password)}</p>
+          </div>
+          <div class="p-actions">
+            <button class="btn-toggle-avail ${d.active ? 'avail' : 'unavail'}" onclick="toggleDriverStatus('${d.id}', ${d.active})" title="Habilitar/Inhabilitar">
+              ${d.active ? '✅' : '🚫'}
+            </button>
+            <button onclick="openDriverEditor('${d.id}', '${esc(d.name)}', '${esc(d.email)}', '${esc(d.password)}')" title="Editar">✎</button>
+            <button onclick="deleteDriver('${d.id}')" style="color:var(--danger)" title="Eliminar">✕</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function openDriverEditor(id = null, name = '', email = '', password = '') {
+  const isEdit = !!id;
+  document.getElementById("modal").innerHTML = `
+    <div class="modal-box">
+      <div class="modal-head"><h2>${isEdit ? 'Editar' : 'Nuevo'} Repartidor</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="field"><label>Nombre Completo *</label><input type="text" id="d-name" value="${esc(name)}" placeholder="Ej: Carlos Pérez"></div>
+        <div class="field"><label>Correo (Para login) *</label><input type="email" id="d-email" value="${esc(email)}" placeholder="ejemplo@correo.com"></div>
+        <div class="field"><label>Contraseña *</label><input type="text" id="d-pass" value="${esc(password)}" placeholder="Ej: 123456"></div>
+        <input type="hidden" id="d-id" value="${id || ''}">
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveDriver()">Guardar</button>
+      </div>
+    </div>`;
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+async function saveDriver() {
+  const id = document.getElementById("d-id").value;
+  const name = document.getElementById("d-name").value.trim();
+  const email = document.getElementById("d-email").value.trim();
+  const password = document.getElementById("d-pass").value.trim();
+
+  if (!name || !email || !password) return toast("Todos los campos son obligatorios", "error");
+
+  const btn = document.querySelector(".modal-foot .btn-primary");
+  btn.disabled = true; btn.textContent = "Guardando...";
+
+  const driverData = { name, email, password };
+  let error;
+
+  if (id) {
+    const res = await supabaseClient.from('drivers').update(driverData).eq('id', id);
+    error = res.error;
+  } else {
+    const res = await supabaseClient.from('drivers').insert([driverData]);
+    error = res.error;
+  }
+
+  btn.disabled = false; btn.textContent = "Guardar";
+
+  if (error) {
+    toast("Error: " + error.message, "error");
+  } else {
+    toast("✅ Repartidor guardado");
+    closeModal();
+    render(); 
+  }
+}
+
+async function toggleDriverStatus(id, currentStatus) {
+  await supabaseClient.from('drivers').update({ active: !currentStatus }).eq('id', id);
+  render();
+}
+
+async function deleteDriver(id) {
+  if (!confirm("¿Eliminar este repartidor?")) return;
+  await supabaseClient.from('drivers').delete().eq('id', id);
+  render();
+  toast("Repartidor eliminado");
+}
 </script>
 </body>
 </html>
