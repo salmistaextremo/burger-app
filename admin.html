@@ -617,11 +617,17 @@ async function dbUpdateOrderStatus(orderId, newStatus) {
   }
 }
 
+// =========================================
+// ACTUALIZACIÓN EN TIEMPO REAL (CORREGIDO)
+// =========================================
 function setupOrderListener() {
   if (window.adminOrderChannel) return;
+  
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
+      console.log("🔔 Nuevo pedido recibido:", newOrder);
+      
       if (notificationsEnabled) playNotificationSound();
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(registration => {
@@ -635,22 +641,26 @@ function setupOrderListener() {
         });
       }
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
+      
+      // Agregamos el pedido localmente y recargamos toda la data (para asegurar)
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
       });
     })
-    // 👇 ACTUALIZACIÓN EN TIEMPO REAL PARA CALIFICACIONES
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      
-      // 1. Actualizamos el pedido en el array local inmediatamente
+      console.log("🔄 Actualización recibida (Calificación o Estado):", updatedOrder);
+
+      // 1. Actualizamos el pedido en el array local de inmediato
       const index = DB.orders.findIndex(o => o.id === updatedOrder.id);
       if (index !== -1) {
         DB.orders[index] = { ...DB.orders[index], ...updatedOrder };
+      } else {
+        DB.orders.unshift(updatedOrder); // Si por alguna razón no estaba, lo agregamos
       }
 
-      // 2. Si el pedido tiene una nueva calificación, notificamos
+      // 2. Si se detecta una nueva calificación, disparamos la notificación
       if (updatedOrder.rating) {
         if (notificationsEnabled) playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
@@ -664,21 +674,19 @@ function setupOrderListener() {
           });
         }
         toast(`⭐ ¡Pedido ${updatedOrder.code} calificado con ${updatedOrder.rating} estrellas!`);
-        
-        // 3. Refrescamos la vista de pedidos o inicio para mostrar la calificación
-        if (state.tab === 'orders') {
-          renderOrders($("#main"));
-        } else if (state.tab === 'home') {
-          renderHome($("#main"));
-        }
-      } else {
-        // Si es un cambio de estado normal (sin calificación), actualizamos la vista
-        if (state.tab === 'orders' || state.tab === 'home') {
-          render();
-        }
       }
+
+      // 3. Forzamos un redibujado de la vista para mostrar los cambios
+      if (state.tab === 'orders') {
+        renderOrders($("#main"));
+      } else if (state.tab === 'home') {
+        renderHome($("#main"));
+      }
+      updateAppBadge();
     })
-    .subscribe();
+    .subscribe((status) => {
+      console.log("Estado de la conexión Realtime Supabase:", status);
+    });
 }
 
 function setupNav() {
