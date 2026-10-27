@@ -1209,7 +1209,13 @@ async function renderTracking() {
   
   const ok = await fetchOrderAndUpdate(); if (!ok) return;
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => { fetchOrderAndUpdate(); }).subscribe();
-  window.trackingInterval = setInterval(() => { fetchOrderAndUpdate(); }, 5000);
+  
+  // 👇 OPTIMIZACIÓN: Solo consulta si la pestaña está visible
+  window.fetchCurrentTracking = fetchOrderAndUpdate; // Guardamos la función globalmente
+  if (window.trackingInterval) { clearInterval(window.trackingInterval); }
+  window.trackingInterval = setInterval(() => { 
+    if (document.visibilityState === 'visible') { fetchOrderAndUpdate(); }
+  }, 5000);
 }
 
 function lookupOrder() { var code = $("#lookupInput").value.trim().toUpperCase(); if (!code) return; localStorage.setItem('ff_current_order_code', code); renderTracking(); }
@@ -1354,6 +1360,13 @@ async function init(){
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
   $("#btnHelp").onclick = () => go("help");
 }
+
+// 👇 OPTIMIZACIÓN: Detector para actualizar en el instante que el cliente vuelve a la app
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && state.view === 'tracking') {
+    if (window.fetchCurrentTracking) window.fetchCurrentTracking();
+  }
+});
 
 document.addEventListener("DOMContentLoaded", init);
 </script>
