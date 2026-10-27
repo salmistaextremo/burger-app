@@ -610,7 +610,18 @@ async function dbLoad() {
 
     if (configRes.data) {
       const config = configRes.data;
-      DB.config = { ...DEFAULT_CONFIG, ...config, phoneCall: config.phonecall, mapsUrl: config.mapsurl, deliveryFee: config.deliveryfee, freeDeliveryFrom: config.freedeliveryfrom, helpHoursText: config.helphourstext, manualRate: config.manual_rate || 0 };
+      DB.config = { 
+        ...DEFAULT_CONFIG, 
+        ...config, 
+        phoneCall: config.phonecall, 
+        mapsUrl: config.mapsurl, 
+        deliveryFee: config.deliveryfee, 
+        freeDeliveryFrom: config.freedeliveryfrom, 
+        helpHoursText: config.helphourstext, 
+        manualRate: config.manual_rate || 0,
+        primary_color: config.primary_color || '#FF5A1F',
+        bg_color: config.bg_color || '#F7F8FA'
+      };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
       if (!DB.config.days) DB.config.days = DEFAULT_CONFIG.days;
@@ -633,7 +644,9 @@ async function dbSaveConfig() {
     phonecall: DB.config.phoneCall, mapsurl: DB.config.mapsUrl, deliveryfee: DB.config.deliveryFee, 
     freedeliveryfrom: DB.config.freeDeliveryFrom, helphourstext: DB.config.helpHoursText,
     hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
-    manual_rate: DB.config.manualRate
+    manual_rate: DB.config.manualRate,
+    primary_color: DB.config.primary_color,
+    bg_color: DB.config.bg_color
   }); 
 }
 
@@ -949,34 +962,72 @@ function renderBusiness(m) {
   `).join('');
 
   m.innerHTML = `
-    <div class="page-head"><div><h1 class="page-title">Negocio</h1></div></div>
+    <div class="page-head"><div><h1 class="page-title">Información y Diseño</h1></div></div>
+    
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
+      <h3 class="card-title" style="margin-bottom:16px;">🏪 Datos Básicos</h3>
       <div class="form-grid">
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
-        <div class="field full"><label>WhatsApp</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        
+        <!-- SECCIÓN DE LOGO VISUAL -->
+        <div class="field full">
+          <label>Logo del Negocio</label>
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div id="logoPreview" style="width:60px; height:60px; border-radius:12px; background:var(--surface-2); display:grid; place-items:center; overflow:hidden; border:1px solid var(--line);">
+              ${DB.config.logo ? `<img src="${DB.config.logo}" style="width:100%;height:100%;object-fit:cover;">` : '🍔'}
+            </div>
+            <input type="file" id="bLogoFile" accept="image/*" style="flex:1; padding:8px; background:var(--surface-2); border-radius:8px; border:1px solid var(--line); font-size:12px;" onchange="uploadLogo(event)">
+            <input type="hidden" id="bLogoUrl" value="${esc(DB.config.logo || '')}">
+          </div>
+        </div>
+
+        <div class="field"><label>WhatsApp (Ej: 584121234567)</label><input type="text" id="bWhatsapp" value="${esc(DB.config.whatsapp)}"></div>
+        <div class="field"><label>Teléfono de Llamadas</label><input type="text" id="bPhoneCall" value="${esc(DB.config.phoneCall || '')}"></div>
+        <div class="field full"><label>Enlace de Ubicación (Google Maps)</label><input type="text" id="bMapsUrl" value="${esc(DB.config.mapsUrl || '')}"></div>
+      </div>
+    </div></div>
+
+    <div class="card" style="margin-bottom:24px;"><div class="card-body">
+      <h3 class="card-title" style="margin-bottom:16px;">🎨 Diseño y Colores</h3>
+      <p class="card-desc">Los colores se aplicarán automáticamente en la App del Cliente y Repartidor.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label>Color Principal (Botones y Precios)</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="color" id="bPrimaryColor" value="${DB.config.primary_color}" style="width:50px; height:40px; padding:0; border:none; cursor:pointer; border-radius:8px;">
+            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexPrimary">${DB.config.primary_color}</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Color de Fondo</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="color" id="bBgColor" value="${DB.config.bg_color}" style="width:50px; height:40px; padding:0; border:none; cursor:pointer; border-radius:8px;">
+            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexBg">${DB.config.bg_color}</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="card" style="margin-bottom:24px;"><div class="card-body">
+      <h3 class="card-title" style="margin-bottom:16px;">💰 Precios y Horarios</h3>
+      <div class="form-grid">
+        <div class="field"><label>Moneda ($)</label><input type="text" id="bCurrency" value="${esc(DB.config.currency)}"></div>
+        <div class="field"><label>Costo Delivery</label><input type="number" step="0.01" id="bDeliveryFee" value="${DB.config.deliveryFee}"></div>
         
         <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
-        
-        <div class="field"><label>Hora de Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
-        <div class="field"><label>Hora de Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
-        
+        <div class="field"><label>Hora Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
+        <div class="field"><label>Hora Cierre</label><input type="time" id="bCloseTime" value="${closeTime}"></div>
+
         <div class="field full">
           <label>Tasa de Cambio Manual (Bs/USD)</label>
           <input type="number" step="0.01" id="bManualRate" value="${DB.config.manualRate || 0}" placeholder="Ej: 36.50">
-          <div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si pones un valor mayor a 0, la app usará esta tasa fija en lugar de buscar la tasa del BCV automáticamente.</div>
-        </div>
-
-        <div class="field full">
-          <label>Texto de horario para el cliente (opcional)</label>
-          <textarea id="bHelpHours" rows="3" placeholder="Ej: Lunes a Jueves: 11:00 AM - 11:00 PM&#10;Viernes y Sábado: 11:00 AM - 1:00 AM&#10;Domingo: 12:00 PM - 10:00 PM">${esc(DB.config.helpHoursText || '')}</textarea>
-          <div style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">Si dejas este campo vacío, se generará automáticamente con los días y horas que seleccionaste arriba.</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar cambios</button>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar Cambios</button>
     </div></div>
 
     <div class="page-head" style="margin-top:32px;">
-      <div><h2 class="page-title" style="font-size:20px;">Métodos de Pago</h2><p class="page-sub">Configura cómo pueden pagar tus clientes.</p></div>
+      <div><h2 class="page-title" style="font-size:20px;">Métodos de Pago</h2></div>
       <button class="btn btn-primary" onclick="openPaymentEditor(null)">＋ Nuevo método</button>
     </div>
     
@@ -993,6 +1044,10 @@ function renderBusiness(m) {
       `).join("")}
     </div>
   `;
+
+  // Escuchar cambios de color en tiempo real para actualizar el código HEX visualmente
+  document.getElementById('bPrimaryColor').addEventListener('input', (e) => document.getElementById('hexPrimary').textContent = e.target.value.toUpperCase());
+  document.getElementById('bBgColor').addEventListener('input', (e) => document.getElementById('hexBg').textContent = e.target.value.toUpperCase());
 }
 
 async function saveBusiness() {
@@ -1018,6 +1073,32 @@ async function saveBusiness() {
   else { fetchExchangeRate(); }
 
   toast('✅ Negocio actualizado');
+}
+
+  async function uploadLogo(e) {
+  const file = e.target.files[0]; if (!file) return;
+  if (file.size > 2 * 1024 * 1024) return toast("La imagen es muy grande (máx 2MB)", "error");
+  
+  const btn = document.getElementById("bLogoFile");
+  btn.disabled = true;
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `logo-${Date.now()}.${fileExt}`;
+  
+  const { error } = await supabaseClient.storage.from('productos').upload(fileName, file);
+  
+  if (error) {
+    toast("Error al subir logo", "error");
+    btn.disabled = false;
+    return;
+  }
+  
+  const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
+  
+  document.getElementById("bLogoUrl").value = data.publicUrl;
+  document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+  toast("Logo subido correctamente");
+  btn.disabled = false;
 }
 
 let editingPaymentIndex = null;
