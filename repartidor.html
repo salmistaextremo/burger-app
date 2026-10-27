@@ -108,26 +108,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   }
 
   async function loginDriver() {
-    const email = document.getElementById("dEmail").value.trim();
-    const pass = document.getElementById("dPass").value.trim();
-    if (!email || !pass) return toast("Llena todos los campos");
+  const email = document.getElementById("dEmail").value.trim();
+  const pass = document.getElementById("dPass").value.trim();
+  if (!email || !pass) return toast("Llena todos los campos");
 
-    // Verificamos el usuario en la tabla de conductores
-    const { data, error } = await supabaseClient.from('drivers').select('*').eq('email', email).eq('password', pass).single();
-
-    if (error || !data) {
-      return toast("❌ Correo o contraseña incorrectos");
-    }
-    
-    if (!data.active) {
-      return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
-    }
-
-    currentDriver = data;
-    localStorage.setItem('driver_session', JSON.stringify(data));
-    startPanel();
-  }
-
+  const { data, error } = await supabaseClient.rpc('verify_driver', { driver_email: email, driver_password: pass });
+  
+  if (error || !data || data.length === 0) return toast("❌ Correo o contraseña incorrectos");
+  if (!data[0].active) return toast("🚫 Tu cuenta está inhabilitada.");
+  
+  currentDriver = data[0];
+  localStorage.setItem('driver_session', JSON.stringify(currentDriver));
+  startPanel();
+}
+  
   function logoutDriver() {
     localStorage.removeItem('driver_session');
     currentDriver = null;
@@ -145,20 +139,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
   }
 
-  async function loadOrders() {
-    // Buscamos pedidos que estén "En camino" (Delivery) o "Listo" (Retiro)
-    const { data: orders, error } = await supabaseClient
-      .from('orders')
-      .select('*')
-      .in('status', ['camino', 'listo'])
-      .order('created_at', { ascending: true });
+ async function loadOrders() {
+  const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', { 
+    driver_email: currentDriver.email, 
+    driver_password: currentDriver.password // Nota: para producción futura, esto debería ser un token
+  });
 
-    const list = document.getElementById("ordersList");
-
-    if (error || !orders || orders.length === 0) {
-      list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
-      return;
-    }
+  const list = document.getElementById("ordersList");
+  if (error || !orders || orders.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
+    return;
+  }
+  }
 
     list.innerHTML = orders.map(o => {
       const c = o.customer;
@@ -196,18 +188,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   }
 
   async function markDelivered(orderId) {
-    if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
-    
-    // Actualizamos el estado en Supabase
-    const { error } = await supabaseClient.from('orders').update({ status: 'entregado' }).eq('id', orderId);
-    
-    if (error) {
-      toast("Error al actualizar el pedido");
-    } else {
-      toast("✅ Pedido marcado como entregado");
-      loadOrders(); // Recargar la lista
-    }
-  }
+  if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
+  const { data: success, error } = await supabaseClient.rpc('mark_order_delivered', {
+    driver_email: currentDriver.email, driver_password: currentDriver.password, order_uuid: orderId
+  });
+  if (error || !success) { toast("Error al actualizar el pedido"); } 
+  else { toast("✅ Pedido entregado"); loadOrders(); }
+}
 
   // AUTO-LOGIN SI YA HAY SESIÓN GUARDADA
   window.addEventListener('DOMContentLoaded', () => {
