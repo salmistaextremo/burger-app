@@ -403,7 +403,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // 🚨 ATENCIÓN: REEMPLAZA ESTAS DOS LÍNEAS CON LAS CREDENCIALES DE TU NUEVO PROYECTO EN SUPABASE
   const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
   
@@ -550,9 +549,7 @@ function exitApp() {
   }, 100);
 }
 
-// CARGA DE TASA CON CACHÉ, TIMEOUT Y TASA MANUAL
 async function fetchExchangeRate() {
-  // 🔧 LÓGICA DE TASA MANUAL: Si el admin configuró una tasa, se usa esa.
   if (CONFIG.manualRate && Number(CONFIG.manualRate) > 0) {
     EXCHANGE_RATE = Number(CONFIG.manualRate);
     updateRateBadge(); refreshCurrentView(); return;
@@ -1047,6 +1044,7 @@ function renderCheckout(){
 async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
   var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
+  var payId = $("#paySelect").value;
   
   var valid = true;
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
@@ -1059,9 +1057,39 @@ async function submitOrder() {
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
   
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
+  var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
+  
   let proofUrl = null;
+  const selectedPayment = CONFIG.payments.find(p => p.id === payId);
+  const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
 
-  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
+  // NUEVA LÓGICA: SUBIR COMPROBANTE A SUPABASE STORAGE
+  if (state.proofImage && needsProof) {
+    try {
+      btn.innerHTML = "Subiendo comprobante...";
+      const blob = await (await fetch(state.proofImage)).blob();
+      const fileExt = blob.type.split('/')[1] || 'jpg';
+      const fileName = `${code}-${Date.now()}.${fileExt}`;
+      
+      const { error: upErr } = await supabaseClient.storage
+        .from('comprobantes')
+        .upload(fileName, blob, { contentType: blob.type, upsert: false });
+        
+      if (upErr) throw upErr;
+      
+      const { data: urlData } = supabaseClient.storage
+        .from('comprobantes')
+        .getPublicUrl(fileName);
+        
+      proofUrl = urlData.publicUrl;
+      btn.innerHTML = "Enviando...";
+    } catch(e) {
+      console.warn("No se pudo subir comprobante:", e);
+      toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
+    }
+  }
+
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
   if (isDelivery) { 
     msg += `*Tipo:* Delivery\n`;
@@ -1071,8 +1099,8 @@ async function submitOrder() {
     msg += `*Tipo:* Retiro en tienda\n`;
   }
   msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
-  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> $${(i.unit*i.qty).toFixed(2)}\n`; });
-  msg += `\n*Subtotal:* $${sub.toFixed(2)}\n*Delivery:* $${del.toFixed(2)}\n*TOTAL:* $${total.toFixed(2)}\n`;
+  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
+  msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
 
   var orderData = {
     code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl },
@@ -1101,12 +1129,17 @@ async function renderTracking() {
     if (order.status === 'entregado' && !order.rating && !isRated) { rateBtnHtml = `<button class="btn btn-primary" onclick="openRatingModal('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`; }
     trackDiv.innerHTML = `<div style="padding:0 20px;"><div style="background:var(--surface); border-radius:24px; padding:24px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden; margin-bottom:24px;"><div style="position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-80px;background:radial-gradient(circle, var(--brand-soft), transparent 70%);"></div><div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--brand);font-weight:800;position:relative;z-index:1;">Pedido</div><div style="font-size:48px;font-weight:900;letter-spacing:-2px;margin:4px 0 12px;position:relative;z-index:1;color:var(--ink);">${esc(order.code)}</div><div style="display:inline-flex;align-items:center;gap:8px;background:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;position:relative;z-index:1;"><span style="width:8px;height:8px;border-radius:50%;background:var(--brand);animation:pulse 1.6s infinite;"></span>${currentStage.label}</div><div style="height:8px;border-radius:99px;background:var(--bg);margin-top:20px;overflow:hidden;position:relative;z-index:1;"><i style="display:block;height:100%;border-radius:99px;background:var(--brand);width:${progress}%;transition:width .8s cubic-bezier(.2,.9,.3,1);"></i></div><div style="margin-top:24px;position:relative;z-index:1;">${stages.map((s, i) => `<div style="display:flex;gap:16px;padding:12px 0;opacity:${i < currentStageIndex ? '1' : i === currentStageIndex ? '1' : '0.4'};transition:.4s;"><div style="width:32px;height:32px;border-radius:50%;background:${i < currentStageIndex ? 'var(--ok)' : i === currentStageIndex ? 'var(--brand)' : 'var(--bg)'};display:grid;place-items:center;font-size:16px;flex:none;color:${i <= currentStageIndex ? '#fff' : 'var(--muted)'};box-shadow:${i === currentStageIndex ? '0 0 0 4px var(--brand-soft)' : 'none'};transition:.3s;">${s.icon}</div><div><h5 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">${s.label}</h5><p style="margin:4px 0 0;font-size:12px;color:var(--muted);">${s.desc}</p></div></div>`).join("")}</div>${rateBtnHtml}</div></div>`;
   }
+  
   async function fetchOrderAndUpdate() {
-    const { data: order, error } = await supabaseClient.from('orders').select('*').eq('code', code).single();
+    // NUEVA LÓGICA: USAR RPC SEGURO EN VEZ DE CONSULTA DIRECTA
+    const { data: orderArr, error } = await supabaseClient.rpc('get_order_by_code', { order_code: code });
+    const order = orderArr && orderArr[0];
+    
     if (error || !order) { trackDiv.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">❌</div><p>Pedido no encontrado.</p></div>`; return false; }
     if (lastStatus !== order.status) { updateTrackingUI(order); if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado"); lastStatus = order.status; }
     return true;
   }
+  
   const ok = await fetchOrderAndUpdate(); if (!ok) return;
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => { fetchOrderAndUpdate(); }).subscribe();
   window.trackingInterval = setInterval(() => { fetchOrderAndUpdate(); }, 5000);
@@ -1133,7 +1166,11 @@ function openRatingModal(orderCode) {
     <button class="btn-rate-close" onclick="closeRatingModal()" style="width:100%; padding:16px; margin-top:8px; border-radius:16px; border:none; background:transparent; color:var(--muted); font-size:15px; font-weight:700; cursor:pointer;">Ahora no</button>`;
   updateStarsUI(0); document.getElementById('ratingModal').classList.add('show');
 }
-function closeRatingModal() { document.getElementById('ratingModal').classList.remove('show'); currentOrderCodeToRate = null; localStorage.removeItem('ff_current_order_code'); go('menu'); }
+function closeRatingModal() { 
+  document.getElementById('ratingModal').classList.remove('show'); 
+  currentOrderCodeToRate = null; 
+  go('menu'); 
+}
 function hoverRating(val) { updateStarsUI(val); }
 function setRating(val) { currentRating = val; updateStarsUI(val); const star = document.querySelectorAll('.star')[val - 1]; if(star) { star.style.transform='scale(1.3)'; setTimeout(() => star.style.transform='scale(1)', 200); } }
 function updateStarsUI(val) { document.querySelectorAll('.star').forEach((star, index) => { if (index < val) { star.style.color = '#F59E0B'; star.style.textShadow = '0 0 16px rgba(245,158,11,0.5)'; } else { star.style.color = 'var(--line)'; star.style.textShadow = 'none'; } }); }
@@ -1142,9 +1179,18 @@ async function submitRating() {
   if (currentRating === 0) { toast("Por favor, selecciona al menos 1 estrella ⭐"); return; }
   const comment = document.getElementById('ratingComment').value.trim(); const btn = document.querySelector('.btn-rate-submit'); btn.disabled = true; btn.textContent = "Enviando...";
   try {
-    const { error } = await supabaseClient.from('orders').update({ rating: currentRating, review_text: comment }).eq('code', currentOrderCodeToRate);
+    // NUEVA LÓGICA: USAR RPC SEGURO EN VEZ DE UPDATE DIRECTO
+    const { error } = await supabaseClient.rpc('rate_order', { 
+      order_code: currentOrderCodeToRate, 
+      order_rating: currentRating, 
+      order_review: comment 
+    });
+    
     if (error) throw error;
+    
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
+    localStorage.removeItem('ff_current_order_code'); // Se borra aquí, no en closeRatingModal
+    
     document.getElementById('ratingBoxContent').innerHTML = `<div style="padding: 30px 10px; animation: bounceIn 0.5s ease;"><div style="font-size: 64px; margin-bottom: 12px;">🎉</div><h3 style="color: var(--ok); margin-bottom: 8px; font-size:24px; font-weight:900;">¡Gracias por tu opinión!</h3><p style="color: var(--muted); font-size: 14px;">Tu calificación ha sido enviada con éxito.</p></div>`;
     setTimeout(() => { closeRatingModal(); toast("⭐ Calificación guardada. ¡Gracias!"); }, 2000);
   } catch (err) { console.error(err); toast("Error al guardar la calificación. Intenta de nuevo."); btn.disabled = false; btn.textContent = "Enviar calificación"; }
