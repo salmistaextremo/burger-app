@@ -653,7 +653,7 @@ async function dbSaveConfig() {
 }
 
 async function dbSaveMenu() {
-  if (!DB.menu.length) return; // Si no hay menú, no hace nada (para evitar borrar todo por error)
+  if (!DB.menu.length) return; 
   
   const payload = DB.menu.map(p => ({
     ...(p.id && !p.id.startsWith('temp-') ? { id: p.id } : {}),
@@ -668,7 +668,11 @@ async function dbSaveMenu() {
     available: p.available !== false
   }));
 
-  const { data, error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id' }).select();
+  // 👇 LA SOLUCIÓN ESTÁ EN EL SEGUNDO PARÁMETRO: defaultToNull: false
+  const { data, error } = await supabaseClient
+    .from('products')
+    .upsert(payload, { onConflict: 'id', defaultToNull: false })
+    .select();
   
   if (error) throw error;
   if (data) DB.menu = data.map(p => ({ ...p, cat: String(p.category_id), desc: p.description, extras: p.extras || [], available: p.available !== false }));
