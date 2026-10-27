@@ -135,6 +135,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }
 
     const driver = data[0];
+          driver.password = pass;
+      currentDriver = driver;
+      localStorage.setItem('driver_session', JSON.stringify(currentDriver));
+      startPanel();
 
     if (!driver.active) {
       return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
