@@ -348,7 +348,7 @@ textarea{resize:vertical;min-height:80px}
       
       <div class="sb-brand-actions">
         <!-- NUEVO BOTÓN DE SOPORTE -->
-        <a href="https://wa.me/584243547882?text=Hola,%20necesito%20soporte%20t%C3%A9cnico%20App%20Food%20Delivery" target="_blank" class="btn-header-support">🎧 Soporte</a>
+        <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20t%C3%A9cnico" target="_blank" class="btn-header-support">🎧 Soporte</a>
         
         <button id="btnInstallAppMobile" class="btn-header-install" onclick="installPWA()">Instalar</button>
         <button class="btn-header-logout" onclick="doLogout()">Salir</button>
@@ -425,7 +425,9 @@ var DEFAULT_CONFIG = {
   hours: { open: "11:00", close: "23:00" }, 
   days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00", manualRate: 0,
-  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }]
+  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
+  primary_color: "#FF6B2C",
+  bg_color: "#F5F6F8"
 };
 
 var EXCHANGE_RATE = null;
@@ -619,8 +621,8 @@ async function dbLoad() {
         freeDeliveryFrom: config.freedeliveryfrom, 
         helpHoursText: config.helphourstext, 
         manualRate: config.manual_rate || 0,
-        primary_color: config.primary_color || '#FF5A1F',
-        bg_color: config.bg_color || '#F7F8FA'
+        primary_color: config.primary_color || '#FF6B2C',
+        bg_color: config.bg_color || '#F5F6F8'
       };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
       if (!DB.config.hours) DB.config.hours = DEFAULT_CONFIG.hours;
@@ -973,7 +975,7 @@ function renderBusiness(m) {
         <div class="field full">
           <label>Logo del Negocio</label>
           <div style="display:flex; gap:12px; align-items:center;">
-            <div id="logoPreview" style="width:60px; height:60px; border-radius:12px; background:var(--surface-2); display:grid; place-items:center; overflow:hidden; border:1px solid var(--line);">
+            <div id="logoPreview" style="width:60px; height:60px; border-radius:12px; background:var(--surface-2); display:grid; place-items:center; overflow:hidden; border:1px solid var(--line); flex-shrink: 0;">
               ${DB.config.logo ? `<img src="${DB.config.logo}" style="width:100%;height:100%;object-fit:cover;">` : '🍔'}
             </div>
             <input type="file" id="bLogoFile" accept="image/*" style="flex:1; padding:8px; background:var(--surface-2); border-radius:8px; border:1px solid var(--line); font-size:12px;" onchange="uploadLogo(event)">
@@ -995,14 +997,14 @@ function renderBusiness(m) {
           <label>Color Principal (Botones y Precios)</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="color" id="bPrimaryColor" value="${DB.config.primary_color}" style="width:50px; height:40px; padding:0; border:none; cursor:pointer; border-radius:8px;">
-            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexPrimary">${DB.config.primary_color}</span>
+            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexPrimary">${DB.config.primary_color.toUpperCase()}</span>
           </div>
         </div>
         <div class="field">
           <label>Color de Fondo</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="color" id="bBgColor" value="${DB.config.bg_color}" style="width:50px; height:40px; padding:0; border:none; cursor:pointer; border-radius:8px;">
-            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexBg">${DB.config.bg_color}</span>
+            <span style="font-size:13px; font-weight:600; color:var(--muted);" id="hexBg">${DB.config.bg_color.toUpperCase()}</span>
           </div>
         </div>
       </div>
@@ -1050,37 +1052,13 @@ function renderBusiness(m) {
   document.getElementById('bBgColor').addEventListener('input', (e) => document.getElementById('hexBg').textContent = e.target.value.toUpperCase());
 }
 
-async function saveBusiness() {
-  DB.config.brand = document.getElementById('bBrand').value;
-  DB.config.whatsapp = document.getElementById('bWhatsapp').value;
-  const openTime = document.getElementById('bOpenTime').value;
-  const closeTime = document.getElementById('bCloseTime').value;
-  const helpText = document.getElementById('bHelpHours').value;
-  const manualRate = parseFloat(document.getElementById('bManualRate').value) || 0;
-  
-  const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
-  if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
-
-  DB.config.hours = { open: openTime, close: closeTime };
-  DB.config.helpHoursText = helpText;
-  DB.config.days = checkedDays;
-  DB.config.manualRate = manualRate;
-
-  await dbSaveConfig();
-  document.getElementById("sbBrandName").textContent = DB.config.brand;
-  
-  if (manualRate > 0) { EXCHANGE_RATE = manualRate; }
-  else { fetchExchangeRate(); }
-
-  toast('✅ Negocio actualizado');
-}
-
-  async function uploadLogo(e) {
+async function uploadLogo(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 2 * 1024 * 1024) return toast("La imagen es muy grande (máx 2MB)", "error");
   
   const btn = document.getElementById("bLogoFile");
   btn.disabled = true;
+  btn.value = "Subiendo..."; // Feedback visual
 
   const fileExt = file.name.split('.').pop();
   const fileName = `logo-${Date.now()}.${fileExt}`;
@@ -1090,6 +1068,7 @@ async function saveBusiness() {
   if (error) {
     toast("Error al subir logo", "error");
     btn.disabled = false;
+    btn.value = "";
     return;
   }
   
@@ -1099,6 +1078,55 @@ async function saveBusiness() {
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
   toast("Logo subido correctamente");
   btn.disabled = false;
+  btn.value = "";
+}
+
+async function saveBusiness() {
+  // 1. Capturar todos los valores
+  DB.config.brand = document.getElementById('bBrand').value.trim();
+  DB.config.logo = document.getElementById('bLogoUrl').value.trim();
+  DB.config.whatsapp = document.getElementById('bWhatsapp').value.trim();
+  DB.config.phoneCall = document.getElementById('bPhoneCall').value.trim();
+  DB.config.mapsUrl = document.getElementById('bMapsUrl').value.trim();
+  DB.config.currency = document.getElementById('bCurrency').value.trim() || '$';
+  DB.config.deliveryFee = parseFloat(document.getElementById('bDeliveryFee').value) || 0;
+  DB.config.manualRate = parseFloat(document.getElementById('bManualRate').value) || 0;
+  
+  // 👇 CAPTURAR COLORES
+  DB.config.primary_color = document.getElementById('bPrimaryColor').value;
+  DB.config.bg_color = document.getElementById('bBgColor').value;
+  
+  const openTime = document.getElementById('bOpenTime').value;
+  const closeTime = document.getElementById('bCloseTime').value;
+  
+  const checkedDays = Array.from(document.querySelectorAll('.day-check:checked')).map(cb => parseInt(cb.value));
+  if (checkedDays.length === 0) return toast("Selecciona al menos un día de atención", "error");
+
+  // 2. Asignar los que tienen formato específico
+  DB.config.hours = { open: openTime, close: closeTime };
+  DB.config.days = checkedDays;
+
+  // 3. Guardar en Supabase
+  try {
+    await dbSaveConfig();
+    
+    // 4. Actualizar la interfaz
+    document.getElementById("sbBrandName").textContent = DB.config.brand;
+    if (DB.config.logo) {
+      document.getElementById("sbLogo").innerHTML = `<img src="${esc(DB.config.logo)}">`;
+    } else {
+      document.getElementById("sbLogo").innerHTML = "⚙️";
+    }
+    
+    if (DB.config.manualRate > 0) { EXCHANGE_RATE = DB.config.manualRate; }
+    else { fetchExchangeRate(); }
+
+    toast('✅ Información del negocio actualizada');
+    render(); // Recargar vista
+  } catch (e) {
+    console.error(e);
+    toast("Error al guardar. Intenta de nuevo.", "error");
+  }
 }
 
 let editingPaymentIndex = null;
