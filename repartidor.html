@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Rapid Burger — Panel Repartidor</title>
-<link rel="manifest" href='data:application/manifest+json,{"name":"Repartidor Rapid Burger","short_name":"Delivery","start_url":"./repartidor.html","display":"standalone","background_color":"#F7F8FA","theme_color":"#FF5A1F","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
+
+<!-- Manifest corregido (sin errores de sintaxis) -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Repartidor Rapid Burger","short_name":"Delivery","start_url":"/repartidor.html","display":"standalone","background_color":"#F7F8FA","theme_color":"#FF5A1F","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3075/3075977.png","sizes":"512x512","type":"image/png"}]}'>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -93,7 +96,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ATENCIÓN: Asegúrate de que estas llaves sean las mismas de tu index.html
   const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -107,21 +109,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     setTimeout(() => t.classList.remove("show"), 3000); 
   }
 
+  // LOGIN SEGURO USANDO LA FUNCIÓN RPC
   async function loginDriver() {
-  const email = document.getElementById("dEmail").value.trim();
-  const pass = document.getElementById("dPass").value.trim();
-  if (!email || !pass) return toast("Llena todos los campos");
+    const email = document.getElementById("dEmail").value.trim();
+    const pass = document.getElementById("dPass").value.trim();
+    if (!email || !pass) return toast("Llena todos los campos");
 
-  const { data, error } = await supabaseClient.rpc('verify_driver', { driver_email: email, driver_password: pass });
-  
-  if (error || !data || data.length === 0) return toast("❌ Correo o contraseña incorrectos");
-  if (!data[0].active) return toast("🚫 Tu cuenta está inhabilitada.");
-  
-  currentDriver = data[0];
-  localStorage.setItem('driver_session', JSON.stringify(currentDriver));
-  startPanel();
-}
-  
+    const btn = document.querySelector('.btn-login');
+    btn.disabled = true; btn.textContent = "Verificando...";
+
+    const { data, error } = await supabaseClient.rpc('verify_driver', { 
+      driver_email: email, 
+      driver_password: pass 
+    });
+
+    btn.disabled = false; btn.textContent = "Iniciar Sesión";
+
+    if (error) {
+      console.error("Error RPC:", error);
+      return toast("❌ Error de conexión. Intenta de nuevo.");
+    }
+
+    if (!data || data.length === 0) {
+      return toast("❌ Correo o contraseña incorrectos");
+    }
+
+    const driver = data[0];
+
+    if (!driver.active) {
+      return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
+    }
+
+    currentDriver = driver;
+    // Guardamos la sesión (incluyendo el pass para futuras consultas RPC)
+    localStorage.setItem('driver_session', JSON.stringify(currentDriver));
+    startPanel();
+  }
+
   function logoutDriver() {
     localStorage.removeItem('driver_session');
     currentDriver = null;
@@ -139,18 +163,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
   }
 
- async function loadOrders() {
-  const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', { 
-    driver_email: currentDriver.email, 
-    driver_password: currentDriver.password // Nota: para producción futura, esto debería ser un token
-  });
+  // CARGA DE PEDIDOS SEGURA USANDO LA FUNCIÓN RPC
+  async function loadOrders() {
+    const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
+      driver_email: currentDriver.email, 
+      driver_password: currentDriver.password 
+    });
 
-  const list = document.getElementById("ordersList");
-  if (error || !orders || orders.length === 0) {
-    list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
-    return;
-  }
-  }
+    const list = document.getElementById("ordersList");
+
+    if (error) {
+      console.error("Error al cargar pedidos:", error);
+      list.innerHTML = `<div class="empty"><div class="big">❌</div><p>Error al cargar pedidos.</p></div>`;
+      return;
+    }
+
+    if (!orders || orders.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
+      return;
+    }
 
     list.innerHTML = orders.map(o => {
       const c = o.customer;
@@ -187,14 +218,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }).join('');
   }
 
+  // MARCAR ENTREGADO SEGURO USANDO LA FUNCIÓN RPC
   async function markDelivered(orderId) {
-  if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
-  const { data: success, error } = await supabaseClient.rpc('mark_order_delivered', {
-    driver_email: currentDriver.email, driver_password: currentDriver.password, order_uuid: orderId
-  });
-  if (error || !success) { toast("Error al actualizar el pedido"); } 
-  else { toast("✅ Pedido entregado"); loadOrders(); }
-}
+    if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
+    
+    const { data: success, error } = await supabaseClient.rpc('mark_order_delivered', {
+      driver_email: currentDriver.email, 
+      driver_password: currentDriver.password, 
+      order_uuid: orderId
+    });
+    
+    if (error || !success) {
+      toast("Error al actualizar el pedido");
+    } else {
+      toast("✅ Pedido marcado como entregado");
+      loadOrders(); // Recargar la lista
+    }
+  }
 
   // AUTO-LOGIN SI YA HAY SESIÓN GUARDADA
   window.addEventListener('DOMContentLoaded', () => {
