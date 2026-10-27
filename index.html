@@ -1058,7 +1058,7 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
   
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
-  var code = 'A-' + Math.floor(1000 + Math.random() * 9000);
+  var code = 'A-' + String(Date.now()).slice(-4);
   
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
