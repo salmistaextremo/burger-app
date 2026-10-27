@@ -208,13 +208,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     if (refreshInterval) clearInterval(refreshInterval);
   }
 
-  function startPanel() {
+    function startPanel() {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("dName").textContent = currentDriver.name;
     loadOrders();
+    
     if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
+    // 👇 OPTIMIZACIÓN: Solo consulta cada 10s si la pantalla está visible
+    refreshInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadOrders();
+      }
+    }, 10000);
   }
 
   // 4. CARGA DE PEDIDOS Y DETECCIÓN DE NUEVOS
@@ -323,6 +329,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
         startPanel();
       } catch(e) { localStorage.removeItem('driver_session'); }
     }
+// 👇 Detector para actualizar en el instante que el repartidor vuelve a la app
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && currentDriver) {
+    loadOrders();
+  }
+});
+    
   });
 </script>
 </body>
