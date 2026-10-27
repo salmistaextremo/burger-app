@@ -480,6 +480,15 @@ async function loadSharedData(){
       CONFIG.manualRate = config.manual_rate || 0;
     }
 
+        // 🎨 APLICAR COLORES DINÁMICOS
+    if (configRes.data) {
+      const pColor = configRes.data.primary_color || '#FF5A1F';
+      const bColor = configRes.data.bg_color || '#F7F8FA';
+      document.documentElement.style.setProperty('--brand', pColor);
+      document.documentElement.style.setProperty('--bg', bColor);
+    }
+    
+
     if (catsRes.data) {
       CATS.length = 0; CATS.push({ id:"todos", name:"Todo", icon:"✨" });
       catsRes.data.forEach(x => CATS.push({ ...x, id: String(x.id) }));
