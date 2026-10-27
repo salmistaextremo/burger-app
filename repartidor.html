@@ -7,9 +7,8 @@
 <!-- PWA: Hace que la app se pueda instalar en el celular del repartidor -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Rapid Burger — Panel Repartidor</title>
+<title>Panel Repartidor</title>
 
-<!-- Manifest apuntando al archivo global -->
 <link rel="manifest" href="/manifest.json">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,7 +113,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     setTimeout(() => t.classList.remove("show"), 3000); 
   }
 
-  // Función para reproducir el sonido de campana
+  // 1. CARGAR COLORES DEL NEGOCIO
+  async function cargarColoresMarca() {
+    try {
+      const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
+      if (data) {
+        if (data.brand) {
+          document.title = `${data.brand} — Repartidor`;
+        }
+        if (data.primary_color) {
+          document.documentElement.style.setProperty('--brand', data.primary_color);
+          // Generar un tono más clarito para el fondo (añadiendo '1A' para opacidad del 10% en HEX)
+          document.documentElement.style.setProperty('--brand-soft', data.primary_color + '1A'); 
+        }
+      }
+    } catch(e) { console.log("Error cargando colores de marca"); }
+  }
+
+  // 2. FUNCIÓN PARA REPRODUCIR EL SONIDO DE CAMPANA
   function playNotificationSound() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -137,7 +153,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     } catch(e) { console.log("Audio error:", e); }
   }
 
-  // LOGIN SEGURO USANDO LA FUNCIÓN RPC
+  // 3. LOGIN SEGURO USANDO LA FUNCIÓN RPC
   async function loginDriver() {
     const email = document.getElementById("dEmail").value.trim();
     const pass = document.getElementById("dPass").value.trim();
@@ -163,7 +179,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }
 
     const driver = data[0];
-    driver.password = pass; // Guardamos la contraseña para las consultas RPC
+    driver.password = pass; // Guardamos la contraseña para las consultas RPC posteriores
 
     if (!driver.active) {
       return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
@@ -201,8 +217,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
   }
 
-  // CARGA DE PEDIDOS Y DETECCIÓN DE NUEVOS
+  // 4. CARGA DE PEDIDOS Y DETECCIÓN DE NUEVOS
   async function loadOrders() {
+    if (!currentDriver) return;
+
     const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
       driver_email: currentDriver.email, 
       driver_password: currentDriver.password 
@@ -275,7 +293,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }).join('');
   }
 
-  // MARCAR ENTREGADO SEGURO USANDO LA FUNCIÓN RPC
+  // 5. MARCAR ENTREGADO SEGURO USANDO LA FUNCIÓN RPC
   async function markDelivered(orderId) {
     if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
     
@@ -294,35 +312,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }
   }
 
-  // AUTO-LOGIN SI YA HAY SESIÓN GUARDADA
+  // 6. INICIALIZACIÓN
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('driver_session');
-    if (saved) {
-      try {
-        currentDriver = JSON.parse(saved);
-        startPanel();
-      } catch(e) { localStorage.removeItem('driver_session'); }
-    }
-
-      // 🎨 CARGAR COLORES DEL NEGOCIO
-  async function cargarColoresMarca() {
-    try {
-      const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
-      if (data) {
-        if (data.brand) {
-          document.title = `${data.brand} — Repartidor`;
-        }
-        if (data.primary_color) {
-          document.documentElement.style.setProperty('--brand', data.primary_color);
-          // Generar un tono más clarito para el fondo de los botones
-          document.documentElement.style.setProperty('--brand-soft', data.primary_color + '1A'); // 1A = 10% opacidad en HEX
-        }
-      }
-    } catch(e) { console.log("Error cargando colores de marca"); }
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    cargarColoresMarca(); // 👈 Llamamos a la función aquí
+    cargarColoresMarca(); // Cargar colores corporativos
     
     const saved = localStorage.getItem('driver_session');
     if (saved) {
@@ -332,6 +324,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
       } catch(e) { localStorage.removeItem('driver_session'); }
     }
   });
-  </script>
+</script>
 </body>
 </html>
