@@ -453,7 +453,8 @@ var CATS = [ { id:"todos", name:"Todo", icon:"✨" } ];
 var MENU = [];
 var EXCHANGE_RATE = null;
 
-var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, userLocationUrl: null };
+// 👇 AGREGAMOS proofFile AQUÍ
+var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
 async function loadSharedData(){
@@ -611,7 +612,7 @@ async function fetchExchangeRate() {
 function updateRateBadge(){ 
   var badge = document.getElementById("rateBadge"); 
   if (badge && EXCHANGE_RATE) { 
-    // AJUSTE: Forzamos a que siempre muestre 2 decimales
+    // Forzamos a que siempre muestre 2 decimales
     var formattedRate = Number(EXCHANGE_RATE).toFixed(2); 
     badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; 
   } 
@@ -905,12 +906,16 @@ function updateProofField(){
   else { field.style.display = 'block'; }
 }
 
+// 👇 NUEVA LÓGICA DE SUBIDA DE IMAGEN (GUARDA EL ARCHIVO FÍSICO)
 function handleProofUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 10 * 1024 * 1024) { alert("La imagen es muy grande (máx 10MB)."); return; }
+  
+  state.proofFile = file; // Guardamos el archivo real
+  
   const reader = new FileReader();
   reader.onload = (ev) => {
-    state.proofImage = ev.target.result;
+    state.proofImage = ev.target.result; // Solo para la vista previa visual
     $("#proofImg").src = state.proofImage;
     $("#proofPickerWrap").style.display = 'none';
     $("#proofPreviewWrap").style.display = 'block';
@@ -918,8 +923,10 @@ function handleProofUpload(e) {
   };
   reader.readAsDataURL(file);
 }
+
 function clearProof() { 
   state.proofImage = null; 
+  state.proofFile = null; // Limpiamos el archivo real
   if($("#proofFile")) $("#proofFile").value = ""; 
   if($("#proofPickerWrap")) $("#proofPickerWrap").style.display = 'block'; 
   if($("#proofPreviewWrap")) $("#proofPreviewWrap").style.display = 'none'; 
@@ -1078,23 +1085,23 @@ async function submitOrder() {
   
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
   
-  // AJUSTE: Uso de Date.now() para que el código del pedido nunca choque
+  // Código de pedido sin colisiones
   var code = 'A-' + String(Date.now()).slice(-4);
   
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
 
-  if (state.proofImage && needsProof) {
+  // 👇 SUBIDA DIRECTA DEL ARCHIVO FÍSICO (EVITA FALLOS EN MÓVILES)
+  if (state.proofFile && needsProof) {
     try {
       btn.innerHTML = "Subiendo comprobante...";
-      const blob = await (await fetch(state.proofImage)).blob();
-      const fileExt = blob.type.split('/')[1] || 'jpg';
+      const fileExt = state.proofFile.name.split('.').pop() || 'jpg';
       const fileName = `${code}-${Date.now()}.${fileExt}`;
       
       const { error: upErr } = await supabaseClient.storage
         .from('comprobantes')
-        .upload(fileName, blob, { contentType: blob.type, upsert: false });
+        .upload(fileName, state.proofFile, { contentType: state.proofFile.type, upsert: false });
         
       if (upErr) throw upErr;
       
@@ -1130,9 +1137,17 @@ async function submitOrder() {
   const { error } = await supabaseClient.from('orders').insert([orderData]);
   if (error) { console.error("Error de Supabase:", error); alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); }
 
-  saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; saveCart(); updateBadge();
+  saveName(name); 
+  state.cart = []; 
+  state.userLocationUrl = null; 
+  state.proofImage = null; 
+  state.proofFile = null; // 👈 Limpiamos el archivo físico
+  saveCart(); updateBadge();
+  
   localStorage.setItem('ff_current_order_code', code);
-  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); toast("Pedido enviado con éxito"); go('tracking');
+  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); 
+  toast("Pedido enviado con éxito"); 
+  go('tracking');
 }
 
 async function renderTracking() {
