@@ -459,15 +459,32 @@ function playNotificationSound() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
+    
+    // Sonido de campana doble (Ding-Dong)
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15);
+    
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    
+    // Tono 1
+    osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+    osc1.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+    
+    // Tono 2 (ligeramente después)
+    osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15); // C6
+    osc2.frequency.exponentialRampToValueAtTime(523.25, audioCtx.currentTime + 0.25);
+
     gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+    
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc1.start(); osc1.stop(audioCtx.currentTime + 0.15);
+    osc2.start(audioCtx.currentTime + 0.15); osc2.stop(audioCtx.currentTime + 0.6);
   } catch(e) { console.log("Audio error:", e); }
 }
 
