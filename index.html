@@ -28,7 +28,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .hidden{display:none !important}
 
 /* HEADER */
-.hdr{position:sticky;top:0;z-index:30;background:rgba(247,248,250,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:16px 20px 12px;}
+.hdr{position:sticky;top:0;z-index:30;background:var(--bg);opacity:0.98;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:16px 20px 12px;}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .logo{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;font-size:24px;background:var(--surface);box-shadow:var(--shadow-sm);flex:none;overflow:hidden;position:relative;color:var(--brand)}
@@ -360,10 +360,14 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <div style="background:var(--surface); border-radius:24px; padding:24px; box-shadow:var(--shadow-sm); margin-top:24px;">
           <h4 style="margin:0 0 8px; font-size:18px; font-weight:800;">🔍 Rastrear otro pedido</h4>
           <p style="margin:0 0 16px; font-size:14px; color:var(--muted);">Escribe el número de pedido (ej: A-4821).</p>
-          <div style="display:flex; gap:10px;">
-            <input id="lookupInput" placeholder="A-0000" maxlength="8" style="flex:1; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
-            <button onclick="lookupOrder()" style="padding:0 24px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-weight:800; font-size:15px; cursor:pointer;">Buscar</button>
+          
+          <!-- 👇 ARREGLO VISUAL DEL BOTÓN AQUÍ 👇 -->
+          <div style="display:flex; gap:10px; width:100%;">
+            <input id="lookupInput" placeholder="A-0000" maxlength="8" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
+            <button onclick="lookupOrder()" style="padding:0 20px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-weight:800; font-size:14px; cursor:pointer; flex-shrink:0; white-space:nowrap;">Buscar</button>
           </div>
+          <!-- 👆 FIN DEL ARREGLO 👆 -->
+
         </div>
       </div>
     </section>
@@ -478,16 +482,13 @@ async function loadSharedData(){
       CONFIG.days = config.days || CONFIG.days;
       CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
       CONFIG.manualRate = config.manual_rate || 0;
-    }
 
-        // 🎨 APLICAR COLORES DINÁMICOS
-    if (configRes.data) {
-      const pColor = configRes.data.primary_color || '#FF5A1F';
-      const bColor = configRes.data.bg_color || '#F7F8FA';
+      // 🎨 APLICAR COLORES DINÁMICOS DEL ADMIN
+      const pColor = config.primary_color || '#FF5A1F';
+      const bColor = config.bg_color || '#F7F8FA';
       document.documentElement.style.setProperty('--brand', pColor);
       document.documentElement.style.setProperty('--bg', bColor);
     }
-    
 
     if (catsRes.data) {
       CATS.length = 0; CATS.push({ id:"todos", name:"Todo", icon:"✨" });
@@ -881,7 +882,6 @@ function renderPayments(){
   updatePayDetails(); updateProofField();
 }
 
-// 👇 NUEVA LÓGICA DE DATOS DE PAGO (UN SOLO BOTÓN CON EL MONTO EN BS)
 function updatePayDetails(){
   var box = $("#payDetails"); var sel = $("#paySelect");
   if (!box || !sel) return;
@@ -890,21 +890,18 @@ function updatePayDetails(){
   var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
   if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
 
-  // 1. Calcular el total en Bs en tiempo real
   var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
   var totalUsd = sub + del;
   var totalBsText = EXCHANGE_RATE ? `Bs. ${(totalUsd * EXCHANGE_RATE).toFixed(2)}` : '';
 
-  // 2. Armar el texto para copiar
   let textoCompleto = `*Datos de Pago (${p.label}):*\n`;
   keys.forEach(k => { textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`; });
   if (totalBsText) {
     textoCompleto += `\n*Monto a pagar:* ${totalBsText}`;
   }
 
-  // 3. Crear el botón único
   var btnCopiarTodo = "";
   if (p.type === 'pagomovil' || p.type === 'transferencia') {
     btnCopiarTodo = `<button style="background:var(--brand); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; font-size:14px;" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">
@@ -912,14 +909,12 @@ function updatePayDetails(){
     </button>`;
   }
 
-  // 4. Renderizar las filas SIN el botón individual
   var rows = keys.map(k => `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:14px;border-bottom:1px dashed var(--line);">
       <span style="color:var(--muted);">${esc(DETAIL_LABELS[k] || k)}</span>
       <span style="color:var(--ink);font-weight:700;text-align:right;word-break:break-all;">${esc(details[k])}</span>
     </div>`).join("");
 
-  // 5. Añadir el monto visualmente al final
   var montoHtml = totalBsText ? `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;font-size:15px;border-top:2px solid var(--brand); margin-top:8px;">
       <span style="color:var(--brand-d); font-weight:800;">Total a pagar:</span>
@@ -1080,7 +1075,6 @@ function updateOrderType() {
   var del = isDelivery ? CONFIG.deliveryFee : 0;
   if($("#checkoutSummary")) $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
   
-  // 👇 IMPORTANTE: Recalcular el monto en Bs del pago cuando cambia a Delivery o Pickup
   if ($("#paySelect").value) { updatePayDetails(); }
 }
 
