@@ -1386,12 +1386,38 @@ function openProductEditor(id) {
 
 function handleImgUpload(e) {
   const file = e.target.files[0]; if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { toast("La imagen debe pesar menos de 2MB", "error"); return; }
   
-  tempImgFile = file;
+  // Ahora permitimos hasta 10MB porque la vamos a comprimir
+  if (file.size > 10 * 1024 * 1024) { toast("La imagen es muy grande (máx 10MB)", "error"); return; }
+  
   const reader = new FileReader();
-  reader.onload = (ev) => { 
-    document.getElementById("p-img-preview").innerHTML = `<img src="${ev.target.result}">`; 
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      // 🛠️ PROCESO DE COMPRESIÓN CON CANVAS
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 800; // Ancho máximo para que cargue rápido en el celular
+      const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH;
+      canvas.height = img.height * scaleSize;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Convertimos a JPEG con 70% de calidad (reduce el peso drásticamente)
+      canvas.toBlob((blob) => {
+        // Creamos un archivo simulado con la imagen comprimida
+        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+          type: "image/jpeg",
+          lastModified: Date.now()
+        });
+        
+        tempImgFile = compressedFile; // Esta es la imagen que subirá a Supabase
+        document.getElementById("p-img-preview").innerHTML = `<img src="${canvas.toDataURL('image/jpeg', 0.7)}">`;
+        
+      }, 'image/jpeg', 0.7); // 0.7 es la calidad (70%)
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -1425,7 +1451,7 @@ async function saveProduct() {
       existingImg = existing.img;
     }
 
-    if (tempImgFile) {
+      if (tempImgFile) {
       const fileExt = tempImgFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       
