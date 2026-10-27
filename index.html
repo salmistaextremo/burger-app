@@ -595,7 +595,14 @@ async function fetchExchangeRate() {
   }
 }
 
-function updateRateBadge(){ var badge = document.getElementById("rateBadge"); if (badge && EXCHANGE_RATE) { var formattedRate = EXCHANGE_RATE.toFixed(4).replace(/\.?0+$/, ''); badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; } }
+function updateRateBadge(){ 
+  var badge = document.getElementById("rateBadge"); 
+  if (badge && EXCHANGE_RATE) { 
+    // Forzamos a que siempre muestre 2 decimales (ej: 887.30 en vez de 887.3)
+    var formattedRate = EXCHANGE_RATE.toFixed(2); 
+    badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; 
+  } 
+}
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
