@@ -62,7 +62,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 /* BARRA DE ACCIONES FIJAS */
 .guided-actions-bar {
   position: fixed; 
-  bottom: calc(105px + env(safe-area-inset-bottom)); /* Subida para no chocar con el menú */
+  bottom: calc(105px + env(safe-area-inset-bottom)); 
   left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 8px; 
   z-index: 35; animation: fade .3s ease;
@@ -71,9 +71,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .guided-actions-bar > button { pointer-events: auto; }
 .btn-guided { 
   flex: 1; 
-  padding: 12px; /* Botones un poco más compactos */
+  padding: 12px; 
   border-radius: 14px; 
-  font-size: 13px; /* Letra un poco más pequeña */
+  font-size: 13px; 
   font-weight: 700; 
   cursor: pointer; 
   display: flex; align-items: center; justify-content: center; gap: 6px; 
@@ -453,7 +453,6 @@ var CATS = [ { id:"todos", name:"Todo", icon:"✨" } ];
 var MENU = [];
 var EXCHANGE_RATE = null;
 
-// 👇 AGREGAMOS proofFile AQUÍ
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
@@ -873,6 +872,7 @@ function renderPayments(){
   updatePayDetails(); updateProofField();
 }
 
+// 👇 NUEVA LÓGICA DE DATOS DE PAGO (UN SOLO BOTÓN CON EL MONTO EN BS)
 function updatePayDetails(){
   var box = $("#payDetails"); var sel = $("#paySelect");
   if (!box || !sel) return;
@@ -880,21 +880,51 @@ function updatePayDetails(){
   if (!p || NO_DETAILS_TYPES.includes(p.type)) { box.classList.remove("show"); box.innerHTML = ""; return; }
   var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
   if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
-  let textoCompleto = `Datos de ${p.label}:\n`;
+
+  // 1. Calcular el total en Bs en tiempo real
+  var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
+  var del = isDelivery ? CONFIG.deliveryFee : 0;
+  var totalUsd = sub + del;
+  var totalBsText = EXCHANGE_RATE ? `Bs. ${(totalUsd * EXCHANGE_RATE).toFixed(2)}` : '';
+
+  // 2. Armar el texto para copiar
+  let textoCompleto = `*Datos de Pago (${p.label}):*\n`;
   keys.forEach(k => { textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`; });
+  if (totalBsText) {
+    textoCompleto += `\n*Monto a pagar:* ${totalBsText}`;
+  }
+
+  // 3. Crear el botón único
   var btnCopiarTodo = "";
   if (p.type === 'pagomovil' || p.type === 'transferencia') {
-    btnCopiarTodo = `<button class="copy-all-btn" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">📋 Copiar todos los datos</button>`;
+    btnCopiarTodo = `<button style="background:var(--brand); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; font-size:14px;" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">
+      <span style="font-size:18px;">📋</span> Copiar datos ${totalBsText ? 'y monto en Bs' : ''}
+    </button>`;
   }
+
+  // 4. Renderizar las filas SIN el botón individual
   var rows = keys.map(k => `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:14px;border-bottom:1px dashed var(--line);">
       <span style="color:var(--muted);">${esc(DETAIL_LABELS[k] || k)}</span>
-      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        <span style="color:var(--ink);font-weight:700;text-align:right;word-break:break-all;">${esc(details[k])}</span>
-        <button style="background:var(--surface);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;cursor:pointer;" onclick="copyToClipboard('${esc(details[k])}')">📋</button>
-      </div>
+      <span style="color:var(--ink);font-weight:700;text-align:right;word-break:break-all;">${esc(details[k])}</span>
     </div>`).join("");
-  box.innerHTML = `<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--brand-d);margin-bottom:10px;">📋 Datos para pagar</div>${btnCopiarTodo}${rows}`;
+
+  // 5. Añadir el monto visualmente al final
+  var montoHtml = totalBsText ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;font-size:15px;border-top:2px solid var(--brand); margin-top:8px;">
+      <span style="color:var(--brand-d); font-weight:800;">Total a pagar:</span>
+      <span style="color:var(--brand-d);font-weight:900;font-size:18px;text-align:right;">${totalBsText}</span>
+    </div>` : '';
+
+  box.innerHTML = `
+    <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--brand-d);margin-bottom:10px;">📋 Datos para pagar</div>
+    ${btnCopiarTodo}
+    <div style="background:var(--surface); border-radius:12px; padding:0 12px; box-shadow:var(--shadow-sm);">
+      ${rows}
+      ${montoHtml}
+    </div>
+  `;
   box.style.display = 'block';
 }
 
@@ -906,7 +936,6 @@ function updateProofField(){
   else { field.style.display = 'block'; }
 }
 
-// 👇 NUEVA LÓGICA DE SUBIDA DE IMAGEN (GUARDA EL ARCHIVO FÍSICO)
 function handleProofUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 10 * 1024 * 1024) { alert("La imagen es muy grande (máx 10MB)."); return; }
@@ -1041,6 +1070,9 @@ function updateOrderType() {
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
   if($("#checkoutSummary")) $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
+  
+  // 👇 IMPORTANTE: Recalcular el monto en Bs del pago cuando cambia a Delivery o Pickup
+  if ($("#paySelect").value) { updatePayDetails(); }
 }
 
 function renderCheckout(){
@@ -1085,14 +1117,12 @@ async function submitOrder() {
   
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
   
-  // Código de pedido sin colisiones
   var code = 'A-' + String(Date.now()).slice(-4);
   
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
 
-  // 👇 SUBIDA DIRECTA DEL ARCHIVO FÍSICO (EVITA FALLOS EN MÓVILES)
   if (state.proofFile && needsProof) {
     try {
       btn.innerHTML = "Subiendo comprobante...";
@@ -1141,7 +1171,7 @@ async function submitOrder() {
   state.cart = []; 
   state.userLocationUrl = null; 
   state.proofImage = null; 
-  state.proofFile = null; // 👈 Limpiamos el archivo físico
+  state.proofFile = null; 
   saveCart(); updateBadge();
   
   localStorage.setItem('ff_current_order_code', code);
