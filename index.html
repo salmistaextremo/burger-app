@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F8FA">
 <title>Rapid Burger — Pide y rastrea en tiempo real</title>
+<link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -60,12 +61,24 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 /* BARRA DE ACCIONES FIJAS */
 .guided-actions-bar {
-  position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 12px; z-index: 35; animation: fade .3s ease;
+  position: fixed; 
+  bottom: calc(105px + env(safe-area-inset-bottom)); /* Subida para no chocar con el menú */
+  left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 8px; 
+  z-index: 35; animation: fade .3s ease;
   pointer-events: none;
 }
 .guided-actions-bar > button { pointer-events: auto; }
-.btn-guided { flex: 1; padding: 16px; border-radius: 16px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; border: none; box-shadow: var(--shadow-md); }
+.btn-guided { 
+  flex: 1; 
+  padding: 12px; /* Botones un poco más compactos */
+  border-radius: 14px; 
+  font-size: 13px; /* Letra un poco más pequeña */
+  font-weight: 700; 
+  cursor: pointer; 
+  display: flex; align-items: center; justify-content: center; gap: 6px; 
+  transition: 0.2s; border: none; box-shadow: var(--shadow-md); 
+}
 .btn-guided-back { background: var(--surface); color: var(--ink); }
 .btn-guided-skip { background: var(--brand); color: #FFF; }
 .btn-guided-complete { background: var(--ok); color: #FFF; }
@@ -598,8 +611,8 @@ async function fetchExchangeRate() {
 function updateRateBadge(){ 
   var badge = document.getElementById("rateBadge"); 
   if (badge && EXCHANGE_RATE) { 
-    // Forzamos a que siempre muestre 2 decimales (ej: 887.30 en vez de 887.3)
-    var formattedRate = EXCHANGE_RATE.toFixed(2); 
+    // AJUSTE: Forzamos a que siempre muestre 2 decimales
+    var formattedRate = Number(EXCHANGE_RATE).toFixed(2); 
     badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; 
   } 
 }
@@ -1050,8 +1063,7 @@ function renderCheckout(){
 
 async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
-  var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text;
-  var payId = $("#paySelect").value;
+  var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text; var payId = $("#paySelect").value;
   
   var valid = true;
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
@@ -1065,13 +1077,14 @@ async function submitOrder() {
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
   
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
+  
+  // AJUSTE: Uso de Date.now() para que el código del pedido nunca choque
   var code = 'A-' + String(Date.now()).slice(-4);
   
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
 
-  // NUEVA LÓGICA: SUBIR COMPROBANTE A SUPABASE STORAGE
   if (state.proofImage && needsProof) {
     try {
       btn.innerHTML = "Subiendo comprobante...";
@@ -1138,7 +1151,6 @@ async function renderTracking() {
   }
   
   async function fetchOrderAndUpdate() {
-    // NUEVA LÓGICA: USAR RPC SEGURO EN VEZ DE CONSULTA DIRECTA
     const { data: orderArr, error } = await supabaseClient.rpc('get_order_by_code', { order_code: code });
     const order = orderArr && orderArr[0];
     
@@ -1186,7 +1198,6 @@ async function submitRating() {
   if (currentRating === 0) { toast("Por favor, selecciona al menos 1 estrella ⭐"); return; }
   const comment = document.getElementById('ratingComment').value.trim(); const btn = document.querySelector('.btn-rate-submit'); btn.disabled = true; btn.textContent = "Enviando...";
   try {
-    // NUEVA LÓGICA: USAR RPC SEGURO EN VEZ DE UPDATE DIRECTO
     const { error } = await supabaseClient.rpc('rate_order', { 
       order_code: currentOrderCodeToRate, 
       order_rating: currentRating, 
@@ -1196,7 +1207,7 @@ async function submitRating() {
     if (error) throw error;
     
     localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
-    localStorage.removeItem('ff_current_order_code'); // Se borra aquí, no en closeRatingModal
+    localStorage.removeItem('ff_current_order_code'); 
     
     document.getElementById('ratingBoxContent').innerHTML = `<div style="padding: 30px 10px; animation: bounceIn 0.5s ease;"><div style="font-size: 64px; margin-bottom: 12px;">🎉</div><h3 style="color: var(--ok); margin-bottom: 8px; font-size:24px; font-weight:900;">¡Gracias por tu opinión!</h3><p style="color: var(--muted); font-size: 14px;">Tu calificación ha sido enviada con éxito.</p></div>`;
     setTimeout(() => { closeRatingModal(); toast("⭐ Calificación guardada. ¡Gracias!"); }, 2000);
