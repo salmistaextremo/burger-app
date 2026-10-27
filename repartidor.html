@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Rapid Burger — Panel Repartidor</title>
 
-<!-- Manifest corregido (sin errores de sintaxis) -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Rapid Burger","short_name":"Rapid","start_url":"./","display":"standalone","background_color":"#F7F8FA","theme_color":"#FF5A1F","icons":[{"src":"/icon-512.png","sizes":"512x512","type":"image/png"}]}'>
+<!-- Manifest apuntando al archivo global -->
+<link rel="manifest" href="/manifest.json">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -102,11 +102,39 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 
   let currentDriver = null;
   let refreshInterval = null;
+  
+  // Variables para el control de sonido y pedidos nuevos
+  let knownOrderIds = new Set();
+  let audioCtx;
+  window.hasLoadedOnce = false; // Bandera para no sonar en la primera carga
 
   function toast(msg) { 
     var t = document.getElementById("toast"); 
     t.textContent = msg; t.classList.add("show"); 
     setTimeout(() => t.classList.remove("show"), 3000); 
+  }
+
+  // Función para reproducir el sonido de campana
+  function playNotificationSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'triangle'; // Un tono más fuerte para la calle
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+      
+      gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      osc.connect(gain); 
+      gain.connect(audioCtx.destination);
+      osc.start(); 
+      osc.stop(audioCtx.currentTime + 0.5);
+    } catch(e) { console.log("Audio error:", e); }
   }
 
   // LOGIN SEGURO USANDO LA FUNCIÓN RPC
@@ -135,24 +163,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     }
 
     const driver = data[0];
-          driver.password = pass;
-      currentDriver = driver;
-      localStorage.setItem('driver_session', JSON.stringify(currentDriver));
-      startPanel();
+    driver.password = pass; // Guardamos la contraseña para las consultas RPC
 
     if (!driver.active) {
       return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
     }
 
+    // 👇 Desbloqueo del audio en móviles (requiere interacción del usuario)
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+
     currentDriver = driver;
-    // Guardamos la sesión (incluyendo el pass para futuras consultas RPC)
     localStorage.setItem('driver_session', JSON.stringify(currentDriver));
+    
+    knownOrderIds.clear();
+    window.hasLoadedOnce = false; // Reiniciamos para que no suene al entrar
+
     startPanel();
   }
 
   function logoutDriver() {
     localStorage.removeItem('driver_session');
     currentDriver = null;
+    knownOrderIds.clear();
+    window.hasLoadedOnce = false;
     document.getElementById("loginScreen").style.display = "flex";
     document.getElementById("app").classList.add("hidden");
     if (refreshInterval) clearInterval(refreshInterval);
@@ -167,7 +201,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     refreshInterval = setInterval(loadOrders, 10000); // Refrescar cada 10s
   }
 
-  // CARGA DE PEDIDOS SEGURA USANDO LA FUNCIÓN RPC
+  // CARGA DE PEDIDOS Y DETECCIÓN DE NUEVOS
   async function loadOrders() {
     const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
       driver_email: currentDriver.email, 
@@ -184,8 +218,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 
     if (!orders || orders.length === 0) {
       list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
+      knownOrderIds.clear(); // Limpiamos la memoria si no hay pedidos
       return;
     }
+
+    // 👇 LÓGICA PARA DETECTAR PEDIDOS NUEVOS
+    let hasNewOrder = false;
+    orders.forEach(o => {
+      if (!knownOrderIds.has(o.id)) {
+        hasNewOrder = true;
+        knownOrderIds.add(o.id); // Guardamos el nuevo ID en la memoria
+      }
+    });
+
+    // Si hay un pedido nuevo Y ya habíamos cargado la pantalla antes, suena.
+    if (hasNewOrder && window.hasLoadedOnce) {
+       playNotificationSound();
+       toast("🔔 ¡Nuevo pedido asignado!");
+    }
+    
+    // Marcamos que ya pasó la primera carga
+    window.hasLoadedOnce = true; 
 
     list.innerHTML = orders.map(o => {
       const c = o.customer;
@@ -236,6 +289,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
       toast("Error al actualizar el pedido");
     } else {
       toast("✅ Pedido marcado como entregado");
+      knownOrderIds.delete(orderId); // Lo sacamos de la memoria
       loadOrders(); // Recargar la lista
     }
   }
