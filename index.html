@@ -235,8 +235,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   border-radius: 16px;
   padding: 16px;
   display: flex;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   z-index: 150;
   animation: slideUp 0.4s ease;
 }
@@ -463,15 +463,21 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   <div id="modal" class="modal hidden"></div>
   <div id="toast" class="toast"></div>
 
-  <!-- BANNER DE COOKIES -->
+  <!-- BANNER DE COOKIES Y PRIVACIDAD -->
   <div id="cookieBanner" class="cookie-banner hidden">
     <div style="flex:1;">
-      <p style="margin:0; font-size:12px; color:var(--ink-2); line-height:1.4;">
-        Usamos cookies y almacenamiento local para que tu carrito y tus pedidos funcionen correctamente. 
-        <a href="#" onclick="openLegal('cookies')" style="color:var(--brand); font-weight:700; text-decoration:underline;">Leer más</a>
+      <p style="margin:0 0 8px; font-size:12.5px; font-weight:700; color:var(--ink);">
+        🍪 Tu privacidad es importante
+      </p>
+      <p style="margin:0; font-size:11.5px; color:var(--ink-2); line-height:1.5;">
+        Usamos cookies y almacenamiento local para que tu carrito y tus pedidos funcionen. Al continuar, aceptas nuestros 
+        <a href="#" onclick="openLegal('terms')" style="color:var(--brand); font-weight:700; text-decoration:underline;">Términos</a>, 
+        <a href="#" onclick="openLegal('privacy')" style="color:var(--brand); font-weight:700; text-decoration:underline;">Privacidad</a> y 
+        <a href="#" onclick="openLegal('cookies')" style="color:var(--brand); font-weight:700; text-decoration:underline;">Cookies</a>.
+        <strong style="color:var(--ink);">Tus datos personales no serán revelados a terceros.</strong>
       </p>
     </div>
-    <button onclick="acceptCookies()" style="background:var(--brand); color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap;">Aceptar</button>
+    <button onclick="acceptCookies()" style="background:var(--brand); color:#fff; border:none; padding:12px 16px; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap; width:100%;">Aceptar y Continuar</button>
   </div>
 
   <!-- MODAL DE TEXTOS LEGALES -->
@@ -1473,7 +1479,7 @@ const LEGAL_TEXTS = {
       <li>Comprobante de pago (opcional).</li>
     </ul>
     <h3>3. Uso de los datos</h3>
-    <p>Tus datos son utilizados exclusivamente para la gestión del pedido, la entrega del mismo y la comunicación contigo en caso de algún problema con tu orden. <strong>No vendemos ni compartimos tu información con terceros ajenos al restaurante.</strong></p>
+    <p>Tus datos son utilizados exclusivamente para la gestión del pedido, la entrega del mismo y la comunicación contigo en caso de algún problema con tu orden. <strong>Garantizamos que tus datos personales no serán revelados, vendidos ni compartidos con terceros ajenos al restaurante.</strong></p>
     <h3>4. Seguridad</h3>
     <p>La información se almacena en servidores seguros (Supabase) con protocolos de encriptación. Solo el administrador del restaurante y el repartidor asignado tienen acceso a los datos de entrega.</p>
     <h3>5. Tus Derechos</h3>
