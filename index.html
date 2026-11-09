@@ -249,6 +249,22 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 #legalContent ul { padding-left: 20px; margin-bottom: 12px; }
 #legalContent li { margin-bottom: 6px; }
 
+/* =========================================
+   ANIMACIÓN DE ZOOM ELEGANTE (REVEAL ON SCROLL)
+   ========================================= */
+.scroll-anim {
+  opacity: 0;
+  transform: scale(0.95) translateY(20px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-anim.is-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
 </style>
 </head>
 <body>
@@ -520,6 +536,31 @@ var EXCHANGE_RATE = null;
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
+// =========================================
+// LÓGICA DE ANIMACIÓN AL HACER SCROLL
+// =========================================
+const zoomObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      zoomObserver.unobserve(entry.target);
+    }
+  });
+}, { 
+  threshold: 0.1, 
+  rootMargin: "0px 0px -20px 0px" 
+});
+
+function applyScrollAnimations(container = document) {
+  const elements = container.querySelectorAll('.card, .cat-card, .cart-item, .totals, .bot-bubble, .field, .location-card');
+  elements.forEach((el, index) => {
+    if (el.classList.contains('scroll-anim')) return;
+    el.classList.add('scroll-anim');
+    el.style.transitionDelay = `${(index % 5) * 50}ms`;
+    zoomObserver.observe(el);
+  });
+}
+
 async function loadSharedData(){
   try {
     const [configRes, catsRes, productsRes] = await Promise.all([
@@ -681,7 +722,6 @@ async function fetchExchangeRate() {
 function updateRateBadge(){ 
   var badge = document.getElementById("rateBadge"); 
   if (badge && EXCHANGE_RATE) { 
-    // Forzamos a que siempre muestre 2 decimales
     var formattedRate = Number(EXCHANGE_RATE).toFixed(2); 
     badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; 
   } 
@@ -827,6 +867,7 @@ function renderGuided() {
       `;
       content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
     }
+    applyScrollAnimations(content); // 👈 ANIMACIÓN
     return;
   }
 
@@ -841,6 +882,7 @@ function renderGuided() {
     
     if (allCats.length === 0) {
         content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías disponibles.</p><button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="startGuidedFlow()">Reintentar</button></div>`;
+        applyScrollAnimations(content); // 👈 ANIMACIÓN
         return;
     }
 
@@ -851,6 +893,7 @@ function renderGuided() {
       </div>
     `).join('');
     content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
+    applyScrollAnimations(content); // 👈 ANIMACIÓN
     return;
   }
 
@@ -860,6 +903,7 @@ function renderGuided() {
     textEl.innerHTML = `Cargando categorías...`;
     actionsEl.innerHTML = `<button class="btn-guided btn-guided-skip" onclick="startGuidedFlow()">Reintentar</button>`;
     content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías.</p></div>`;
+    applyScrollAnimations(content); // 👈 ANIMACIÓN
     return;
   }
 
@@ -882,6 +926,7 @@ function renderGuided() {
       </div>
     `).join('');
     content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
+    applyScrollAnimations(content); // 👈 ANIMACIÓN
 
   } else {
     const catObj = CATS.find(c => c.id === guidedState.viewingCategory);
@@ -917,6 +962,7 @@ function renderGuided() {
         </article>`).join('')}
       </div>`;
     }
+    applyScrollAnimations(content); // 👈 ANIMACIÓN
   }
 }
 
@@ -1004,11 +1050,11 @@ function handleProofUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 10 * 1024 * 1024) { alert("La imagen es muy grande (máx 10MB)."); return; }
   
-  state.proofFile = file; // Guardamos el archivo real
+  state.proofFile = file; 
   
   const reader = new FileReader();
   reader.onload = (ev) => {
-    state.proofImage = ev.target.result; // Solo para la vista previa visual
+    state.proofImage = ev.target.result; 
     $("#proofImg").src = state.proofImage;
     $("#proofPickerWrap").style.display = 'none';
     $("#proofPreviewWrap").style.display = 'block';
@@ -1019,7 +1065,7 @@ function handleProofUpload(e) {
 
 function clearProof() { 
   state.proofImage = null; 
-  state.proofFile = null; // Limpiamos el archivo real
+  state.proofFile = null; 
   if($("#proofFile")) $("#proofFile").value = ""; 
   if($("#proofPickerWrap")) $("#proofPickerWrap").style.display = 'block'; 
   if($("#proofPreviewWrap")) $("#proofPreviewWrap").style.display = 'none'; 
@@ -1050,6 +1096,7 @@ function renderMenu(){
       <div class="card-body"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="card-foot"><span class="price">${money(p.price)}</span>${isAvail ? `<button class="add-btn" onclick="event.stopPropagation(); openProduct('${p.id}')">+</button>` : ''}</div></div>
     </article>`;
   }).join("");
+  applyScrollAnimations(list); // 👈 ANIMACIÓN
 }
 
 function openProduct(id){
@@ -1120,6 +1167,7 @@ function renderCart(){
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
   totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
   actions.innerHTML = `<button class="btn btn-primary" onclick="go('checkout')">Continuar con el pedido →</button>`;
+  applyScrollAnimations(); // 👈 ANIMACIÓN
 }
 
 function changeQty(key, d){
@@ -1161,6 +1209,7 @@ function renderCheckout(){
   }
 
   updateOrderType();
+  applyScrollAnimations(); // 👈 ANIMACIÓN
 }
 
 async function submitOrder() {
@@ -1270,7 +1319,7 @@ async function renderTracking() {
   const ok = await fetchOrderAndUpdate(); if (!ok) return;
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => { fetchOrderAndUpdate(); }).subscribe();
   
-  window.fetchCurrentTracking = fetchOrderAndUpdate; // Guardamos la función globalmente
+  window.fetchCurrentTracking = fetchOrderAndUpdate; 
   if (window.trackingInterval) { clearInterval(window.trackingInterval); }
   window.trackingInterval = setInterval(() => { 
     if (document.visibilityState === 'visible') { fetchOrderAndUpdate(); }
