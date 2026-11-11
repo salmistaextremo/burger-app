@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Panel Repartidor</title>
 
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest-repartidor.json">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -83,6 +83,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
       <h1 id="dName">Repartidor</h1>
       <p>Pedidos en camino</p>
     </div>
+    <button id="btnInstallDriver" style="display:none; background:var(--brand); color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:12px; margin-right:10px; cursor:pointer;" onclick="installDriverApp()">Instalar App</button>
     <button class="btn-logout" onclick="logoutDriver()">Cerrar Sesión</button>
   </header>
   
@@ -337,6 +338,32 @@ document.addEventListener('visibilitychange', () => {
 });
     
   });
+
+  // ==========================================
+// LÓGICA PWA (APP REPARTIDOR)
+// ==========================================
+let deferredPromptDriver;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPromptDriver = e;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  document.getElementById('btnInstallDriver').style.display = 'block';
+});
+
+function installDriverApp() {
+  if (deferredPromptDriver) {
+    deferredPromptDriver.prompt();
+    deferredPromptDriver.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        toast("✅ ¡App de repartidor instalada!");
+        document.getElementById('btnInstallDriver').style.display = 'none';
+      }
+      deferredPromptDriver = null;
+    });
+  } else {
+    alert("Para instalar la app:\n\n1. Abre el menú del navegador.\n2. Selecciona 'Añadir a pantalla de inicio'.");
+  }
+}
 </script>
 </body>
 </html>
