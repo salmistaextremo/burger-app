@@ -9,6 +9,38 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- 👇 SCRIPT DE CACHÉ: Evita el parpadeo de colores aplicando la caché antes de dibujar -->
+<script>
+  (function() {
+    try {
+      const cached = JSON.parse(localStorage.getItem('ff_config_cache'));
+      if (cached) {
+        if (cached.primary_color) document.documentElement.style.setProperty('--brand', cached.primary_color);
+        if (cached.bg_color) document.documentElement.style.setProperty('--bg', cached.bg_color);
+        
+        document.addEventListener("DOMContentLoaded", () => {
+          if (cached.brand) {
+            document.title = cached.brand + " — Pide y rastrea";
+            const bn = document.getElementById("brandName");
+            if (bn) bn.textContent = cached.brand;
+            const bb = document.getElementById("botBrand");
+            if (bb) bb.textContent = cached.brand;
+          }
+          if (cached.logo) {
+            const bl = document.getElementById("brandLogo");
+            if (bl) { bl.innerHTML = `<img src="${cached.logo}" alt="logo">`; bl.style.background = "transparent"; bl.style.boxShadow = "none"; }
+            const ba = document.getElementById("botAvatar");
+            if (ba) ba.innerHTML = `<img src="${cached.logo}" alt="logo">`;
+            const gb = document.getElementById("guidedBotAvatar");
+            if (gb) gb.innerHTML = `<img src="${cached.logo}" alt="logo">`;
+          }
+        });
+      }
+    } catch(e) {}
+  })();
+</script>
+
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -25,6 +57,9 @@
 html,body{margin:0;padding:0;background:var(--bg)}
 body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;font-weight:400}
 #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:110px;box-shadow:0 0 80px rgba(0,0,0,0.05);overflow-x:hidden;}
+
+/* 👇 CLASE PARA OCULTAR LA APP HASTA QUE LOS DATOS ESTÉN LISTOS */
+.hidden-app { display: none !important; }
 .hidden{display:none !important}
 
 /* HEADER */
@@ -269,7 +304,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 </head>
 <body>
 
-<div id="app">
+<!-- 👇 APLICAMOS LA CLASE hidden-app PARA EVITAR VER LA PANTALLA EN BLANCO -->
+<div id="app" class="hidden-app">
 
   <!-- PANTALLA DE TIENDA CERRADA -->
   <div id="closedOverlay" class="closed-overlay hidden" style="position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">
@@ -595,6 +631,14 @@ async function loadSharedData(){
       const bColor = config.bg_color || '#F7F8FA';
       document.documentElement.style.setProperty('--brand', pColor);
       document.documentElement.style.setProperty('--bg', bColor);
+      
+      // 👇 GUARDAR EN CACHÉ PARA LA PRÓXIMA VISITA
+      localStorage.setItem('ff_config_cache', JSON.stringify({
+        brand: CONFIG.brand,
+        logo: CONFIG.logo,
+        primary_color: pColor,
+        bg_color: bColor
+      }));
     }
 
     if (catsRes.data) {
@@ -1522,7 +1566,6 @@ document.addEventListener('visibilitychange', function() {
 async function init(){
   loadLocal();
   
-  document.getElementById("botWelcome").classList.remove("hidden");
   if (state.clientName) {
     document.getElementById("botNameInput").value = state.clientName;
     document.getElementById("botStartBtn").disabled = false;
@@ -1543,11 +1586,16 @@ async function init(){
     };
   });
 
+  // 1. Esperamos a que los datos (colores y logos) estén listos
   const loaded = await loadSharedData();
   
   if (!loaded) {
     console.warn("No se pudieron cargar los datos de la nube. Mostrando modo offline o vacío.");
   }
+
+  // 2. Mostramos la app y el welcome (ya con los colores correctos)
+  document.getElementById("app").classList.remove("hidden-app");
+  document.getElementById("botWelcome").classList.remove("hidden");
 
   checkStoreStatus(); setInterval(checkStoreStatus, 60000);
   renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
