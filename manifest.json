@@ -1,6 +1,6 @@
 {
-  "name": "Rapid Burger Admin",
-  "short_name": "RB Admin",
+  "name": "DLV Food Admin",
+  "short_name": "DLV Food Admin",
   "start_url": "/admin.html",
   "display": "standalone",
   "background_color": "#F5F6F8",
