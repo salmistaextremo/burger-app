@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel Admin — Rapid Burger</title>
+<title>Panel Admin — DLV Food</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
@@ -343,7 +343,7 @@ textarea{resize:vertical;min-height:80px}
       
       <div class="sb-brand-text">
         <h1>Admin Panel</h1>
-        <p id="sbBrandName">Rapid Burger</p>
+        <p id="sbBrandName">DLV Food</p>
       </div>
       
       <div class="sb-brand-actions">
@@ -420,7 +420,7 @@ function installPWA() {
 // =========================================
 var DB = { config: null, cats: [], menu: [], orders: [] };
 var DEFAULT_CONFIG = {
-  brand: "Rapid Burger", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
+  brand: "DLV Food", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
   hours: { open: "11:00", close: "23:00" }, 
   days: [1, 2, 3, 4, 5, 6, 0],
@@ -543,7 +543,7 @@ function updateAppBadge() {
     else navigator.clearAppBadge().catch(console.error);
   }
   if (pendingOrders > 0 && document.hidden) document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
-  else document.title = `Panel Admin — Rapid Burger`;
+  else document.title = `Panel Admin — DLV Food`;
   
   const orderCountEl = $("#cnt-orders");
   if (orderCountEl) {
@@ -594,7 +594,7 @@ function doLogout() {
     if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     if ("clearAppBadge" in navigator) navigator.clearAppBadge();
     localStorage.removeItem('admin_notif_unlocked');
-    document.title = "Panel Admin — Rapid Burger";
+    document.title = "Panel Admin — DLV Food";
     toast("Sesión cerrada");
     document.getElementById("loginUser").value = "";
     document.getElementById("loginPass").value = "";
@@ -808,7 +808,7 @@ function setupNav() {
       if (b.dataset.tab) {
         state.tab = b.dataset.tab; 
         $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
-        if (state.tab === 'orders') document.title = "Panel Admin — Rapid Burger";
+        if (state.tab === 'orders') document.title = "Panel Admin — DLV Food";
         render(); 
         window.scrollTo(0,0); 
       }
