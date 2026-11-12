@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel Admin — Rapid Burger</title>
+<title>Panel Admin — DLV Food</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
@@ -1030,9 +1030,14 @@ async function uploadLogo(e) {
   
   const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
   
+  // Asignamos la URL al input oculto y actualizamos la vista previa
   document.getElementById("bLogoUrl").value = data.publicUrl;
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-  toast("Logo subido correctamente");
+  
+  // Actualizamos el logo en la barra lateral del admin al instante
+  document.getElementById("sbLogo").innerHTML = `<img src="${data.publicUrl}">`;
+  
+  toast("Logo subido correctamente. Presiona 'Guardar Cambios' para aplicar.");
   btn.disabled = false; btn.value = "";
 }
 
@@ -1061,6 +1066,7 @@ async function saveBusiness() {
   try {
     await dbSaveConfig();
     
+    // Actualizar el Sidebar del Admin inmediatamente
     document.getElementById("sbBrandName").textContent = DB.config.brand;
     if (DB.config.logo) {
       document.getElementById("sbLogo").innerHTML = `<img src="${esc(DB.config.logo)}">`;
@@ -1071,7 +1077,15 @@ async function saveBusiness() {
     if (DB.config.manualRate > 0) { EXCHANGE_RATE = DB.config.manualRate; }
     else { fetchExchangeRate(); }
 
-    toast('✅ Información del negocio actualizada');
+    // 👇 LA MAGIA: Forzamos la actualización de la caché para que el index tome el nuevo logo de inmediato
+    let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
+    cached.brand = DB.config.brand;
+    cached.logo = DB.config.logo;
+    cached.primary_color = DB.config.primary_color;
+    cached.bg_color = DB.config.bg_color;
+    localStorage.setItem('ff_config_cache', JSON.stringify(cached));
+
+    toast('✅ Información y Logo actualizados');
     render(); 
   } catch (e) {
     console.error(e);
