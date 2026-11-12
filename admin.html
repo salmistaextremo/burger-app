@@ -314,10 +314,12 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('Error al registrar SW:', err));
   });
 }
-window.addEventListener('beforeinstallprompt', (e) {
+// 👇 ESTA ERA LA LÍNEA CON EL ERROR (Faltaba el =>)
+window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 });
+
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
