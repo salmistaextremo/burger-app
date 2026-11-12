@@ -314,7 +314,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('Error al registrar SW:', err));
   });
 }
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener('beforeinstallprompt', (e) {
   e.preventDefault();
   deferredPrompt = e;
 });
@@ -934,8 +934,7 @@ async function uploadLogo(e) {
   if (file.size > 2 * 1024 * 1024) return toast("La imagen es muy grande (máx 2MB)", "error");
   
   const btn = document.getElementById("bLogoFile");
-  btn.disabled = true;
-  btn.value = "Subiendo..."; 
+  btn.disabled = true; // Deshabilitamos para evitar doble clic
 
   const fileExt = file.name.split('.').pop();
   const fileName = `logo-${Date.now()}.${fileExt}`;
@@ -944,7 +943,8 @@ async function uploadLogo(e) {
   
   if (error) {
     toast("Error al subir logo", "error");
-    btn.disabled = false; btn.value = ""; return;
+    btn.disabled = false;
+    return;
   }
   
   const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
@@ -953,6 +953,7 @@ async function uploadLogo(e) {
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
   document.getElementById("sbLogo").innerHTML = `<img src="${data.publicUrl}">`;
   
+  // Guardado automático en la tabla config
   await supabaseClient.from('config').update({ logo: data.publicUrl }).eq('id', 1);
   
   let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
@@ -962,7 +963,7 @@ async function uploadLogo(e) {
   DB.config.logo = data.publicUrl;
 
   toast("✅ Logo actualizado en toda la app");
-  btn.disabled = false; btn.value = "";
+  btn.disabled = false;
 }
 
 async function saveBusiness() {
