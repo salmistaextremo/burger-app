@@ -7,7 +7,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-// Evento Fetch necesario para que sea instalable
+// Evento Fetch necesario para que la app sea instalable
 self.addEventListener('fetch', (event) => {
   // Dejar vacío
 });
