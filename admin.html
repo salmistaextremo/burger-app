@@ -815,9 +815,22 @@ function renderOrders(m) {
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
     <div class="order-list">${DB.orders.map(o => {
-      const isPending = o.status !== 'entregado';
+            const isPending = o.status !== 'entregado';
+      const isWaitingClient = o.status === 'entregado' && !o.client_confirmed;
       const cardClass = isPending ? 'order-card pending' : 'order-card';
-      const badgeStyle = o.status === 'entregado' ? 'background:var(--ok-soft); color:var(--ok);' : 'background:var(--brand); color:#fff;';
+      
+      let badgeStyle = 'background:var(--brand); color:#fff;';
+      let statusText = (o.status||'recibido').toUpperCase();
+
+      if (o.status === 'entregado') {
+        if (!o.client_confirmed) {
+          badgeStyle = 'background:#FEF3C7; color:#D97706;'; // Amarillo (Esperando)
+          statusText = 'ENTREGADO (Esperando Cliente)';
+        } else {
+          badgeStyle = 'background:var(--ok-soft); color:var(--ok);'; // Verde (Confirmado)
+          statusText = 'COMPLETADO Y CONFIRMADO';
+        }
+      }
 
       let reviewHtml = "";
       if (o.rating) {
@@ -837,7 +850,7 @@ function renderOrders(m) {
       <div class="${cardClass}">
         <div class="order-head">
           <span class="order-code">${esc(o.code)}</span>
-          <span class="order-status" style="${badgeStyle}">${esc((o.status||'recibido').toUpperCase())}</span>
+          <span class="order-status" style="${badgeStyle}">${esc(statusText)}</span>
           <span class="order-date">${new Date(o.created_at).toLocaleString()}</span>
         </div>
         <div class="order-customer">
