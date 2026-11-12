@@ -253,6 +253,28 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   will-change: opacity, transform;
 }
 .scroll-anim.is-visible { opacity: 1; transform: scale(1) translateY(0); }
+
+/* =========================================
+   ESTADOS DE CARGA, VACÍO Y ERROR
+   ========================================= */
+.state-container {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; animation: fadeIn 0.3s ease; width: 100%;
+}
+.state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.8; }
+.state-title { font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.state-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; max-width: 300px; line-height: 1.5; }
+.btn-retry { background: var(--surface-2); color: var(--brand); border: 1px solid var(--line); padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-retry:hover { background: var(--brand-soft); border-color: var(--brand); }
+
+/* Esqueletos de Carga (Skeletons) */
+.skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
+@keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+.skeleton-card { height: 120px; border-radius: 20px; margin-bottom: 16px; }
+.skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
+.skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
+.skeleton-text.short { width: 50%; }
+  
 </style>
 </head>
 <body>
