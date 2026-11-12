@@ -274,7 +274,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
 .skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
 .skeleton-text.short { width: 50%; }
-  
 </style>
 </head>
 <body>
@@ -470,7 +469,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 
   <div id="modal" class="modal hidden"></div>
-  <div id="" class=""></div>
+  <div id="toast" class="toast"></div>
 
   <div id="cookieBanner" class="cookie-banner hidden">
     <div style="flex:1;">
@@ -544,25 +543,6 @@ var EXCHANGE_RATE = null;
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
-const zoomObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('is-visible');
-      zoomObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
-
-function applyScrollAnimations(container = document) {
-  const elements = container.querySelectorAll('.card, .cat-card, .cart-item, .totals, .bot-bubble, .field, .location-card');
-  elements.forEach((el, index) => {
-    if (el.classList.contains('scroll-anim')) return;
-    el.classList.add('scroll-anim');
-    el.style.transitionDelay = `${(index % 5) * 50}ms`;
-    zoomObserver.observe(el);
-  });
-}
-
 // =========================================
 // GENERADORES DE ESTADOS (UI HELPERS)
 // =========================================
@@ -600,6 +580,28 @@ function getErrorHTML(message, retryFunctionName) {
       <div class="state-desc">${message}</div>
       <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
     </div>`;
+}
+
+// =========================================
+// LÓGICA DE ANIMACIÓN AL HACER SCROLL
+// =========================================
+const zoomObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      zoomObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
+
+function applyScrollAnimations(container = document) {
+  const elements = container.querySelectorAll('.card, .cat-card, .cart-item, .totals, .bot-bubble, .field, .location-card');
+  elements.forEach((el, index) => {
+    if (el.classList.contains('scroll-anim')) return;
+    el.classList.add('scroll-anim');
+    el.style.transitionDelay = `${(index % 5) * 50}ms`;
+    zoomObserver.observe(el);
+  });
 }
 
 async function loadSharedData(){
@@ -777,7 +779,7 @@ function money(n){
 }
 function findProduct(id){ return MENU.find(p => p.id === id); }
 
-function (msg) { var t = $("#"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'guided') renderGuided(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
 
 function loadLocal() {
@@ -793,7 +795,7 @@ function getLocation() {
   const card = document.getElementById("locationCard");
   const content = document.getElementById("locationCardContent");
   const statusEl = document.getElementById("locationStatus");
-  if (!navigator.geolocation) { ("Tu navegador no soporta geolocalización"); return; }
+  if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
   if (!content || !statusEl) return;
   content.innerHTML = `<span class="icon">⏳</span><span>Obteniendo ubicación...</span>`;
   statusEl.style.display = "block"; statusEl.style.color = "var(--muted)"; statusEl.innerHTML = "Esperando permiso...";
@@ -803,7 +805,7 @@ function getLocation() {
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
       statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
-      ("Ubicación capturada");
+      toast("Ubicación capturada");
     },
     (error) => {
       content.innerHTML = `<span class="icon">📍</span><span>Reintentar enviar ubicación</span>`;
@@ -812,7 +814,7 @@ function getLocation() {
       if (error.code === 1) msg = "Permiso denegado. Habilita la ubicación en tu navegador.";
       if (error.code === 2) msg = "Ubicación no disponible. Verifica tu GPS.";
       if (error.code === 3) msg = "Tiempo de espera agotado. Intenta de nuevo.";
-      statusEl.innerHTML = msg; (msg);
+      statusEl.innerHTML = msg; toast(msg);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
@@ -820,7 +822,7 @@ function getLocation() {
 
 function startGuidedFlow() { guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] }; renderGuided(); go('guided'); }
 function showAllCategories() { guidedState.step = 'all'; guidedState.viewingCategory = null; renderGuided(); go('guided', 'all'); }
-function escapeGuidedFlow() { state.category = 'todos'; renderChips(); renderMenu(); go('menu'); ("Explorando menú libre"); }
+function escapeGuidedFlow() { state.category = 'todos'; renderChips(); renderMenu(); go('menu'); toast("Explorando menú libre"); }
 
 function getCategoryPhase(catName) {
   const n = catName.toLowerCase();
@@ -858,11 +860,11 @@ function renderGuided() {
     if (state.cart.length === 0) {
       textEl.innerHTML = `Parece que tu carrito está vacío, <b>${esc(state.clientName)}</b>. 🛒<br><br>¿Quieres volver a explorar las categorías para elegir algo?`;
       actionsEl.innerHTML = `<button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>`;
-      content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛍️</div><p>Explora nuestras categorías para armar tu pedido.</p></div>`;
+      content.innerHTML = getEmptyHTML("Carrito vacío", "Explora nuestras categorías para armar tu pedido.", "🛍️");
     } else {
       textEl.innerHTML = `¡Excelente elección, <b>${esc(state.clientName)}</b>! 🎉<br><br>Ya tienes todo tu pedido armado. ¿Quieres revisar tu carrito para confirmar?`;
       actionsEl.innerHTML = `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button><button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>`;
-      content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
+      content.innerHTML = getEmptyHTML("Pedido listo", "Presiona 'Ver mi carrito' para finalizar.", "🛍️");
     }
     applyScrollAnimations(content); return;
   }
@@ -873,7 +875,7 @@ function renderGuided() {
     if (state.cart.length > 0) { btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito (${state.cart.reduce((a,i)=>a+i.qty,0)})</button>`; }
     actionsEl.innerHTML = btnHtml;
     const allCats = getFilteredCategories('all');
-    if (allCats.length === 0) { content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías disponibles.</p><button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="startGuidedFlow()">Reintentar</button></div>`; applyScrollAnimations(content); return; }
+    if (allCats.length === 0) { content.innerHTML = getEmptyHTML("Sin categorías", "No se encontraron categorías disponibles.", "🍽️", `<button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="startGuidedFlow()">Reintentar</button>`); applyScrollAnimations(content); return; }
     let gridHtml = allCats.map(c => `<div class="cat-card" onclick="selectGuidedCategory('${c.id}')"><span class="icon">${c.icon || '🍽️'}</span><span class="name">${esc(c.name)}</span></div>`).join('');
     content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`; applyScrollAnimations(content); return;
   }
@@ -882,8 +884,8 @@ function renderGuided() {
   if (currentPhaseCats.length === 0 && !guidedState.viewingCategory) {
     textEl.innerHTML = `Cargando categorías...`;
     actionsEl.innerHTML = `<button class="btn-guided btn-guided-skip" onclick="startGuidedFlow()">Reintentar</button>`;
-    content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías.</p></div>`;
-    applyScrollAnimations(content); return;
+    content.innerHTML = getLoadingHTML('list', 2);
+    return;
   }
 
   if (!guidedState.viewingCategory) {
@@ -913,7 +915,7 @@ function renderGuided() {
     actionsEl.innerHTML = btnHtml;
     const items = MENU.filter(p => p.cat === guidedState.viewingCategory && p.available !== false);
     if (items.length === 0) {
-      content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🔍</div><p>No hay productos disponibles aquí.</p></div>`;
+      content.innerHTML = getEmptyHTML("Sin productos", "No hay productos disponibles en esta categoría.", "🔍");
     } else {
       content.innerHTML = `<div class="menu-list">${items.map(p => `
         <article class="card" onclick="openProduct('${p.id}')">
@@ -929,12 +931,12 @@ function renderGuided() {
 function selectGuidedCategory(catId) { guidedState.viewingCategory = catId; renderGuided(); }
 
 function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => ("✅ Copiado")).catch(() => fallbackCopy(text));
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
   else fallbackCopy(text);
 }
 function fallbackCopy(text) {
   var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
-  try { document.execCommand('copy'); ("✅ Copiado"); } catch(e) { ("❌ Error"); }
+  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
   t.remove();
 }
 
@@ -988,7 +990,7 @@ function handleProofUpload(e) {
     $("#proofImg").src = state.proofImage;
     $("#proofPickerWrap").style.display = 'none';
     $("#proofPreviewWrap").style.display = 'block';
-    ("Comprobante adjuntado");
+    toast("Comprobante adjuntado");
   };
   reader.readAsDataURL(file);
 }
@@ -1009,7 +1011,17 @@ function renderMenu(){
   var q = state.query.trim().toLowerCase();
   var items = MENU.filter(p => (state.category === "todos" || p.cat === state.category) && (!q || p.name.toLowerCase().includes(q)));
   var list = $("#menuList"); if (!list) return;
-  if (!items.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🔍</div><p>No hay productos.</p></div>`; return; }
+  
+  if (!MENU.length) { 
+    list.innerHTML = getEmptyHTML("Menú en preparación", "Estamos cargando nuestros productos. Vuelve en un momento.", "🍽️"); 
+    return; 
+  }
+  
+  if (!items.length) { 
+    list.innerHTML = getEmptyHTML("Sin resultados", "No encontramos productos que coincidan con tu búsqueda.", "🔍", `<button class="btn-retry" onclick="state.query=''; document.getElementById('searchInput').value=''; renderMenu();">Limpiar búsqueda</button>`); 
+    return; 
+  }
+  
   list.innerHTML = items.map(p => {
     const isAvail = p.available !== false;
     return `
@@ -1061,7 +1073,7 @@ function addToCart(){
   var found = state.cart.find(i => i.key === key);
   if (found) found.qty += m.qty;
   else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, img: p.img, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
-  saveCart(); updateBadge(); closeModal(); ("Agregado al carrito");
+  saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
   if (state.view === 'guided') { toast("¡Agregado! Puedes elegir otro o presionar 'Continuar'"); }
 }
 
@@ -1070,7 +1082,10 @@ function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("
 function renderCart(){
   var list = $("#cartList"), totals = $("#cartTotals"), actions = $("#cartActions");
   if (!list || !totals || !actions) return;
-  if (!state.cart.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="showAllCategories()">Ver Categorías</button>`; return; }
+  if (!state.cart.length) { 
+    list.innerHTML = getEmptyHTML("Tu carrito está vacío", "Agrega productos del menú para comenzar tu pedido.", "🛒", `<button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="showAllCategories()">Ver Categorías</button>`);
+    totals.innerHTML = ""; actions.innerHTML = ""; return; 
+  }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
       <div class="ci-emoji">${i.img ? `<img src="${esc(i.img)}" alt="${esc(i.name)}" style="object-fit:cover;">` : `<span style="font-size:28px;">${i.emoji || '🍔'}</span>`}</div>
@@ -1163,9 +1178,12 @@ async function submitOrder() {
 async function renderTracking() {
   var trackDiv = $("#trackDynamic"); var code = localStorage.getItem('ff_current_order_code');
   if (!trackDiv) return;
-  if (!code) { trackDiv.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛵</div><p>No tienes pedidos recientes.</p></div>`; return; }
+  if (!code) { trackDiv.innerHTML = getEmptyHTML("Sin pedidos recientes", "No tienes pedidos activos en este momento.", "🛵"); return; }
   if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
   if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
+  
+  trackDiv.innerHTML = `<div style="padding:0 20px;"><div class="skeleton skeleton-card" style="height:250px;"></div></div>`;
+  
   let lastStatus = null;
   function updateTrackingUI(order) {
     var stages = CONFIG.stages[order.type]; var currentStageIndex = stages.findIndex(s => s.key === order.status); if (currentStageIndex === -1) currentStageIndex = 0;
@@ -1178,7 +1196,7 @@ async function renderTracking() {
   async function fetchOrderAndUpdate() {
     const { data: orderArr, error } = await supabaseClient.rpc('get_order_by_code', { order_code: code });
     const order = orderArr && orderArr[0];
-    if (error || !order) { trackDiv.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">❌</div><p>Pedido no encontrado.</p></div>`; return false; }
+    if (error || !order) { trackDiv.innerHTML = getErrorHTML("No pudimos encontrar tu pedido. Verifica el código.", "renderTracking"); return false; }
     if (lastStatus !== order.status) { updateTrackingUI(order); if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado"); lastStatus = order.status; }
     return true;
   }
@@ -1328,8 +1346,19 @@ async function init(){
       else { go(b.dataset.view); }
     };
   });
+
+  // Cargando esqueletos mientras llegan los datos
+  document.getElementById("menuList").innerHTML = getLoadingHTML('menu', 4);
+  document.getElementById("guidedContent").innerHTML = getLoadingHTML('list', 3);
+
   const loaded = await loadSharedData();
-  if (!loaded) { console.warn("No se pudieron cargar los datos de la nube. Mostrando modo offline o vacío."); }
+  
+  if (!loaded) { 
+    document.getElementById("menuList").innerHTML = getErrorHTML("No pudimos cargar el menú. Revisa tu conexión.", "init");
+    document.getElementById("guidedContent").innerHTML = getErrorHTML("Error de conexión.", "init");
+    return; 
+  }
+  
   document.getElementById("app").classList.remove("hidden-app");
   document.getElementById("botWelcome").classList.remove("hidden");
   checkStoreStatus(); setInterval(checkStoreStatus, 60000);
