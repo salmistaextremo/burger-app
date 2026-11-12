@@ -1021,6 +1021,7 @@ async function uploadLogo(e) {
   const fileExt = file.name.split('.').pop();
   const fileName = `logo-${Date.now()}.${fileExt}`;
   
+  // 1. Subir imagen a Supabase Storage
   const { error } = await supabaseClient.storage.from('productos').upload(fileName, file);
   
   if (error) {
@@ -1030,14 +1031,23 @@ async function uploadLogo(e) {
   
   const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
   
-  // Asignamos la URL al input oculto y actualizamos la vista previa
+  // 2. Actualizar la vista previa en el Admin
   document.getElementById("bLogoUrl").value = data.publicUrl;
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-  
-  // Actualizamos el logo en la barra lateral del admin al instante
   document.getElementById("sbLogo").innerHTML = `<img src="${data.publicUrl}">`;
   
-  toast("Logo subido correctamente. Presiona 'Guardar Cambios' para aplicar.");
+  // 3. GUARDAR AUTOMÁTICAMENTE EN LA BASE DE DATOS (Sin necesidad de presionar Guardar)
+  await supabaseClient.from('config').update({ logo: data.publicUrl }).eq('id', 1);
+  
+  // 4. ACTUALIZAR LA CACHÉ DEL NAVEGADOR (Para que el index lo tome ya)
+  let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
+  cached.logo = data.publicUrl;
+  localStorage.setItem('ff_config_cache', JSON.stringify(cached));
+  
+  // 5. Actualizar el objeto local
+  DB.config.logo = data.publicUrl;
+
+  toast("✅ Logo actualizado en toda la app");
   btn.disabled = false; btn.value = "";
 }
 
