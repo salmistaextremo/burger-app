@@ -470,7 +470,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </div>
 
   <div id="modal" class="modal hidden"></div>
-  <div id="toast" class="toast"></div>
+  <div id="" class=""></div>
 
   <div id="cookieBanner" class="cookie-banner hidden">
     <div style="flex:1;">
@@ -561,6 +561,45 @@ function applyScrollAnimations(container = document) {
     el.style.transitionDelay = `${(index % 5) * 50}ms`;
     zoomObserver.observe(el);
   });
+}
+
+// =========================================
+// GENERADORES DE ESTADOS (UI HELPERS)
+// =========================================
+function getLoadingHTML(type = 'list', count = 3) {
+  let html = '';
+  if (type === 'list') {
+    for(let i=0; i<count; i++) {
+      html += `<div class="skeleton skeleton-card"></div>`;
+    }
+  } else if (type === 'menu') {
+    for(let i=0; i<count; i++) {
+      html += `<div class="card" style="pointer-events:none;"><div class="skeleton skeleton-img"></div><div style="padding:20px;"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div></div>`;
+    }
+  } else if (type === 'text') {
+    html = `<div class="skeleton skeleton-text" style="width:100%;"></div><div class="skeleton skeleton-text" style="width:70%;"></div><div class="skeleton skeleton-text" style="width:90%;"></div>`;
+  }
+  return html;
+}
+
+function getEmptyHTML(title, desc, icon = '📭', btnHtml = '') {
+  return `
+    <div class="state-container">
+      <div class="state-icon">${icon}</div>
+      <div class="state-title">${title}</div>
+      <div class="state-desc">${desc}</div>
+      ${btnHtml}
+    </div>`;
+}
+
+function getErrorHTML(message, retryFunctionName) {
+  return `
+    <div class="state-container">
+      <div class="state-icon" style="color:var(--danger);">⚠️</div>
+      <div class="state-title">Algo salió mal</div>
+      <div class="state-desc">${message}</div>
+      <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
+    </div>`;
 }
 
 async function loadSharedData(){
@@ -738,7 +777,7 @@ function money(n){
 }
 function findProduct(id){ return MENU.find(p => p.id === id); }
 
-function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+function (msg) { var t = $("#"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'guided') renderGuided(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
 
 function loadLocal() {
@@ -754,7 +793,7 @@ function getLocation() {
   const card = document.getElementById("locationCard");
   const content = document.getElementById("locationCardContent");
   const statusEl = document.getElementById("locationStatus");
-  if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
+  if (!navigator.geolocation) { ("Tu navegador no soporta geolocalización"); return; }
   if (!content || !statusEl) return;
   content.innerHTML = `<span class="icon">⏳</span><span>Obteniendo ubicación...</span>`;
   statusEl.style.display = "block"; statusEl.style.color = "var(--muted)"; statusEl.innerHTML = "Esperando permiso...";
@@ -764,7 +803,7 @@ function getLocation() {
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
       statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
-      toast("Ubicación capturada");
+      ("Ubicación capturada");
     },
     (error) => {
       content.innerHTML = `<span class="icon">📍</span><span>Reintentar enviar ubicación</span>`;
@@ -773,7 +812,7 @@ function getLocation() {
       if (error.code === 1) msg = "Permiso denegado. Habilita la ubicación en tu navegador.";
       if (error.code === 2) msg = "Ubicación no disponible. Verifica tu GPS.";
       if (error.code === 3) msg = "Tiempo de espera agotado. Intenta de nuevo.";
-      statusEl.innerHTML = msg; toast(msg);
+      statusEl.innerHTML = msg; (msg);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
@@ -781,7 +820,7 @@ function getLocation() {
 
 function startGuidedFlow() { guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] }; renderGuided(); go('guided'); }
 function showAllCategories() { guidedState.step = 'all'; guidedState.viewingCategory = null; renderGuided(); go('guided', 'all'); }
-function escapeGuidedFlow() { state.category = 'todos'; renderChips(); renderMenu(); go('menu'); toast("Explorando menú libre"); }
+function escapeGuidedFlow() { state.category = 'todos'; renderChips(); renderMenu(); go('menu'); ("Explorando menú libre"); }
 
 function getCategoryPhase(catName) {
   const n = catName.toLowerCase();
@@ -890,12 +929,12 @@ function renderGuided() {
 function selectGuidedCategory(catId) { guidedState.viewingCategory = catId; renderGuided(); }
 
 function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => ("✅ Copiado")).catch(() => fallbackCopy(text));
   else fallbackCopy(text);
 }
 function fallbackCopy(text) {
   var t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
-  try { document.execCommand('copy'); toast("✅ Copiado"); } catch(e) { toast("❌ Error"); }
+  try { document.execCommand('copy'); ("✅ Copiado"); } catch(e) { ("❌ Error"); }
   t.remove();
 }
 
@@ -949,7 +988,7 @@ function handleProofUpload(e) {
     $("#proofImg").src = state.proofImage;
     $("#proofPickerWrap").style.display = 'none';
     $("#proofPreviewWrap").style.display = 'block';
-    toast("Comprobante adjuntado");
+    ("Comprobante adjuntado");
   };
   reader.readAsDataURL(file);
 }
@@ -1022,7 +1061,7 @@ function addToCart(){
   var found = state.cart.find(i => i.key === key);
   if (found) found.qty += m.qty;
   else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, img: p.img, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
-  saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
+  saveCart(); updateBadge(); closeModal(); ("Agregado al carrito");
   if (state.view === 'guided') { toast("¡Agregado! Puedes elegir otro o presionar 'Continuar'"); }
 }
 
