@@ -41,6 +41,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .header-info h1{font-size:18px;font-weight:900;margin:0;}
 .header-info p{font-size:12px;color:var(--muted);margin:2px 0 0;}
 .btn-logout{background:transparent;border:none;color:var(--danger);font-weight:700;font-size:13px;cursor:pointer;}
+.btn-install-driver{display:none; background:var(--brand); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;}
 
 /* PEDIDOS */
 .content{padding:20px;}
@@ -58,8 +59,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:200;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.empty{text-align:center;padding:60px 20px;color:var(--muted);}
-.empty .big{font-size:48px;margin-bottom:16px;opacity:.5;}
 
 /* =========================================
    ESTADOS DE CARGA, VACÍO Y ERROR
@@ -77,11 +76,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 /* Esqueletos de Carga (Skeletons) */
 .skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
 @keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-.skeleton-card { height: 120px; border-radius: 20px; margin-bottom: 16px; }
-.skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
-.skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
-.skeleton-text.short { width: 50%; }
-  
+.skeleton-card { height: 160px; border-radius: 20px; margin-bottom: 16px; }
 </style>
 </head>
 <body>
@@ -105,8 +100,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
       <h1 id="dName">Repartidor</h1>
       <p>Pedidos en camino</p>
     </div>
-    <button id="btnInstallDriver" style="display:none; background:var(--brand); color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:12px; margin-right:10px; cursor:pointer;" onclick="installDriverApp()">Instalar App</button>
-    <button class="btn-logout" onclick="logoutDriver()">Cerrar Sesión</button>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button id="btnInstallDriver" class="btn-install-driver" onclick="installDriverApp()">Instalar App</button>
+      <button class="btn-logout" onclick="logoutDriver()">Salir</button>
+    </div>
   </header>
   
   <div class="content" id="ordersList">
@@ -128,46 +125,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
   // Variables para el control de sonido y pedidos nuevos
   let knownOrderIds = new Set();
   let audioCtx;
-  window.hasLoadedOnce = false; // Bandera para no sonar en la primera carga
-
-  // =========================================
-// GENERADORES DE ESTADOS (UI HELPERS)
-// =========================================
-function getLoadingHTML(type = 'list', count = 3) {
-  let html = '';
-  if (type === 'list') {
-    for(let i=0; i<count; i++) {
-      html += `<div class="skeleton skeleton-card"></div>`;
-    }
-  } else if (type === 'menu') {
-    for(let i=0; i<count; i++) {
-      html += `<div class="card" style="pointer-events:none;"><div class="skeleton skeleton-img"></div><div style="padding:20px;"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div></div>`;
-    }
-  } else if (type === 'text') {
-    html = `<div class="skeleton skeleton-text" style="width:100%;"></div><div class="skeleton skeleton-text" style="width:70%;"></div><div class="skeleton skeleton-text" style="width:90%;"></div>`;
-  }
-  return html;
-}
-
-function getEmptyHTML(title, desc, icon = '📭', btnHtml = '') {
-  return `
-    <div class="state-container">
-      <div class="state-icon">${icon}</div>
-      <div class="state-title">${title}</div>
-      <div class="state-desc">${desc}</div>
-      ${btnHtml}
-    </div>`;
-}
-
-function getErrorHTML(message, retryFunctionName) {
-  return `
-    <div class="state-container">
-      <div class="state-icon" style="color:var(--danger);">⚠️</div>
-      <div class="state-title">Algo salió mal</div>
-      <div class="state-desc">${message}</div>
-      <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
-    </div>`;
-}
+  window.hasLoadedOnce = false; 
 
   function toast(msg) { 
     var t = document.getElementById("toast"); 
@@ -175,24 +133,49 @@ function getErrorHTML(message, retryFunctionName) {
     setTimeout(() => t.classList.remove("show"), 3000); 
   }
 
-  // 1. CARGAR COLORES DEL NEGOCIO
+  // GENERADORES DE ESTADOS (UI HELPERS)
+  function getLoadingHTML(count = 2) {
+    let html = '';
+    for(let i=0; i<count; i++) {
+      html += `<div class="skeleton skeleton-card"></div>`;
+    }
+    return html;
+  }
+
+  function getEmptyHTML(title, desc, icon = '🛵') {
+    return `
+      <div class="state-container">
+        <div class="state-icon">${icon}</div>
+        <div class="state-title">${title}</div>
+        <div class="state-desc">${desc}</div>
+      </div>`;
+  }
+
+  function getErrorHTML(message, retryFunctionName) {
+    return `
+      <div class="state-container">
+        <div class="state-icon" style="color:var(--danger);">⚠️</div>
+        <div class="state-title">Algo salió mal</div>
+        <div class="state-desc">${message}</div>
+        <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
+      </div>`;
+  }
+
+  // CARGAR COLORES Y NOMBRE
   async function cargarColoresMarca() {
     try {
       const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
       if (data) {
-        if (data.brand) {
-          document.title = `${data.brand} — Repartidor`;
-        }
+        if (data.brand) document.title = `${data.brand} — Repartidor`;
         if (data.primary_color) {
           document.documentElement.style.setProperty('--brand', data.primary_color);
-          // Generar un tono más clarito para el fondo (añadiendo '1A' para opacidad del 10% en HEX)
           document.documentElement.style.setProperty('--brand-soft', data.primary_color + '1A'); 
         }
       }
     } catch(e) { console.log("Error cargando colores de marca"); }
   }
 
-  // 2. FUNCIÓN PARA REPRODUCIR EL SONIDO DE CAMPANA
+  // SONIDO DE CAMPANA
   function playNotificationSound() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -201,7 +184,7 @@ function getErrorHTML(message, retryFunctionName) {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       
-      osc.type = 'triangle'; // Un tono más fuerte para la calle
+      osc.type = 'triangle';
       osc.frequency.setValueAtTime(600, audioCtx.currentTime);
       osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
       
@@ -215,7 +198,7 @@ function getErrorHTML(message, retryFunctionName) {
     } catch(e) { console.log("Audio error:", e); }
   }
 
-  // 3. LOGIN SEGURO USANDO LA FUNCIÓN RPC
+  // LOGIN
   async function loginDriver() {
     const email = document.getElementById("dEmail").value.trim();
     const pass = document.getElementById("dPass").value.trim();
@@ -241,13 +224,12 @@ function getErrorHTML(message, retryFunctionName) {
     }
 
     const driver = data[0];
-    driver.password = pass; // Guardamos la contraseña para las consultas RPC posteriores
+    driver.password = pass;
 
     if (!driver.active) {
       return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
     }
 
-    // 👇 Desbloqueo del audio en móviles (requiere interacción del usuario)
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtx.resume();
 
@@ -255,7 +237,7 @@ function getErrorHTML(message, retryFunctionName) {
     localStorage.setItem('driver_session', JSON.stringify(currentDriver));
     
     knownOrderIds.clear();
-    window.hasLoadedOnce = false; // Reiniciamos para que no suene al entrar
+    window.hasLoadedOnce = false;
 
     startPanel();
   }
@@ -270,98 +252,102 @@ function getErrorHTML(message, retryFunctionName) {
     if (refreshInterval) clearInterval(refreshInterval);
   }
 
-    function startPanel() {
+  function startPanel() {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("dName").textContent = currentDriver.name;
     loadOrders();
     
     if (refreshInterval) clearInterval(refreshInterval);
-    // 👇 OPTIMIZACIÓN: Solo consulta cada 10s si la pantalla está visible
     refreshInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        loadOrders();
-      }
+      if (document.visibilityState === 'visible') { loadOrders(); }
     }, 10000);
   }
 
-  // 4. CARGA DE PEDIDOS Y DETECCIÓN DE NUEVOS
+  // CARGA DE PEDIDOS CON ESTADOS VISUALES
   async function loadOrders() {
-    if (!currentDriver) return;
-
-    const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
-      driver_email: currentDriver.email, 
-      driver_password: currentDriver.password 
-    });
-
     const list = document.getElementById("ordersList");
-
-    if (error) {
-      console.error("Error al cargar pedidos:", error);
-      list.innerHTML = `<div class="empty"><div class="big">❌</div><p>Error al cargar pedidos.</p></div>`;
-      return;
-    }
-
-    if (!orders || orders.length === 0) {
-      list.innerHTML = `<div class="empty"><div class="big">🛵</div><p>No hay entregas pendientes por ahora.</p></div>`;
-      knownOrderIds.clear(); // Limpiamos la memoria si no hay pedidos
-      return;
-    }
-
-    // 👇 LÓGICA PARA DETECTAR PEDIDOS NUEVOS
-    let hasNewOrder = false;
-    orders.forEach(o => {
-      if (!knownOrderIds.has(o.id)) {
-        hasNewOrder = true;
-        knownOrderIds.add(o.id); // Guardamos el nuevo ID en la memoria
-      }
-    });
-
-    // Si hay un pedido nuevo Y ya habíamos cargado la pantalla antes, suena.
-    if (hasNewOrder && window.hasLoadedOnce) {
-       playNotificationSound();
-       toast("🔔 ¡Nuevo pedido asignado!");
-    }
     
-    // Marcamos que ya pasó la primera carga
-    window.hasLoadedOnce = true; 
+    // Si es la primera carga, mostramos los esqueletos
+    if (!window.hasLoadedOnce) {
+      list.innerHTML = getLoadingHTML(2);
+    }
 
-    list.innerHTML = orders.map(o => {
-      const c = o.customer;
-      const isDelivery = o.type === 'delivery';
-      
-      let mapBtn = '';
-      if (isDelivery && c.locationUrl) {
-        mapBtn = `<a href="${c.locationUrl}" target="_blank" class="btn-map">📍 Ver Mapa</a>`;
+    try {
+      const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
+        driver_email: currentDriver.email, 
+        driver_password: currentDriver.password 
+      });
+
+      if (error) throw error;
+
+      // ESTADO VACÍO
+      if (!orders || orders.length === 0) {
+        list.innerHTML = getEmptyHTML("Todo al día", "No tienes entregas pendientes por ahora.", "🛵");
+        knownOrderIds.clear();
+        window.hasLoadedOnce = true;
+        return;
       }
 
-      return `
-        <div class="order-card">
-          <div class="order-head">
-            <span class="order-code">${o.code}</span>
-            <span class="order-status">${isDelivery ? 'En Camino' : 'Para Retirar'}</span>
-          </div>
-          
-          <div class="order-info">
-            <b>Cliente:</b> ${c.name}<br>
-            <b>Tel:</b> <a href="tel:${c.phone}" style="color:var(--brand)">${c.phone}</a><br>
-            ${isDelivery ? `<b>Dirección:</b> ${c.address || 'Sin dirección'}<br><b>Ref:</b> ${c.ref || 'N/A'}` : `<b>Tipo:</b> Retiro en Tienda`}
-          </div>
+      // LÓGICA PARA DETECTAR PEDIDOS NUEVOS (Sonido)
+      let hasNewOrder = false;
+      orders.forEach(o => {
+        if (!knownOrderIds.has(o.id)) {
+          hasNewOrder = true;
+          knownOrderIds.add(o.id);
+        }
+      });
 
-          <div class="order-items">
-            ${o.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
-          </div>
+      if (hasNewOrder && window.hasLoadedOnce) {
+         playNotificationSound();
+         toast("🔔 ¡Nuevo pedido asignado!");
+      }
+      
+      window.hasLoadedOnce = true; 
 
-          <div class="btn-actions">
-            ${mapBtn}
-            <button class="btn-delivered" onclick="markDelivered('${o.id}')">✅ Entregado</button>
+      // RENDERIZADO DE PEDIDOS
+      list.innerHTML = orders.map(o => {
+        const c = o.customer;
+        const isDelivery = o.type === 'delivery';
+        
+        let mapBtn = '';
+        if (isDelivery && c.locationUrl) {
+          mapBtn = `<a href="${c.locationUrl}" target="_blank" class="btn-map">📍 Ver Mapa</a>`;
+        }
+
+        return `
+          <div class="order-card">
+            <div class="order-head">
+              <span class="order-code">${o.code}</span>
+              <span class="order-status">${isDelivery ? 'En Camino' : 'Para Retirar'}</span>
+            </div>
+            
+            <div class="order-info">
+              <b>Cliente:</b> ${c.name}<br>
+              <b>Tel:</b> <a href="tel:${c.phone}" style="color:var(--brand)">${c.phone}</a><br>
+              ${isDelivery ? `<b>Dirección:</b> ${c.address || 'Sin dirección'}<br><b>Ref:</b> ${c.ref || 'N/A'}` : `<b>Tipo:</b> Retiro en Tienda`}
+            </div>
+
+            <div class="order-items">
+              ${o.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+            </div>
+
+            <div class="btn-actions">
+              ${mapBtn}
+              <button class="btn-delivered" onclick="markDelivered('${o.id}')">✅ Entregado</button>
+            </div>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+
+    } catch (err) {
+      console.error("Error al cargar pedidos:", err);
+      // ESTADO DE ERROR
+      list.innerHTML = getErrorHTML("Error de conexión. No pudimos cargar tus entregas.", "loadOrders");
+    }
   }
 
-  // 5. MARCAR ENTREGADO SEGURO USANDO LA FUNCIÓN RPC
+  // MARCAR ENTREGADO
   async function markDelivered(orderId) {
     if (!confirm("¿Confirmar que este pedido fue entregado?")) return;
     
@@ -375,14 +361,39 @@ function getErrorHTML(message, retryFunctionName) {
       toast("Error al actualizar el pedido");
     } else {
       toast("✅ Pedido marcado como entregado");
-      knownOrderIds.delete(orderId); // Lo sacamos de la memoria
-      loadOrders(); // Recargar la lista
+      knownOrderIds.delete(orderId);
+      window.hasLoadedOnce = false; // Forzamos esqueleto visual al recargar
+      loadOrders();
     }
   }
 
-  // 6. INICIALIZACIÓN
+  // LÓGICA PWA (APP REPARTIDOR)
+  let deferredPromptDriver;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPromptDriver = e;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    document.getElementById('btnInstallDriver').style.display = 'block';
+  });
+
+  function installDriverApp() {
+    if (deferredPromptDriver) {
+      deferredPromptDriver.prompt();
+      deferredPromptDriver.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          toast("✅ ¡App de repartidor instalada!");
+          document.getElementById('btnInstallDriver').style.display = 'none';
+        }
+        deferredPromptDriver = null;
+      });
+    } else {
+      alert("Para instalar la app:\n\n1. Abre el menú del navegador.\n2. Selecciona 'Añadir a pantalla de inicio'.");
+    }
+  }
+
+  // INICIALIZACIÓN
   window.addEventListener('DOMContentLoaded', () => {
-    cargarColoresMarca(); // Cargar colores corporativos
+    cargarColoresMarca();
     
     const saved = localStorage.getItem('driver_session');
     if (saved) {
@@ -391,40 +402,14 @@ function getErrorHTML(message, retryFunctionName) {
         startPanel();
       } catch(e) { localStorage.removeItem('driver_session'); }
     }
-// 👇 Detector para actualizar en el instante que el repartidor vuelve a la app
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && currentDriver) {
-    loadOrders();
-  }
-});
-    
   });
 
-  // ==========================================
-// LÓGICA PWA (APP REPARTIDOR)
-// ==========================================
-let deferredPromptDriver;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPromptDriver = e;
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
-  document.getElementById('btnInstallDriver').style.display = 'block';
-});
-
-function installDriverApp() {
-  if (deferredPromptDriver) {
-    deferredPromptDriver.prompt();
-    deferredPromptDriver.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        toast("✅ ¡App de repartidor instalada!");
-        document.getElementById('btnInstallDriver').style.display = 'none';
-      }
-      deferredPromptDriver = null;
-    });
-  } else {
-    alert("Para instalar la app:\n\n1. Abre el menú del navegador.\n2. Selecciona 'Añadir a pantalla de inicio'.");
-  }
-}
+  // Detector para actualizar al volver a la app
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentDriver) {
+      loadOrders();
+    }
+  });
 </script>
 </body>
 </html>
