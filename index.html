@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F8FA">
-<title>DLV Food — Pide y rastrea en tiempo real</title>
+<title>Rapid Burger — Pide y rastrea en tiempo real</title>
 <link rel="manifest" href="/manifest-cliente.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- 👇 SCRIPT DE CACHÉ: Evita el parpadeo de colores aplicando la caché antes de dibujar -->
+<!-- SCRIPT DE CACHÉ: Evita parpadeos de colores y logos -->
 <script>
   (function() {
     try {
@@ -28,12 +28,13 @@
             if (bb) bb.textContent = cached.brand;
           }
           if (cached.logo) {
+            const getHtml = (str) => str.startsWith('http') ? `<img src="${str}" style="width:100%;height:100%;object-fit:cover;background:transparent;" alt="logo">` : str;
             const bl = document.getElementById("brandLogo");
-            if (bl) { bl.innerHTML = `<img src="${cached.logo}" alt="logo">`; bl.style.background = "transparent"; bl.style.boxShadow = "none"; }
+            if (bl) { bl.innerHTML = getHtml(cached.logo); bl.style.background = "transparent"; bl.style.boxShadow = "none"; }
             const ba = document.getElementById("botAvatar");
-            if (ba) ba.innerHTML = `<img src="${cached.logo}" alt="logo">`;
+            if (ba) ba.innerHTML = getHtml(cached.logo);
             const gb = document.getElementById("guidedBotAvatar");
-            if (gb) gb.innerHTML = `<img src="${cached.logo}" alt="logo">`;
+            if (gb) gb.innerHTML = getHtml(cached.logo);
           }
         });
       }
@@ -57,12 +58,9 @@
 html,body{margin:0;padding:0;background:var(--bg)}
 body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;font-weight:400}
 #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:110px;box-shadow:0 0 80px rgba(0,0,0,0.05);overflow-x:hidden;}
-
-/* 👇 CLASE PARA OCULTAR LA APP HASTA QUE LOS DATOS ESTÉN LISTOS */
 .hidden-app { display: none !important; }
 .hidden{display:none !important}
 
-/* HEADER */
 .hdr{position:sticky;top:0;z-index:30;background:var(--bg);opacity:0.98;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:16px 20px 12px;}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -77,7 +75,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .icon-btn{width:46px;height:46px;border-radius:14px;border:none;background:var(--surface);font-size:20px;display:grid;place-items:center;cursor:pointer;flex:none;transition:.2s;color:var(--ink);box-shadow:var(--shadow-sm)}
 .icon-btn:active{transform:scale(.94);background:var(--surface-2)}
 
-/* BUSCADOR Y CHIPS */
 .search{margin-top:14px;position:relative}
 .search input{width:100%;padding:14px 16px 14px 44px;border-radius:16px;border:none;background:var(--surface);font-size:14px;outline:none;font-family:inherit;color:var(--ink);transition:.2s;box-shadow:var(--shadow-sm);font-weight:500}
 .search input::placeholder{color:var(--muted)}
@@ -86,7 +83,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .chips{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding-bottom:4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 
-/* BOT GUÍA */
 .guided-header { padding: 12px 20px 10px; position: sticky; top: 70px; z-index: 20; background: var(--bg); }
 .bot-bubble { display: flex; gap: 14px; align-items: center; background: var(--surface); padding: 16px 20px; border-radius: 24px; border-bottom-left-radius: 6px; margin-bottom: 6px; box-shadow: var(--shadow-sm); animation: fade .4s ease; }
 .bot-avatar-small { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-soft); display: grid; place-items: center; font-size: 20px; color: var(--brand); flex: none; overflow: hidden; }
@@ -94,26 +90,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .bot-text { font-size: 15px; color: var(--ink); line-height: 1.4; font-weight: 500; }
 .escape-btn { display: block; text-align: center; font-size: 12px; color: var(--muted); text-decoration: underline; margin: 12px 0 0; cursor: pointer; font-weight: 500;}
 
-/* BARRA DE ACCIONES FIJAS */
 .guided-actions-bar {
-  position: fixed; 
-  bottom: calc(105px + env(safe-area-inset-bottom)); 
-  left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 8px; 
-  z-index: 35; animation: fade .3s ease;
-  pointer-events: none;
+  position: fixed; bottom: calc(105px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 520px; padding: 0 20px; display: flex; gap: 8px; z-index: 35; animation: fade .3s ease; pointer-events: none;
 }
 .guided-actions-bar > button { pointer-events: auto; }
-.btn-guided { 
-  flex: 1; 
-  padding: 12px; 
-  border-radius: 14px; 
-  font-size: 13px; 
-  font-weight: 700; 
-  cursor: pointer; 
-  display: flex; align-items: center; justify-content: center; gap: 6px; 
-  transition: 0.2s; border: none; box-shadow: var(--shadow-md); 
-}
+.btn-guided { flex: 1; padding: 12px; border-radius: 14px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; border: none; box-shadow: var(--shadow-md); }
 .btn-guided-back { background: var(--surface); color: var(--ink); }
 .btn-guided-skip { background: var(--brand); color: #FFF; }
 .btn-guided-complete { background: var(--ok); color: #FFF; }
@@ -126,7 +108,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .cat-card .icon { font-size: 42px; margin-bottom: 10px; display: block; }
 .cat-card .name { font-size: 15px; font-weight: 700; color: var(--ink); }
 
-/* TARJETAS DE PRODUCTOS */
 .menu-list{display:flex;flex-direction:column;gap:16px;}
 .card{background:var(--surface);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:.3s cubic-bezier(.2,.9,.3,1);cursor:pointer;box-shadow:var(--shadow-sm);border:none;}
 .card:active{transform:scale(.97);box-shadow:var(--shadow-md)}
@@ -147,7 +128,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .add-btn{border:none;background:var(--brand-soft);color:var(--brand);width:44px;height:44px;border-radius:50%;font-size:24px;font-weight:700;cursor:pointer;display:grid;place-items:center;flex:none;transition:.2s;font-family:inherit;}
 .add-btn:active{transform:scale(.85); background:var(--brand); color:#fff;}
 
-/* BARRA DE NAVEGACIÓN FLOTANTE (ISLA) */
 .nav {
   position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
   width: calc(100% - 32px); max-width: 480px; z-index: 40;
@@ -160,7 +140,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .nav-btn.active .ni{transform:scale(1.1)}
 .nav-badge{position:absolute;top:6px;right:50%;margin-right:-20px;background:var(--brand);color:#FFFFFF;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px;border:2px solid var(--surface)}
 
-/* RESTO DE COMPONENTES */
 #cartList, #cartTotals, #cartActions, #view-checkout, #view-tracking, #view-help { padding: 0 20px; }
 .cart-item{background:var(--surface);border-radius:20px;padding:16px;margin-bottom:12px;display:flex;gap:16px;align-items:center;box-shadow:var(--shadow-sm)}
 .ci-emoji{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:var(--surface-2);flex:none;overflow:hidden;position:relative;}
@@ -197,7 +176,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--danger);box-shadow:0 0 0 4px var(--danger-soft)}
 .field.invalid .err{display:block}
 
-/* TARJETA DE MAPA */
 .location-card { position: relative; width: 100%; height: 150px; border-radius: 20px; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: #E5E7EB; background-image: linear-gradient(90deg, rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px); background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px; background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px; box-shadow: var(--shadow-sm); transition: 0.3s; }
 .location-card::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); transition: 0.3s; z-index: 1; }
 .location-card:active { transform: scale(0.98); }
@@ -206,7 +184,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .location-card.captured::after { background: rgba(236, 253, 245, 0.9); }
 .location-card.captured .location-card-content { color: var(--ok); }
 
-/* SUBIDA DE COMPROBANTE */
 .proof-field{display:none;margin-top:16px}
 .proof-field.show{display:block;animation:fade .25s}
 .proof-picker{position:relative;width:100%;min-height:130px;background:var(--surface-2);border:2px dashed var(--line-2);border-radius:14px;display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:.2s;padding:16px}
@@ -222,7 +199,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .proof-preview .proof-remove:active{transform:scale(.9);background:var(--danger)}
 .proof-preview .proof-badge{position:absolute;bottom:10px;left:10px;background:rgba(34,197,94,0.9);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;letter-spacing:.3px;backdrop-filter:blur(8px)}
 
-/* MODAL / BOTTOM SHEET */
 .modal{position:fixed;inset:0;z-index:60;background:rgba(17,24,39,0.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
 .sheet{width:100%;max-width:520px;background:var(--surface);border-radius:32px 32px 0 0;max-height:92vh;overflow-y:auto;animation:up .35s cubic-bezier(.2,.9,.3,1);padding-bottom: env(safe-area-inset-bottom);}
 .sheet-hero{position:relative;width:100%;height:280px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden;border-radius:32px 32px 0 0}
@@ -232,17 +208,14 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .sheet-body h2{margin:0;font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--ink);line-height:1.2}
 .sheet-body .desc{font-size:14px;color:var(--muted);line-height:1.6;margin:8px 0 24px;font-weight:400}
 
-/* RATING MODAL */
 .rating-modal { position: fixed; inset: 0; z-index: 200; background: rgba(17,24,39,0.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
 .rating-modal.show { opacity: 1; visibility: visible; }
 .rating-box { background: var(--surface); width: 100%; max-width: 380px; border-radius: 32px; padding: 32px 24px; text-align: center; box-shadow: var(--shadow-lg); transform: translateY(30px) scale(0.9); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .rating-modal.show .rating-box { transform: translateY(0) scale(1); }
 
-/* TOAST */
 .toast{position:fixed;bottom:120px;left:50%;transform:translateX(-50%) translateY(20px);z-index:80;background:var(--ink);color:#FFFFFF;padding:16px 24px;border-radius:16px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;max-width:90%;text-align:center;box-shadow:var(--shadow-lg)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* WELCOME BOT */
 .bot-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 28px;text-align:center;animation:fade .4s}
 .bot-avatar{width:100px;height:100px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center;font-size:48px;margin-bottom:24px;overflow:hidden;position:relative}
 .bot-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -256,24 +229,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .bot-btn:active{transform:scale(.97)}
 .bot-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;background:var(--muted)}
 
-/* COOKIES Y LEGAL */
 .cookie-banner {
-  position: fixed;
-  bottom: 85px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 480px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 150;
-  animation: slideUp 0.4s ease;
+  position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 32px); max-width: 480px; background: var(--surface);
+  border: 1px solid var(--line); box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  border-radius: 16px; padding: 16px; display: flex; flex-direction: column;
+  gap: 12px; z-index: 150; animation: slideUp 0.4s ease;
 }
 @keyframes slideUp {
   from { transform: translateX(-50%) translateY(20px); opacity: 0; }
@@ -284,9 +245,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 #legalContent ul { padding-left: 20px; margin-bottom: 12px; }
 #legalContent li { margin-bottom: 6px; }
 
-/* =========================================
-   ANIMACIÓN DE ZOOM ELEGANTE (REVEAL ON SCROLL)
-   ========================================= */
 .scroll-anim {
   opacity: 0;
   transform: scale(0.95) translateY(20px);
@@ -294,17 +252,11 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
               transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
-
-.scroll-anim.is-visible {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
+.scroll-anim.is-visible { opacity: 1; transform: scale(1) translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- 👇 APLICAMOS LA CLASE hidden-app PARA EVITAR VER LA PANTALLA EN BLANCO -->
 <div id="app" class="hidden-app">
 
   <!-- PANTALLA DE TIENDA CERRADA -->
@@ -319,7 +271,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   <!-- PANTALLA DE BIENVENIDA -->
   <div id="botWelcome" class="bot-overlay hidden">
     <div class="bot-avatar" id="botAvatar">🍔</div>
-    <h2 class="bot-title">¡Bienvenido a <span id="botBrand">DLV Food</span>!</h2>
+    <h2 class="bot-title">¡Bienvenido a <span id="botBrand">Rapid Burger</span>!</h2>
     <p class="bot-sub">Soy tu asistente. Dime tu nombre y te guiaré con botones para armar tu pedido en segundos. 👇</p>
     <div class="bot-input-wrap">
       <input id="botNameInput" class="bot-input" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name">
@@ -332,7 +284,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <div class="brand">
         <div class="logo" id="brandLogo">🍔</div>
         <div style="min-width:0">
-          <h1 id="brandName">DLV Food</h1>
+          <h1 id="brandName">Rapid Burger</h1>
           <div style="display:flex; align-items:center; gap:8px;">
              <span class="status" id="storeStatus">Verificando...</span>
              <span class="rate-badge" id="rateBadge">💱 Cargando...</span>
@@ -348,7 +300,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   </header>
 
   <main>
-    <!-- VISTA GUIADA (ASISTENTE) -->
     <section id="view-guided" class="view hidden">
       <div class="guided-header">
         <div class="bot-bubble">
@@ -358,16 +309,13 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <div class="escape-btn" onclick="escapeGuidedFlow()">Prefiero ver el menú completo</div>
       </div>
       <div class="guided-content" id="guidedContent"></div>
-      
       <div class="guided-actions-bar" id="guidedActions"></div>
     </section>
 
-    <!-- VISTA MENÚ LIBRE -->
     <section id="view-menu" class="view hidden" style="padding:0 20px;"><div id="menuList" class="menu-list"></div></section>
     
     <section id="view-cart" class="view hidden"><div id="cartList"></div><div id="cartTotals"></div><div id="cartActions" style="padding-bottom:20px;"></div></section>
 
-    <!-- VISTA FINALIZAR PEDIDO -->
     <section id="view-checkout" class="view hidden">
       <div style="padding: 0 20px;">
         <h2 style="font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-.5px">Finalizar pedido</h2>
@@ -410,7 +358,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
           <div class="pay-details" id="payDetails"></div>
         </div>
 
-        <!-- COMPROBANTE DE PAGO -->
         <div class="proof-field" id="proofField">
           <label style="margin-top:16px">Comprobante de pago</label>
           <div id="proofPickerWrap">
@@ -441,12 +388,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <div style="background:var(--surface); border-radius:24px; padding:24px; box-shadow:var(--shadow-sm); margin-top:24px;">
           <h4 style="margin:0 0 8px; font-size:18px; font-weight:800;">🔍 Rastrear otro pedido</h4>
           <p style="margin:0 0 16px; font-size:14px; color:var(--muted);">Escribe el número de pedido (ej: A-4821).</p>
-          
           <div style="display:flex; gap:10px; width:100%;">
             <input id="lookupInput" placeholder="A-0000" maxlength="8" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
             <button onclick="lookupOrder()" style="padding:0 20px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-weight:800; font-size:14px; cursor:pointer; flex-shrink:0; white-space:nowrap;">Buscar</button>
           </div>
-
         </div>
       </div>
     </section>
@@ -454,13 +399,14 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <section id="view-help" class="view hidden">
       <div style="padding: 0 20px;">
         <h2 style="font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-.5px">Atención al cliente</h2>
-                <!-- BOTÓN DE INSTALAR APP CLIENTE -->
+        <p style="font-size:14px;color:var(--muted);margin:0 0 24px;line-height:1.5">Estamos en línea de <b id="helpHours" style="color:var(--ink)">11:00 a 23:00</b>. Escríbenos.</p>
+        
         <div id="installBannerClient" class="hidden" style="background:var(--surface); border: 2px dashed var(--brand); padding: 16px; border-radius: 16px; margin-bottom: 24px; text-align: center;">
           <h4 style="margin: 0 0 8px; font-size: 16px; font-weight: 800; color: var(--ink);">📱 Instala nuestra App</h4>
           <p style="margin: 0 0 12px; font-size: 13px; color: var(--muted);">Pide más rápido y recibe ofertas exclusivas.</p>
           <button class="btn btn-primary" onclick="installClientApp()">Instalar en mi celular</button>
         </div>
-        <p style="font-size:14px;color:var(--muted);margin:0 0 24px;line-height:1.5">Estamos en línea de <b id="helpHours" style="color:var(--ink)">11:00 a 23:00</b>. Escríbenos.</p>
+
         <button class="btn btn-wa" onclick="openWhatsApp()"><span style="font-size:20px">💬</span> Chatear con un asesor</button>
         <div style="display:flex; gap:12px; margin-top:12px;">
           <button class="btn btn-ghost" onclick="window.location.href='tel:'+CONFIG.phoneCall">📞 Llamar</button>
@@ -489,7 +435,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     </section>
   </main>
 
-  <!-- MENÚ INFERIOR FLOTANTE -->
   <nav class="nav">
     <button class="nav-btn" data-view="guided"><span class="ni">🤖</span>Asistente</button>
     <button class="nav-btn" data-view="categories"><span class="ni">📋</span>Categorías</button>
@@ -505,12 +450,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   <div id="modal" class="modal hidden"></div>
   <div id="toast" class="toast"></div>
 
-  <!-- BANNER DE COOKIES Y PRIVACIDAD -->
   <div id="cookieBanner" class="cookie-banner hidden">
     <div style="flex:1;">
-      <p style="margin:0 0 8px; font-size:12.5px; font-weight:700; color:var(--ink);">
-        🍪 Tu privacidad es importante
-      </p>
+      <p style="margin:0 0 8px; font-size:12.5px; font-weight:700; color:var(--ink);">🍪 Tu privacidad es importante</p>
       <p style="margin:0; font-size:11.5px; color:var(--ink-2); line-height:1.5;">
         Usamos cookies y almacenamiento local para que tu carrito y tus pedidos funcionen. Al continuar, aceptas nuestros 
         <a href="#" onclick="openLegal('terms')" style="color:var(--brand); font-weight:700; text-decoration:underline;">Términos</a>, 
@@ -522,16 +464,13 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <button onclick="acceptCookies()" style="background:var(--brand); color:#fff; border:none; padding:12px 16px; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap; width:100%;">Aceptar y Continuar</button>
   </div>
 
-  <!-- MODAL DE TEXTOS LEGALES -->
   <div id="legalModal" class="modal hidden" style="z-index:300; align-items:center;">
     <div class="modal-box" style="max-width:520px; height:85vh; display:flex; flex-direction:column;">
       <div class="modal-head" style="flex:none; padding:16px 20px; border-bottom:1px solid var(--line); background:var(--surface); border-radius:20px 20px 0 0;">
         <h2 id="legalTitle" style="font-size:18px; font-weight:900; margin:0;">Título Legal</h2>
         <button class="modal-close" onclick="closeLegal()" style="width:36px; height:36px; border-radius:10px; background:var(--surface-2); border:none; font-size:16px; color:var(--muted); cursor:pointer;">✕</button>
       </div>
-      <div class="modal-body" id="legalContent" style="flex:1; overflow-y:auto; padding:24px; font-size:14px; color:var(--ink-2); line-height:1.6; background:var(--surface); border-radius:0 0 20px 20px;">
-        <!-- El texto se inyectará con JavaScript -->
-      </div>
+      <div class="modal-body" id="legalContent" style="flex:1; overflow-y:auto; padding:24px; font-size:14px; color:var(--ink-2); line-height:1.6; background:var(--surface); border-radius:0 0 20px 20px;"></div>
     </div>
   </div>
 
@@ -546,13 +485,12 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 <script>
   const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
-  
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <script>
 var CONFIG = {
-  brand: "DLV Food", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
+  brand: "Rapid Burger", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, hours: { open: "11:00", close: "23:00" }, days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00", payments: [], manualRate: 0,
@@ -584,9 +522,6 @@ var EXCHANGE_RATE = null;
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
-// =========================================
-// LÓGICA DE ANIMACIÓN AL HACER SCROLL
-// =========================================
 const zoomObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -594,10 +529,7 @@ const zoomObserver = new IntersectionObserver((entries) => {
       zoomObserver.unobserve(entry.target);
     }
   });
-}, { 
-  threshold: 0.1, 
-  rootMargin: "0px 0px -20px 0px" 
-});
+}, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
 
 function applyScrollAnimations(container = document) {
   const elements = container.querySelectorAll('.card, .cat-card, .cart-item, .totals, .bot-bubble, .field, .location-card');
@@ -620,7 +552,7 @@ async function loadSharedData(){
     if (configRes.data) {
       const config = configRes.data;
       CONFIG.brand = config.brand || CONFIG.brand;
-      CONFIG.logo = config.logo || "";
+      CONFIG.logo = config.logo || "🍔";
       CONFIG.whatsapp = config.whatsapp || CONFIG.whatsapp;
       CONFIG.phoneCall = config.phonecall || CONFIG.phoneCall;
       CONFIG.mapsUrl = config.mapsurl || CONFIG.mapsUrl;
@@ -632,18 +564,14 @@ async function loadSharedData(){
       CONFIG.helpHoursText = config.helphourstext || CONFIG.helpHoursText;
       CONFIG.manualRate = config.manual_rate || 0;
 
-      // 🎨 APLICAR COLORES DINÁMICOS DEL ADMIN
       const pColor = config.primary_color || '#FF5A1F';
       const bColor = config.bg_color || '#F7F8FA';
       document.documentElement.style.setProperty('--brand', pColor);
       document.documentElement.style.setProperty('--bg', bColor);
       
-      // 👇 GUARDAR EN CACHÉ PARA LA PRÓXIMA VISITA
       localStorage.setItem('ff_config_cache', JSON.stringify({
-        brand: CONFIG.brand,
-        logo: CONFIG.logo,
-        primary_color: pColor,
-        bg_color: bColor
+        brand: CONFIG.brand, logo: CONFIG.logo,
+        primary_color: pColor, bg_color: bColor
       }));
     }
 
@@ -669,13 +597,24 @@ async function loadSharedData(){
 }
 
 function applyBrandLogo(){
-  var logoEl = document.getElementById("brandLogo"); var avatarEl = document.getElementById("botAvatar"); var guidedAvatar = document.getElementById("guidedBotAvatar");
-  if (logoEl) {
-    if (CONFIG.logo) { logoEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; logoEl.style.background = "transparent"; logoEl.style.boxShadow = "none"; }
-    else { logoEl.innerHTML = "🍔"; }
+  var logoEl = document.getElementById("brandLogo"); 
+  var avatarEl = document.getElementById("botAvatar"); 
+  var guidedAvatar = document.getElementById("guidedBotAvatar");
+  
+  function getLogoHtml(logoStr, defaultEmoji) {
+    if (!logoStr) return defaultEmoji;
+    if (logoStr.startsWith('http')) {
+      return `<img src="${esc(logoStr)}" alt="logo" style="width:100%;height:100%;object-fit:cover;background:transparent;">`;
+    }
+    return logoStr;
   }
-  if (avatarEl) { if (CONFIG.logo) avatarEl.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else avatarEl.innerHTML = "🍔"; }
-  if (guidedAvatar) { if (CONFIG.logo) guidedAvatar.innerHTML = '<img src="' + esc(CONFIG.logo) + '" alt="logo">'; else guidedAvatar.innerHTML = "🤖"; }
+
+  if (logoEl) {
+    logoEl.innerHTML = getLogoHtml(CONFIG.logo, "🍔");
+    if (CONFIG.logo && CONFIG.logo.startsWith('http')) { logoEl.style.background = "transparent"; logoEl.style.boxShadow = "none"; }
+  }
+  if (avatarEl) { avatarEl.innerHTML = getLogoHtml(CONFIG.logo, "🍔"); }
+  if (guidedAvatar) { guidedAvatar.innerHTML = getLogoHtml(CONFIG.logo, "🤖"); }
 }
 
 function getScheduleHTML() {
@@ -734,19 +673,10 @@ async function fetchExchangeRate() {
     EXCHANGE_RATE = Number(CONFIG.manualRate);
     updateRateBadge(); refreshCurrentView(); return;
   }
-
-  if (EXCHANGE_RATE) {
-    updateRateBadge();
-    refreshCurrentView();
-  }
-
+  if (EXCHANGE_RATE) { updateRateBadge(); refreshCurrentView(); }
   const fetchWithTimeout = (url, timeout = 4000) => {
-    return Promise.race([
-      fetch(url),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-    ]);
+    return Promise.race([fetch(url), new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))]);
   };
-
   try {
     let res = await fetchWithTimeout("https://pydolarve.org/api/v1/dollar?page=bcv");
     if (res.ok) {
@@ -758,7 +688,6 @@ async function fetchExchangeRate() {
       }
     }
   } catch (e) { console.log("Fallo API 1 (PyDolar):", e.message); }
-
   try {
     let res = await fetchWithTimeout("https://ve.dolarapi.com/v1/dolares/oficial");
     let data = await res.json();
@@ -768,19 +697,12 @@ async function fetchExchangeRate() {
       updateRateBadge(); refreshCurrentView(); return;
     }
   } catch (e) { console.log("Fallo API 2 (DolarAPI):", e.message); }
-
-  if (!EXCHANGE_RATE) { 
-    EXCHANGE_RATE = 36.50; 
-    updateRateBadge(); refreshCurrentView(); 
-  }
+  if (!EXCHANGE_RATE) { EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView(); }
 }
 
 function updateRateBadge(){ 
   var badge = document.getElementById("rateBadge"); 
-  if (badge && EXCHANGE_RATE) { 
-    var formattedRate = Number(EXCHANGE_RATE).toFixed(2); 
-    badge.innerHTML = '💱 1$ = Bs. ' + formattedRate; 
-  } 
+  if (badge && EXCHANGE_RATE) { badge.innerHTML = '💱 1$ = Bs. ' + Number(EXCHANGE_RATE).toFixed(2); } 
 }
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
@@ -789,9 +711,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&
 function money(n){ 
   if (n === undefined || n === null) n = 0;
   var usd = CONFIG.currency + Number(n).toFixed(2); 
-  if (EXCHANGE_RATE) {
-    return `<span style="display:block; font-weight:900;">${usd}</span><span class="price-ves" style="display:block !important;">≈ Bs. <strong>${(Number(n) * EXCHANGE_RATE).toFixed(2)}</strong></span>`; 
-  }
+  if (EXCHANGE_RATE) { return `<span style="display:block; font-weight:900;">${usd}</span><span class="price-ves" style="display:block !important;">≈ Bs. <strong>${(Number(n) * EXCHANGE_RATE).toFixed(2)}</strong></span>`; }
   return usd; 
 }
 function findProduct(id){ return MENU.find(p => p.id === id); }
@@ -802,39 +722,26 @@ function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (sta
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
-  try { 
-    const cachedRate = localStorage.getItem('ff_exchange_rate');
-    if (cachedRate) EXCHANGE_RATE = parseFloat(cachedRate);
-  } catch(e){}
+  try { const cachedRate = localStorage.getItem('ff_exchange_rate'); if (cachedRate) EXCHANGE_RATE = parseFloat(cachedRate); } catch(e){}
 }
 function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(state.cart)); }
 function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
-
 function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
 
 function getLocation() {
   const card = document.getElementById("locationCard");
   const content = document.getElementById("locationCardContent");
   const statusEl = document.getElementById("locationStatus");
-
   if (!navigator.geolocation) { toast("Tu navegador no soporta geolocalización"); return; }
   if (!content || !statusEl) return;
-
   content.innerHTML = `<span class="icon">⏳</span><span>Obteniendo ubicación...</span>`;
-  statusEl.style.display = "block";
-  statusEl.style.color = "var(--muted)";
-  statusEl.innerHTML = "Esperando permiso...";
-
+  statusEl.style.display = "block"; statusEl.style.color = "var(--muted)"; statusEl.innerHTML = "Esperando permiso...";
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const lat = position.coords.latitude; const lng = position.coords.longitude;
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-      
-      card.classList.add("captured");
-      content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
-      
-      statusEl.style.color = "var(--ok)";
-      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+      card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
       toast("Ubicación capturada");
     },
     (error) => {
@@ -850,26 +757,9 @@ function getLocation() {
   );
 }
 
-function startGuidedFlow() {
-  guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
-  renderGuided();
-  go('guided');
-}
-
-function showAllCategories() {
-  guidedState.step = 'all';
-  guidedState.viewingCategory = null;
-  renderGuided();
-  go('guided', 'all');
-}
-
-function escapeGuidedFlow() {
-  state.category = 'todos';
-  renderChips();
-  renderMenu();
-  go('menu');
-  toast("Explorando menú libre");
-}
+function startGuidedFlow() { guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] }; renderGuided(); go('guided'); }
+function showAllCategories() { guidedState.step = 'all'; guidedState.viewingCategory = null; renderGuided(); go('guided', 'all'); }
+function escapeGuidedFlow() { state.category = 'todos'; renderChips(); renderMenu(); go('menu'); toast("Explorando menú libre"); }
 
 function getCategoryPhase(catName) {
   const n = catName.toLowerCase();
@@ -886,21 +776,14 @@ function getFilteredCategories(phase) {
 function skipGuidedPhase() {
   const currentIndex = guidedState.stepsOrder.indexOf(guidedState.step);
   if (currentIndex < guidedState.stepsOrder.length - 1) {
-    guidedState.step = guidedState.stepsOrder[currentIndex + 1];
-    guidedState.viewingCategory = null;
-    renderGuided();
-  } else {
-    guidedState.step = 'done';
-    renderGuided();
-  }
+    guidedState.step = guidedState.stepsOrder[currentIndex + 1]; guidedState.viewingCategory = null; renderGuided();
+  } else { guidedState.step = 'done'; renderGuided(); }
 }
 
 function prevGuidedPhase() {
   const currentIndex = guidedState.stepsOrder.indexOf(guidedState.step);
   if (currentIndex > 0) {
-    guidedState.step = guidedState.stepsOrder[currentIndex - 1];
-    guidedState.viewingCategory = null;
-    renderGuided();
+    guidedState.step = guidedState.stepsOrder[currentIndex - 1]; guidedState.viewingCategory = null; renderGuided();
   }
 }
 
@@ -917,115 +800,72 @@ function renderGuided() {
       content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛍️</div><p>Explora nuestras categorías para armar tu pedido.</p></div>`;
     } else {
       textEl.innerHTML = `¡Excelente elección, <b>${esc(state.clientName)}</b>! 🎉<br><br>Ya tienes todo tu pedido armado. ¿Quieres revisar tu carrito para confirmar?`;
-      actionsEl.innerHTML = `
-        <button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>
-        <button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>
-      `;
+      actionsEl.innerHTML = `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button><button class="btn-guided btn-guided-back" onclick="showAllCategories()">📋 Ver Categorías</button>`;
       content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛍️</div><p>Presiona "Ver mi carrito" para finalizar.</p></div>`;
     }
-    applyScrollAnimations(content); // 👈 ANIMACIÓN
-    return;
+    applyScrollAnimations(content); return;
   }
 
   if (guidedState.step === 'all' && !guidedState.viewingCategory) {
     textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 Elige una categoría para ver nuestros productos.`;
     let btnHtml = '';
-    if (state.cart.length > 0) {
-      btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito (${state.cart.reduce((a,i)=>a+i.qty,0)})</button>`;
-    }
+    if (state.cart.length > 0) { btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito (${state.cart.reduce((a,i)=>a+i.qty,0)})</button>`; }
     actionsEl.innerHTML = btnHtml;
     const allCats = getFilteredCategories('all');
-    
-    if (allCats.length === 0) {
-        content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías disponibles.</p><button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="startGuidedFlow()">Reintentar</button></div>`;
-        applyScrollAnimations(content); // 👈 ANIMACIÓN
-        return;
-    }
-
-    let gridHtml = allCats.map(c => `
-      <div class="cat-card" onclick="selectGuidedCategory('${c.id}')">
-        <span class="icon">${c.icon || '🍽️'}</span>
-        <span class="name">${esc(c.name)}</span>
-      </div>
-    `).join('');
-    content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
-    applyScrollAnimations(content); // 👈 ANIMACIÓN
-    return;
+    if (allCats.length === 0) { content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías disponibles.</p><button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="startGuidedFlow()">Reintentar</button></div>`; applyScrollAnimations(content); return; }
+    let gridHtml = allCats.map(c => `<div class="cat-card" onclick="selectGuidedCategory('${c.id}')"><span class="icon">${c.icon || '🍽️'}</span><span class="name">${esc(c.name)}</span></div>`).join('');
+    content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`; applyScrollAnimations(content); return;
   }
 
   const currentPhaseCats = getFilteredCategories(guidedState.step);
-  
   if (currentPhaseCats.length === 0 && !guidedState.viewingCategory) {
     textEl.innerHTML = `Cargando categorías...`;
     actionsEl.innerHTML = `<button class="btn-guided btn-guided-skip" onclick="startGuidedFlow()">Reintentar</button>`;
     content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🍽️</div><p>No se encontraron categorías.</p></div>`;
-    applyScrollAnimations(content); // 👈 ANIMACIÓN
-    return;
+    applyScrollAnimations(content); return;
   }
 
   if (!guidedState.viewingCategory) {
     if (guidedState.step === 'food') textEl.innerHTML = `¡Hola <b>${esc(state.clientName)}</b>! 👋 ¿Qué se te antoja comer hoy?`;
     if (guidedState.step === 'drinks') textEl.innerHTML = `¡Buenísimo! 😋 ¿Te gustaría acompañar tu comida con alguna bebida?`;
     if (guidedState.step === 'desserts') textEl.innerHTML = `¿Y qué tal un postre para terminar? 🍰 Tenemos cosas dulces.`;
-    
     let btnHtml = '';
-    if (guidedState.step !== 'food') {
-      btnHtml += `<button class="btn-guided btn-guided-back" onclick="prevGuidedPhase()">← Regresar</button>`;
-    }
+    if (guidedState.step !== 'food') { btnHtml += `<button class="btn-guided btn-guided-back" onclick="prevGuidedPhase()">← Regresar</button>`; }
     btnHtml += `<button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>`;
     actionsEl.innerHTML = btnHtml;
-    
-    let gridHtml = currentPhaseCats.map(c => `
-      <div class="cat-card" onclick="selectGuidedCategory('${c.id}')">
-        <span class="icon">${c.icon || '🍽️'}</span>
-        <span class="name">${esc(c.name)}</span>
-      </div>
-    `).join('');
-    content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`;
-    applyScrollAnimations(content); // 👈 ANIMACIÓN
-
+    let gridHtml = currentPhaseCats.map(c => `<div class="cat-card" onclick="selectGuidedCategory('${c.id}')"><span class="icon">${c.icon || '🍽️'}</span><span class="name">${esc(c.name)}</span></div>`).join('');
+    content.innerHTML = `<div class="cat-grid">${gridHtml}</div>`; applyScrollAnimations(content);
   } else {
     const catObj = CATS.find(c => c.id === guidedState.viewingCategory);
     if (guidedState.step === 'food') textEl.innerHTML = `Aquí tienes nuestras opciones de <b>${esc(catObj.name)}</b>. ¿Qué te provoca?`;
     else if (guidedState.step === 'drinks') textEl.innerHTML = `Nuestras bebidas de <b>${esc(catObj.name)}</b>. ¿Cuál te llevas?`;
     else if (guidedState.step === 'desserts') textEl.innerHTML = `Mira estos postres de <b>${esc(catObj.name)}</b>. ¡Se ven deliciosos!`;
     else textEl.innerHTML = `Aquí tienes nuestras opciones de <b>${esc(catObj.name)}</b>. ¿Qué te provoca?`;
-
     let btnHtml = '';
     if (guidedState.step === 'all') {
       btnHtml += `<button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar a Categorías</button>`;
-      if (state.cart.length > 0) {
-        btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>`;
-      }
+      if (state.cart.length > 0) { btnHtml += `<button class="btn-guided btn-guided-complete" onclick="go('cart')">🛒 Ver mi carrito</button>`; }
     } else {
       btnHtml += `<button class="btn-guided btn-guided-back" onclick="guidedState.viewingCategory = null; renderGuided();">← Regresar</button>`;
       btnHtml += `<button class="btn-guided btn-guided-skip" onclick="skipGuidedPhase()">Continuar ➔</button>`;
     }
     actionsEl.innerHTML = btnHtml;
-
     const items = MENU.filter(p => p.cat === guidedState.viewingCategory && p.available !== false);
     if (items.length === 0) {
       content.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🔍</div><p>No hay productos disponibles aquí.</p></div>`;
     } else {
       content.innerHTML = `<div class="menu-list">${items.map(p => `
         <article class="card" onclick="openProduct('${p.id}')">
-          <div class="card-img">
-            <span class="card-emoji">${p.emoji}</span>
-            ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}">` : ''}
-            ${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}
-          </div>
+          <div class="card-img"><span class="card-emoji">${p.emoji}</span>${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}">` : ''}${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}</div>
           <div class="card-body"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="card-foot"><span class="price">${money(p.price)}</span><button class="add-btn" onclick="event.stopPropagation(); openProduct('${p.id}')">+</button></div></div>
         </article>`).join('')}
       </div>`;
     }
-    applyScrollAnimations(content); // 👈 ANIMACIÓN
+    applyScrollAnimations(content);
   }
 }
 
-function selectGuidedCategory(catId) {
-  guidedState.viewingCategory = catId;
-  renderGuided();
-}
+function selectGuidedCategory(catId) { guidedState.viewingCategory = catId; renderGuided(); }
 
 function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast("✅ Copiado")).catch(() => fallbackCopy(text));
@@ -1051,46 +891,21 @@ function updatePayDetails(){
   if (!p || NO_DETAILS_TYPES.includes(p.type)) { box.classList.remove("show"); box.innerHTML = ""; return; }
   var details = p.details || {}; var keys = Object.keys(details).filter(k => details[k]);
   if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
-
   var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
   var del = isDelivery ? CONFIG.deliveryFee : 0;
   var totalUsd = sub + del;
   var totalBsText = EXCHANGE_RATE ? `Bs. ${(totalUsd * EXCHANGE_RATE).toFixed(2)}` : '';
-
   let textoCompleto = `*Datos de Pago (${p.label}):*\n`;
   keys.forEach(k => { textoCompleto += `${DETAIL_LABELS[k] || k}: ${details[k]}\n`; });
-  if (totalBsText) {
-    textoCompleto += `\n*Monto a pagar:* ${totalBsText}`;
-  }
-
+  if (totalBsText) { textoCompleto += `\n*Monto a pagar:* ${totalBsText}`; }
   var btnCopiarTodo = "";
   if (p.type === 'pagomovil' || p.type === 'transferencia') {
-    btnCopiarTodo = `<button style="background:var(--brand); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; font-size:14px;" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')">
-      <span style="font-size:18px;">📋</span> Copiar datos ${totalBsText ? 'y monto en Bs' : ''}
-    </button>`;
+    btnCopiarTodo = `<button style="background:var(--brand); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; font-size:14px;" onclick="copyToClipboard('${textoCompleto.replace(/\n/g, '\\n')}')"><span style="font-size:18px;">📋</span> Copiar datos ${totalBsText ? 'y monto en Bs' : ''}</button>`;
   }
-
-  var rows = keys.map(k => `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:14px;border-bottom:1px dashed var(--line);">
-      <span style="color:var(--muted);">${esc(DETAIL_LABELS[k] || k)}</span>
-      <span style="color:var(--ink);font-weight:700;text-align:right;word-break:break-all;">${esc(details[k])}</span>
-    </div>`).join("");
-
-  var montoHtml = totalBsText ? `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;font-size:15px;border-top:2px solid var(--brand); margin-top:8px;">
-      <span style="color:var(--brand-d); font-weight:800;">Total a pagar:</span>
-      <span style="color:var(--brand-d);font-weight:900;font-size:18px;text-align:right;">${totalBsText}</span>
-    </div>` : '';
-
-  box.innerHTML = `
-    <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--brand-d);margin-bottom:10px;">📋 Datos para pagar</div>
-    ${btnCopiarTodo}
-    <div style="background:var(--surface); border-radius:12px; padding:0 12px; box-shadow:var(--shadow-sm);">
-      ${rows}
-      ${montoHtml}
-    </div>
-  `;
+  var rows = keys.map(k => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:14px;border-bottom:1px dashed var(--line);"><span style="color:var(--muted);">${esc(DETAIL_LABELS[k] || k)}</span><span style="color:var(--ink);font-weight:700;text-align:right;word-break:break-all;">${esc(details[k])}</span></div>`).join("");
+  var montoHtml = totalBsText ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;font-size:15px;border-top:2px solid var(--brand); margin-top:8px;"><span style="color:var(--brand-d); font-weight:800;">Total a pagar:</span><span style="color:var(--brand-d);font-weight:900;font-size:18px;text-align:right;">${totalBsText}</span></div>` : '';
+  box.innerHTML = `<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--brand-d);margin-bottom:10px;">📋 Datos para pagar</div>${btnCopiarTodo}<div style="background:var(--surface); border-radius:12px; padding:0 12px; box-shadow:var(--shadow-sm);">${rows}${montoHtml}</div>`;
   box.style.display = 'block';
 }
 
@@ -1105,9 +920,7 @@ function updateProofField(){
 function handleProofUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   if (file.size > 10 * 1024 * 1024) { alert("La imagen es muy grande (máx 10MB)."); return; }
-  
   state.proofFile = file; 
-  
   const reader = new FileReader();
   reader.onload = (ev) => {
     state.proofImage = ev.target.result; 
@@ -1120,46 +933,34 @@ function handleProofUpload(e) {
 }
 
 function clearProof() { 
-  state.proofImage = null; 
-  state.proofFile = null; 
+  state.proofImage = null; state.proofFile = null; 
   if($("#proofFile")) $("#proofFile").value = ""; 
   if($("#proofPickerWrap")) $("#proofPickerWrap").style.display = 'block'; 
   if($("#proofPreviewWrap")) $("#proofPreviewWrap").style.display = 'none'; 
 }
 
 function renderChips(){
-  var wrap = $("#chips");
-  if(!wrap) return;
+  var wrap = $("#chips"); if(!wrap) return;
   wrap.innerHTML = CATS.map(c => `<button style="flex:none;padding:10px 16px;border-radius:999px;border:none;background:${state.category === c.id ? 'var(--brand)' : 'var(--surface)'};color:${state.category === c.id ? '#fff' : 'var(--ink)'};font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-sm);transition:.2s;" onclick="state.category='${c.id}'; renderChips(); renderMenu();">${c.icon} ${esc(c.name)}</button>`).join("");
 }
 
 function renderMenu(){
   var q = state.query.trim().toLowerCase();
   var items = MENU.filter(p => (state.category === "todos" || p.cat === state.category) && (!q || p.name.toLowerCase().includes(q)));
-  var list = $("#menuList");
-  if (!list) return;
+  var list = $("#menuList"); if (!list) return;
   if (!items.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🔍</div><p>No hay productos.</p></div>`; return; }
   list.innerHTML = items.map(p => {
     const isAvail = p.available !== false;
     return `
     <article class="card ${isAvail ? '' : 'sold-out'}" onclick="${isAvail ? `openProduct('${p.id}')` : ''}">
-      <div class="card-img">
-        <span class="card-emoji">${p.emoji}</span>
-        ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)} - ${esc(p.desc)}">` : ''}
-        ${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}
-        ${!isAvail ? `<span class="sold-out-badge">Agotado</span>` : ''}
-      </div>
+      <div class="card-img"><span class="card-emoji">${p.emoji}</span>${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)} - ${esc(p.desc)}">` : ''}${p.badge ? `<span class="card-badge">${esc(p.badge)}</span>` : ''}${!isAvail ? `<span class="sold-out-badge">Agotado</span>` : ''}</div>
       <div class="card-body"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="card-foot"><span class="price">${money(p.price)}</span>${isAvail ? `<button class="add-btn" onclick="event.stopPropagation(); openProduct('${p.id}')">+</button>` : ''}</div></div>
     </article>`;
   }).join("");
-  applyScrollAnimations(list); // 👈 ANIMACIÓN
+  applyScrollAnimations(list);
 }
 
-function openProduct(id){
-  var p = findProduct(id); if (!p || p.available === false) return;
-  state.modal = { product: p, qty: 1, extras: [], notes: "" };
-  renderModal(); $("#modal").classList.remove("hidden");
-}
+function openProduct(id){ var p = findProduct(id); if (!p || p.available === false) return; state.modal = { product: p, qty: 1, extras: [], notes: "" }; renderModal(); $("#modal").classList.remove("hidden"); }
 function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; }
 
 function renderModal(){
@@ -1200,10 +1001,7 @@ function addToCart(){
   if (found) found.qty += m.qty;
   else state.cart.push({ key, id: p.id, name: p.name, emoji: p.emoji, img: p.img, extras: p.extras.filter(e=>m.extras.includes(e.name)), notes: m.notes, unit, qty: m.qty });
   saveCart(); updateBadge(); closeModal(); toast("Agregado al carrito");
-  
-  if (state.view === 'guided') {
-    toast("¡Agregado! Puedes elegir otro o presionar 'Continuar'");
-  }
+  if (state.view === 'guided') { toast("¡Agregado! Puedes elegir otro o presionar 'Continuar'"); }
 }
 
 function updateBadge(){ var n = state.cart.reduce((a,i)=>a+i.qty,0); var b = $("#navBadge"); if (b) { b.textContent = n; b.classList.toggle("hidden", n === 0); } }
@@ -1214,16 +1012,14 @@ function renderCart(){
   if (!state.cart.length) { list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">🛒</div><p>Carrito vacío.</p></div>`; totals.innerHTML = ""; actions.innerHTML = `<button class="btn btn-primary" onclick="showAllCategories()">Ver Categorías</button>`; return; }
   list.innerHTML = state.cart.map(i => `
     <div class="cart-item">
-      <div class="ci-emoji">
-        ${i.img ? `<img src="${esc(i.img)}" alt="${esc(i.name)}" style="object-fit:cover;">` : `<span style="font-size:28px;">${i.emoji || '🍔'}</span>`}
-      </div>
+      <div class="ci-emoji">${i.img ? `<img src="${esc(i.img)}" alt="${esc(i.name)}" style="object-fit:cover;">` : `<span style="font-size:28px;">${i.emoji || '🍔'}</span>`}</div>
       <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
       <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQty('${i.key}',-1)">−</button><span>${i.qty}</span><button onclick="changeQty('${i.key}',1)">+</button></div></div>
     </div>`).join("");
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
   totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
   actions.innerHTML = `<button class="btn btn-primary" onclick="go('checkout')">Continuar con el pedido →</button>`;
-  applyScrollAnimations(); // 👈 ANIMACIÓN
+  applyScrollAnimations();
 }
 
 function changeQty(key, d){
@@ -1235,58 +1031,39 @@ function changeQty(key, d){
 function updateOrderType() {
   var isDelivery = $("input[name='otype']:checked").value === 'delivery';
   if($("#addressBlock")) $("#addressBlock").style.display = isDelivery ? "block" : "none";
-  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
-  var del = isDelivery ? CONFIG.deliveryFee : 0;
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0;
   if($("#checkoutSummary")) $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
-  
   if ($("#paySelect").value) { updatePayDetails(); }
 }
 
 function renderCheckout(){
   renderPayments();
   if (state.clientName && $("#f-name")) $("#f-name").value = state.clientName;
-  
-  const card = document.getElementById("locationCard");
-  const content = document.getElementById("locationCardContent");
-  const statusEl = document.getElementById("locationStatus");
-
+  const card = document.getElementById("locationCard"); const content = document.getElementById("locationCardContent"); const statusEl = document.getElementById("locationStatus");
   if (card && content && statusEl) {
     if (state.userLocationUrl) {
-      card.classList.add("captured");
-      content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
-      statusEl.style.display = "block";
-      statusEl.style.color = "var(--ok)";
-      statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+      card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      statusEl.style.display = "block"; statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
     } else {
-      card.classList.remove("captured");
-      content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`;
-      statusEl.style.display = "none";
+      card.classList.remove("captured"); content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`; statusEl.style.display = "none";
     }
   }
-
-  updateOrderType();
-  applyScrollAnimations(); // 👈 ANIMACIÓN
+  updateOrderType(); applyScrollAnimations();
 }
 
 async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
   var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text; var payId = $("#paySelect").value;
-  
   var valid = true;
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
   if (!phone) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
-  
   if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
-  
   if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
-  
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
-  
   var code = 'A-' + String(Date.now()).slice(-4);
-  
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
@@ -1296,56 +1073,30 @@ async function submitOrder() {
       btn.innerHTML = "Subiendo comprobante...";
       const fileExt = state.proofFile.name.split('.').pop() || 'jpg';
       const fileName = `${code}-${Date.now()}.${fileExt}`;
-      
-      const { error: upErr } = await supabaseClient.storage
-        .from('comprobantes')
-        .upload(fileName, state.proofFile, { contentType: state.proofFile.type, upsert: false });
-        
+      const { error: upErr } = await supabaseClient.storage.from('comprobantes').upload(fileName, state.proofFile, { contentType: state.proofFile.type, upsert: false });
       if (upErr) throw upErr;
-      
-      const { data: urlData } = supabaseClient.storage
-        .from('comprobantes')
-        .getPublicUrl(fileName);
-        
+      const { data: urlData } = supabaseClient.storage.from('comprobantes').getPublicUrl(fileName);
       proofUrl = urlData.publicUrl;
       btn.innerHTML = "Enviando...";
     } catch(e) {
-      console.warn("No se pudo subir comprobante:", e);
-      toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
+      console.warn("No se pudo subir comprobante:", e); toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
     }
   }
 
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
-  if (isDelivery) { 
-    msg += `*Tipo:* Delivery\n`;
-    if (ref) msg += `*Ref:* ${ref}\n`;
-    msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; 
-  } else {
-    msg += `*Tipo:* Retiro en tienda\n`;
-  }
+  if (isDelivery) { msg += `*Tipo:* Delivery\n`; if (ref) msg += `*Ref:* ${ref}\n`; msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; } else { msg += `*Tipo:* Retiro en tienda\n`; }
   msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
   state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
   msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
 
-  var orderData = {
-    code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl },
-    items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl 
-  };
-
+  var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
   const { error } = await supabaseClient.from('orders').insert([orderData]);
   if (error) { console.error("Error de Supabase:", error); alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); }
 
-  saveName(name); 
-  state.cart = []; 
-  state.userLocationUrl = null; 
-  state.proofImage = null; 
-  state.proofFile = null; 
-  saveCart(); updateBadge();
-  
+  saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; state.proofFile = null; saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); 
-  toast("Pedido enviado con éxito"); 
-  go('tracking');
+  toast("Pedido enviado con éxito"); go('tracking');
 }
 
 async function renderTracking() {
@@ -1366,20 +1117,15 @@ async function renderTracking() {
   async function fetchOrderAndUpdate() {
     const { data: orderArr, error } = await supabaseClient.rpc('get_order_by_code', { order_code: code });
     const order = orderArr && orderArr[0];
-    
     if (error || !order) { trackDiv.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);"><div style="font-size:48px;margin-bottom:16px;">❌</div><p>Pedido no encontrado.</p></div>`; return false; }
     if (lastStatus !== order.status) { updateTrackingUI(order); if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado"); lastStatus = order.status; }
     return true;
   }
-  
   const ok = await fetchOrderAndUpdate(); if (!ok) return;
   window.clientOrderChannel = supabaseClient.channel('client-order-' + code).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `code=eq.${code}` }, payload => { fetchOrderAndUpdate(); }).subscribe();
-  
   window.fetchCurrentTracking = fetchOrderAndUpdate; 
   if (window.trackingInterval) { clearInterval(window.trackingInterval); }
-  window.trackingInterval = setInterval(() => { 
-    if (document.visibilityState === 'visible') { fetchOrderAndUpdate(); }
-  }, 5000);
+  window.trackingInterval = setInterval(() => { if (document.visibilityState === 'visible') { fetchOrderAndUpdate(); } }, 5000);
 }
 
 function lookupOrder() { var code = $("#lookupInput").value.trim().toUpperCase(); if (!code) return; localStorage.setItem('ff_current_order_code', code); renderTracking(); }
@@ -1403,11 +1149,7 @@ function openRatingModal(orderCode) {
     <button class="btn-rate-close" onclick="closeRatingModal()" style="width:100%; padding:16px; margin-top:8px; border-radius:16px; border:none; background:transparent; color:var(--muted); font-size:15px; font-weight:700; cursor:pointer;">Ahora no</button>`;
   updateStarsUI(0); document.getElementById('ratingModal').classList.add('show');
 }
-function closeRatingModal() { 
-  document.getElementById('ratingModal').classList.remove('show'); 
-  currentOrderCodeToRate = null; 
-  go('menu'); 
-}
+function closeRatingModal() { document.getElementById('ratingModal').classList.remove('show'); currentOrderCodeToRate = null; go('menu'); }
 function hoverRating(val) { updateStarsUI(val); }
 function setRating(val) { currentRating = val; updateStarsUI(val); const star = document.querySelectorAll('.star')[val - 1]; if(star) { star.style.transform='scale(1.3)'; setTimeout(() => star.style.transform='scale(1)', 200); } }
 function updateStarsUI(val) { document.querySelectorAll('.star').forEach((star, index) => { if (index < val) { star.style.color = '#F59E0B'; star.style.textShadow = '0 0 16px rgba(245,158,11,0.5)'; } else { star.style.color = 'var(--line)'; star.style.textShadow = 'none'; } }); }
@@ -1416,17 +1158,9 @@ async function submitRating() {
   if (currentRating === 0) { toast("Por favor, selecciona al menos 1 estrella ⭐"); return; }
   const comment = document.getElementById('ratingComment').value.trim(); const btn = document.querySelector('.btn-rate-submit'); btn.disabled = true; btn.textContent = "Enviando...";
   try {
-    const { error } = await supabaseClient.rpc('rate_order', { 
-      order_code: currentOrderCodeToRate, 
-      order_rating: currentRating, 
-      order_review: comment 
-    });
-    
+    const { error } = await supabaseClient.rpc('rate_order', { order_code: currentOrderCodeToRate, order_rating: currentRating, order_review: comment });
     if (error) throw error;
-    
-    localStorage.setItem('rated_' + currentOrderCodeToRate, 'true');
-    localStorage.removeItem('ff_current_order_code'); 
-    
+    localStorage.setItem('rated_' + currentOrderCodeToRate, 'true'); localStorage.removeItem('ff_current_order_code'); 
     document.getElementById('ratingBoxContent').innerHTML = `<div style="padding: 30px 10px; animation: bounceIn 0.5s ease;"><div style="font-size: 64px; margin-bottom: 12px;">🎉</div><h3 style="color: var(--ok); margin-bottom: 8px; font-size:24px; font-weight:900;">¡Gracias por tu opinión!</h3><p style="color: var(--muted); font-size: 14px;">Tu calificación ha sido enviada con éxito.</p></div>`;
     setTimeout(() => { closeRatingModal(); toast("⭐ Calificación guardada. ¡Gracias!"); }, 2000);
   } catch (err) { console.error(err); toast("Error al guardar la calificación. Intenta de nuevo."); btn.disabled = false; btn.textContent = "Enviar calificación"; }
@@ -1437,27 +1171,15 @@ function go(view, subview = null){
   state.view = view;
   $$(".view").forEach(v => v.classList.add("hidden"));
   const el = document.getElementById("view-" + view); if (el) el.classList.remove("hidden");
-  
-  const searchWrap = document.getElementById("searchWrap");
-  if (searchWrap) searchWrap.style.display = view === "menu" ? "" : "none"; 
-  
-  const chipsEl = document.getElementById("chips");
-  if (chipsEl) chipsEl.style.display = view === "menu" ? "" : "none";
-  
+  const searchWrap = document.getElementById("searchWrap"); if (searchWrap) searchWrap.style.display = view === "menu" ? "" : "none"; 
+  const chipsEl = document.getElementById("chips"); if (chipsEl) chipsEl.style.display = view === "menu" ? "" : "none";
   $$(".nav-btn").forEach(b => b.classList.remove("active"));
-  if (view === 'guided' && subview === 'all') {
-      const btn = document.querySelector('.nav-btn[data-view="categories"]');
-      if (btn) btn.classList.add('active');
-  } else {
-      const btn = document.querySelector(`.nav-btn[data-view="${view}"]`);
-      if (btn) btn.classList.add('active');
-  }
-  
+  if (view === 'guided' && subview === 'all') { const btn = document.querySelector('.nav-btn[data-view="categories"]'); if (btn) btn.classList.add('active'); } 
+  else { const btn = document.querySelector(`.nav-btn[data-view="${view}"]`); if (btn) btn.classList.add('active'); }
   if (view !== "tracking") {
     if (window.trackingInterval) { clearInterval(window.trackingInterval); window.trackingInterval = null; }
     if (window.clientOrderChannel) { supabaseClient.removeChannel(window.clientOrderChannel); window.clientOrderChannel = null; }
   }
-
   if (view === "menu") renderMenu(); 
   if (view === "guided") renderGuided();
   if (view === "cart") renderCart(); 
@@ -1473,154 +1195,36 @@ function go(view, subview = null){
   nameInput.addEventListener("input", syncBtn);
   nameInput.addEventListener("keydown", function(e){ if (e.key === "Enter" && !startBtn.disabled) startBtn.click(); });
   syncBtn();
-
   startBtn.addEventListener("click", function(){
     var name = nameInput.value.trim(); if (!name) return;
     saveName(name); document.getElementById("botWelcome").classList.add("hidden");
-    
-    if (localStorage.getItem('ff_current_order_code')) {
-      go('tracking');
-    } else {
-      startGuidedFlow(); 
-    }
+    if (localStorage.getItem('ff_current_order_code')) { go('tracking'); } else { startGuidedFlow(); }
   });
 })();
 
-// ==========================================
-// LÓGICA DE COOKIES Y TEXTOS LEGALES
-// ==========================================
-function checkCookies() {
-  if (!localStorage.getItem('ff_cookies_accepted')) {
-    setTimeout(() => {
-      document.getElementById('cookieBanner').classList.remove('hidden');
-    }, 1500);
-  }
-}
-function acceptCookies() {
-  localStorage.setItem('ff_cookies_accepted', 'true');
-  document.getElementById('cookieBanner').classList.add('hidden');
-  toast("✅ Preferencias guardadas");
-}
+function checkCookies() { if (!localStorage.getItem('ff_cookies_accepted')) { setTimeout(() => { document.getElementById('cookieBanner').classList.remove('hidden'); }, 1500); } }
+function acceptCookies() { localStorage.setItem('ff_cookies_accepted', 'true'); document.getElementById('cookieBanner').classList.add('hidden'); toast("✅ Preferencias guardadas"); }
+
 const LEGAL_TEXTS = {
-  cookies: `
-    <h3>1. ¿Qué son las cookies?</h3>
-    <p>Este sitio web utiliza almacenamiento local (LocalStorage) y cookies técnicas para garantizar el correcto funcionamiento de la tienda y la aplicación.</p>
-    <h3>2. ¿Para qué las usamos?</h3>
-    <ul>
-      <li><strong>Carrito de compras:</strong> Para recordar los productos que has seleccionado si recargas la página.</li>
-      <li><strong>Preferencias de usuario:</strong> Para no pedirte tu nombre en cada visita.</li>
-      <li><strong>Sesión:</strong> Para mantener tu pedido activo y su rastreo en tiempo real.</li>
-    </ul>
-    <h3>3. Cookies de terceros</h3>
-    <p>No utilizamos cookies de rastreo publicitario sin tu consentimiento. La información de pago y pedidos se almacena de forma segura en Supabase.</p>
-    <h3>4. ¿Cómo desactivarlas?</h3>
-    <p>Puedes borrar estas cookies y el almacenamiento local en cualquier momento desde la configuración de tu navegador móvil o de escritorio.</p>
-  `,
-  privacy: `
-    <h3>1. Responsable del Tratamiento</h3>
-    <p>El restaurante (en adelante, "El Negocio") es el responsable de los datos personales que proporciones a través de esta aplicación.</p>
-    <h3>2. Datos que recopilamos</h3>
-    <p>Solo recopilamos la información estrictamente necesaria para procesar tu pedido:</p>
-    <ul>
-      <li>Nombre y apellido.</li>
-      <li>Número de teléfono / WhatsApp.</li>
-      <li>Ubicación GPS (solo si solicitas Delivery) para que el repartidor pueda encontrarte.</li>
-      <li>Dirección o punto de referencia.</li>
-      <li>Comprobante de pago (opcional).</li>
-    </ul>
-    <h3>3. Uso de los datos</h3>
-    <p>Tus datos son utilizados exclusivamente para la gestión del pedido, la entrega del mismo y la comunicación contigo en caso de algún problema con tu orden. <strong>Garantizamos que tus datos personales no serán revelados, vendidos ni compartidos con terceros ajenos al restaurante.</strong></p>
-    <h3>4. Seguridad</h3>
-    <p>La información se almacena en servidores seguros (Supabase) con protocolos de encriptación. Solo el administrador del restaurante y el repartidor asignado tienen acceso a los datos de entrega.</p>
-    <h3>5. Tus Derechos</h3>
-    <p>Puedes solicitar la eliminación de tus datos personales contactando al WhatsApp del restaurante.</p>
-  `,
-  terms: `
-    <h3>1. Uso de la Plataforma</h3>
-    <p>Esta aplicación es una herramienta tecnológica que permite a los clientes realizar pedidos a domicilio o para retirar en el local. Al confirmar un pedido, aceptas los precios y condiciones mostrados en el carrito.</p>
-    <h3>2. Precios y Pagos</h3>
-    <p>Los precios se muestran en la moneda base y su equivalente calculados a la tasa del día. El pago se realiza mediante los métodos habilitados. El pedido será procesado una vez se verifique el pago correspondiente.</p>
-    <h3>3. Entregas y Tiempos</h3>
-    <p>Los tiempos de entrega estimados son referenciales y pueden variar por condiciones climáticas, tráfico o alta demanda. El cliente debe proporcionar una ubicación GPS precisa; de lo contrario, la entrega podría retrasarse o cancelarse.</p>
-    <h3>4. Cancelaciones</h3>
-    <p>Una vez el pedido entra en estado "En Preparación", no se aceptan cancelaciones ni reembolsos, ya que los insumos han sido procesados.</p>
-    <h3>5. Calificaciones</h3>
-    <p>Al finalizar el pedido, el sistema te permitirá calificar el servicio. Las calificaciones menores a 3 estrellas serán revisadas por el administrador para mejorar la calidad.</p>
-  `
+  cookies: `<h3>1. ¿Qué son las cookies?</h3><p>Este sitio web utiliza almacenamiento local (LocalStorage) y cookies técnicas para garantizar el correcto funcionamiento de la tienda y la aplicación.</p><h3>2. ¿Para qué las usamos?</h3><ul><li><strong>Carrito de compras:</strong> Para recordar los productos que has seleccionado si recargas la página.</li><li><strong>Preferencias de usuario:</strong> Para no pedirte tu nombre en cada visita.</li><li><strong>Sesión:</strong> Para mantener tu pedido activo y su rastreo en tiempo real.</li></ul><h3>3. Cookies de terceros</h3><p>No utilizamos cookies de rastreo publicitario sin tu consentimiento. La información de pago y pedidos se almacena de forma segura en Supabase.</p><h3>4. ¿Cómo desactivarlas?</h3><p>Puedes borrar estas cookies y el almacenamiento local en cualquier momento desde la configuración de tu navegador móvil o de escritorio.</p>`,
+  privacy: `<h3>1. Responsable del Tratamiento</h3><p>El restaurante (en adelante, "El Negocio") es el responsable de los datos personales que proporciones a través de esta aplicación.</p><h3>2. Datos que recopilamos</h3><p>Solo recopilamos la información estrictamente necesaria para procesar tu pedido:</p><ul><li>Nombre y apellido.</li><li>Número de teléfono / WhatsApp.</li><li>Ubicación GPS (solo si solicitas Delivery) para que el repartidor pueda encontrarte.</li><li>Dirección o punto de referencia.</li><li>Comprobante de pago (opcional).</li></ul><h3>3. Uso de los datos</h3><p>Tus datos son utilizados exclusivamente para la gestión del pedido, la entrega del mismo y la comunicación contigo en caso de algún problema con tu orden. <strong>Garantizamos que tus datos personales no serán revelados, vendidos ni compartidos con terceros ajenos al restaurante.</strong></p><h3>4. Seguridad</h3><p>La información se almacena en servidores seguros (Supabase) con protocolos de encriptación. Solo el administrador del restaurante y el repartidor asignado tienen acceso a los datos de entrega.</p><h3>5. Tus Derechos</h3><p>Puedes solicitar la eliminación de tus datos personales contactando al WhatsApp del restaurante.</p>`,
+  terms: `<h3>1. Uso de la Plataforma</h3><p>Esta aplicación es una herramienta tecnológica que permite a los clientes realizar pedidos a domicilio o para retirar en el local. Al confirmar un pedido, aceptas los precios y condiciones mostrados en el carrito.</p><h3>2. Precios y Pagos</h3><p>Los precios se muestran en la moneda base y su equivalente calculados a la tasa del día. El pago se realiza mediante los métodos habilitados. El pedido será procesado una vez se verifique el pago correspondiente.</p><h3>3. Entregas y Tiempos</h3><p>Los tiempos de entrega estimados son referenciales y pueden variar por condiciones climáticas, tráfico o alta demanda. El cliente debe proporcionar una ubicación GPS precisa; de lo contrario, la entrega podría retrasarse o cancelarse.</p><h3>4. Cancelaciones</h3><p>Una vez el pedido entra en estado "En Preparación", no se aceptan cancelaciones ni reembolsos, ya que los insumos han sido procesados.</p><h3>5. Calificaciones</h3><p>Al finalizar el pedido, el sistema te permitirá calificar el servicio. Las calificaciones menores a 3 estrellas serán revisadas por el administrador para mejorar la calidad.</p>`
 };
 function openLegal(type) {
   const titleEl = document.getElementById('legalTitle');
   const contentEl = document.getElementById('legalContent');
-  
   if (type === 'cookies') titleEl.textContent = "Política de Cookies";
   if (type === 'privacy') titleEl.textContent = "Política de Privacidad";
   if (type === 'terms') titleEl.textContent = "Términos y Condiciones";
-
   contentEl.innerHTML = LEGAL_TEXTS[type] || "Información no disponible.";
   document.getElementById('legalModal').classList.remove('hidden');
 }
-function closeLegal() {
-  document.getElementById('legalModal').classList.add('hidden');
-}
+function closeLegal() { document.getElementById('legalModal').classList.add('hidden'); }
 
-document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible' && state.view === 'tracking') {
-    if (window.fetchCurrentTracking) window.fetchCurrentTracking();
-  }
-});
-
-async function init(){
-  loadLocal();
-  
-  if (state.clientName) {
-    document.getElementById("botNameInput").value = state.clientName;
-    document.getElementById("botStartBtn").disabled = false;
-  } else {
-    document.getElementById("botNameInput").value = "";
-    document.getElementById("botStartBtn").disabled = true;
-  }
-
-  $$(".nav-btn").forEach(b => {
-    b.onclick = () => {
-      if (b.dataset.view === 'guided') {
-        startGuidedFlow();
-      } else if (b.dataset.view === 'categories') {
-        showAllCategories();
-      } else {
-        go(b.dataset.view);
-      }
-    };
-  });
-
-  // 1. Esperamos a que los datos (colores y logos) estén listos
-  const loaded = await loadSharedData();
-  
-  if (!loaded) {
-    console.warn("No se pudieron cargar los datos de la nube. Mostrando modo offline o vacío.");
-  }
-
-  // 2. Mostramos la app y el welcome (ya con los colores correctos)
-  document.getElementById("app").classList.remove("hidden-app");
-  document.getElementById("botWelcome").classList.remove("hidden");
-
-  checkStoreStatus(); setInterval(checkStoreStatus, 60000);
-  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
-  
-  fetchExchangeRate();
-  
-  $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
-  $("#btnHelp").onclick = () => go("help");
-
-  checkCookies();
-}
-// ==========================================
-// LÓGICA PWA (APP CLIENTE)
-// ==========================================
 let deferredPromptClient;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPromptClient = e;
-  // Mostramos el banner solo si no está ya instalada
   if (window.matchMedia('(display-mode: standalone)').matches) return;
   const banner = document.getElementById('installBannerClient');
   if (banner) banner.classList.remove('hidden');
@@ -1640,6 +1244,41 @@ function installClientApp() {
     alert("Para instalar la app:\n\n1. Abre el menú de tu navegador (los 3 puntos).\n2. Selecciona 'Añadir a pantalla de inicio'.");
   }
 }
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && state.view === 'tracking') {
+    if (window.fetchCurrentTracking) window.fetchCurrentTracking();
+  }
+});
+
+async function init(){
+  loadLocal();
+  if (state.clientName) {
+    document.getElementById("botNameInput").value = state.clientName;
+    document.getElementById("botStartBtn").disabled = false;
+  } else {
+    document.getElementById("botNameInput").value = "";
+    document.getElementById("botStartBtn").disabled = true;
+  }
+  $$(".nav-btn").forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.view === 'guided') { startGuidedFlow(); }
+      else if (b.dataset.view === 'categories') { showAllCategories(); }
+      else { go(b.dataset.view); }
+    };
+  });
+  const loaded = await loadSharedData();
+  if (!loaded) { console.warn("No se pudieron cargar los datos de la nube. Mostrando modo offline o vacío."); }
+  document.getElementById("app").classList.remove("hidden-app");
+  document.getElementById("botWelcome").classList.remove("hidden");
+  checkStoreStatus(); setInterval(checkStoreStatus, 60000);
+  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
+  fetchExchangeRate();
+  $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
+  $("#btnHelp").onclick = () => go("help");
+  checkCookies();
+}
+
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
