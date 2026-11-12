@@ -342,6 +342,45 @@ window.addEventListener('beforeinstallprompt', (e) => {
   deferredPrompt = e;
 });
 
+// =========================================
+// GENERADORES DE ESTADOS (UI HELPERS)
+// =========================================
+function getLoadingHTML(type = 'list', count = 3) {
+  let html = '';
+  if (type === 'list') {
+    for(let i=0; i<count; i++) {
+      html += `<div class="skeleton skeleton-card"></div>`;
+    }
+  } else if (type === 'menu') {
+    for(let i=0; i<count; i++) {
+      html += `<div class="card" style="pointer-events:none;"><div class="skeleton skeleton-img"></div><div style="padding:20px;"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div></div>`;
+    }
+  } else if (type === 'text') {
+    html = `<div class="skeleton skeleton-text" style="width:100%;"></div><div class="skeleton skeleton-text" style="width:70%;"></div><div class="skeleton skeleton-text" style="width:90%;"></div>`;
+  }
+  return html;
+}
+
+function getEmptyHTML(title, desc, icon = '📭', btnHtml = '') {
+  return `
+    <div class="state-container">
+      <div class="state-icon">${icon}</div>
+      <div class="state-title">${title}</div>
+      <div class="state-desc">${desc}</div>
+      ${btnHtml}
+    </div>`;
+}
+
+function getErrorHTML(message, retryFunctionName) {
+  return `
+    <div class="state-container">
+      <div class="state-icon" style="color:var(--danger);">⚠️</div>
+      <div class="state-title">Algo salió mal</div>
+      <div class="state-desc">${message}</div>
+      <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
+    </div>`;
+}
+  
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
