@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel Admin — DLV Food</title>
+<title>Panel Admin — Rapid Burger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
@@ -33,7 +33,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0
 textarea{resize:vertical;min-height:80px}
 .hidden{display:none !important}
 
-/* Botón de Soporte en móvil */
 .btn-header-support {
   color: var(--ok); font-size: 11px; font-weight: 700;
   padding: 6px 8px; border-radius: 8px; background: var(--ok-soft);
@@ -211,83 +210,23 @@ textarea{resize:vertical;min-height:80px}
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty .big{font-size:52px;opacity:.35;margin-bottom:14px;}
 
-/* =========================================
-   DISEÑO RESPONSIVO (MÓVILES Y TABLETS)
-   ========================================= */
 @media(max-width:860px){
   .app{flex-direction:column}
-  
-  /* Barra Superior Fija */
-  .sidebar{
-    width:100%; height:auto; position:sticky; top:0; z-index:100;
-    flex-direction:column; padding:0; border-right:none; border-bottom:1px solid var(--line);
-    background:var(--surface);
-  }
-  
-  /* Header del Logo con Botones */
-  .sb-brand{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:12px 16px; margin:0; border:none;
-  }
-  
+  .sidebar{ width:100%; height:auto; position:sticky; top:0; z-index:100; flex-direction:column; padding:0; border-right:none; border-bottom:1px solid var(--line); background:var(--surface); }
+  .sb-brand{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; margin:0; border:none; }
   .sb-brand-text { margin-right: auto; margin-left: 10px; }
   .sb-brand-text h1{font-size:15px;}
   .sb-brand-text p{font-size:11px;}
-  
-  .sb-brand-actions {
-    display: flex; gap: 6px; align-items: center;
-  }
-  
-  .btn-header-support {
-    display: flex;
-    color: var(--ok); font-size: 11px; font-weight: 700;
-    padding: 6px 8px; border-radius: 8px; background: var(--ok-soft);
-    text-decoration: none; align-items: center; gap: 4px;
-  }
-  
-  .btn-header-install {
-    color: var(--brand-d); font-size: 11px; font-weight: 700;
-    padding: 6px 8px; border-radius: 8px; background: var(--brand-soft);
-    display: block;
-  }
-  .btn-header-logout {
-    color: var(--danger); font-size: 11px; font-weight: 700;
-    padding: 6px 8px; border-radius: 8px; background: var(--danger-soft);
-  }
-
-  /* Navegación Distribuida (Grid de 4 columnas) */
-  .sb-nav{
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 0 12px 16px;
-    overflow: visible;
-    flex: none;
-  }
-  .sb-nav button, .sb-nav a.nav-link-btn{
-    flex-direction: column;
-    justify-content: center;
-    padding: 10px 4px;
-    background: var(--surface-2);
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 600;
-    white-space: normal;
-    text-align: center;
-    position: relative;
-    line-height: 1.2;
-  }
+  .sb-brand-actions { display: flex; gap: 6px; align-items: center; }
+  .btn-header-support { display: flex; }
+  .btn-header-install { color: var(--brand-d); font-size: 11px; font-weight: 700; padding: 6px 8px; border-radius: 8px; background: var(--brand-soft); display: block; }
+  .btn-header-logout { color: var(--danger); font-size: 11px; font-weight: 700; padding: 6px 8px; border-radius: 8px; background: var(--danger-soft); }
+  .sb-nav{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 12px 16px; overflow: visible; flex: none; }
+  .sb-nav button, .sb-nav a.nav-link-btn{ flex-direction: column; justify-content: center; padding: 10px 4px; background: var(--surface-2); border-radius: 12px; font-size: 10px; font-weight: 600; white-space: normal; text-align: center; position: relative; line-height: 1.2; }
   .sb-nav button .ico, .sb-nav a.nav-link-btn .ico{ font-size: 22px; margin-bottom: 4px; width: auto; }
-  .sb-nav button .count{
-    position: absolute;
-    top: 6px; right: 6px;
-    margin: 0; padding: 2px 5px;
-    font-size: 9px;
-    min-width: 16px; height: 16px;
-  }
+  .sb-nav button .count{ position: absolute; top: 6px; right: 6px; margin: 0; padding: 2px 5px; font-size: 9px; min-width: 16px; height: 16px; }
   .sb-nav button.active{ background: var(--brand); color: #fff; }
   .sb-nav button.active .count{ background: #fff; color: var(--brand); }
-  
   .sb-footer{display:none;}
   .main{padding:16px;}
   .welcome-card{padding:20px; margin-bottom:16px;}
@@ -369,22 +308,16 @@ textarea{resize:vertical;min-height:80px}
 </script>
 
 <script>
-// =========================================
-// LÓGICA DE PWA
-// =========================================
 let deferredPrompt;
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('Error al registrar SW:', err));
   });
 }
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 });
-
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
@@ -397,12 +330,9 @@ function installPWA() {
   }
 }
 
-// =========================================
-// LÓGICA PRINCIPAL DE LA APP
-// =========================================
 var DB = { config: null, cats: [], menu: [], orders: [] };
 var DEFAULT_CONFIG = {
-  brand: "Rapid Burger", logo: "", whatsapp: "584121234567", phoneCall: "+584121234567",
+  brand: "Rapid Burger", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
   hours: { open: "11:00", close: "23:00" }, 
   days: [1, 2, 3, 4, 5, 6, 0],
@@ -543,7 +473,11 @@ async function checkAuth() {
       window.currentAdminUser = session.user.email; 
       if (DB.config) {
         document.getElementById("sbBrandName").textContent = DB.config.brand;
-        document.getElementById("sbLogo").innerHTML = DB.config.logo ? `<img src="${esc(DB.config.logo)}">` : "⚙️";
+        if(DB.config.logo && DB.config.logo.startsWith('http')) {
+           document.getElementById("sbLogo").innerHTML = `<img src="${esc(DB.config.logo)}">`;
+        } else {
+           document.getElementById("sbLogo").textContent = DB.config.logo || "⚙️";
+        }
       }
       startPolling(); 
     } catch(error) { console.error("Error cargando datos:", error); }
@@ -633,23 +567,13 @@ async function dbSaveConfig() {
 
 async function dbSaveMenu() {
   if (!DB.menu.length) return;
-  
   const payload = DB.menu.map(p => ({
     ...(p.id && !p.id.startsWith('temp-') ? { id: p.id } : {}),
-    category_id: p.cat,
-    name: p.name,
-    price: p.price,
-    emoji: p.emoji,
-    badge: p.badge || null,
-    img: p.img || null,
-    description: p.desc,
-    extras: p.extras,
-    available: p.available !== false
+    category_id: p.cat, name: p.name, price: p.price, emoji: p.emoji,
+    badge: p.badge || null, img: p.img || null, description: p.desc,
+    extras: p.extras, available: p.available !== false
   }));
-
-  // FIX: defaultToNull: false evita el error de "null value in column id"
   const { data, error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id', defaultToNull: false }).select();
-  
   if (error) throw error;
   if (data) DB.menu = data.map(p => ({ ...p, cat: String(p.category_id), desc: p.description, extras: p.extras || [], available: p.available !== false }));
 }
@@ -673,22 +597,18 @@ function setupOrderListener() {
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
-      console.log("🔔 Nuevo pedido recibido:", newOrder);
-      
       if (notificationsEnabled) playNotificationSound();
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification('🔔 ¡Nuevo Pedido!', {
             body: `Pedido ${newOrder.code} de ${newOrder.customer.name}\nTotal: $${newOrder.total}`,
-            icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
-            badge: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+            icon: DB.config.logo || "/icon-512.png",
             vibrate: [200, 100, 200, 100, 200, 100, 200],
-            requireInteraction: true, renotify: true, silent: false, tag: 'nuevo-pedido'
+            requireInteraction: true, tag: 'nuevo-pedido'
           });
         });
       }
       toast(`🔔 ¡Nuevo Pedido ${newOrder.code}!`);
-      
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
@@ -696,8 +616,6 @@ function setupOrderListener() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
-      console.log("🔄 Actualización recibida:", updatedOrder);
-
       const index = DB.orders.findIndex(o => o.id === updatedOrder.id);
       if (index !== -1) {
         DB.orders[index] = { ...DB.orders[index], ...updatedOrder };
@@ -711,7 +629,7 @@ function setupOrderListener() {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('⭐ ¡Cliente ha calificado!', {
               body: `Pedido ${updatedOrder.code}: ${updatedOrder.rating} estrellas.\n"${updatedOrder.review_text || 'Sin comentario'}"`,
-              icon: DB.config.logo || "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+              icon: DB.config.logo || "/icon-512.png",
               vibrate: [200, 100, 200],
               requireInteraction: true, tag: 'nueva-calificacion'
             });
@@ -722,17 +640,13 @@ function setupOrderListener() {
 
       if (state.tab === 'orders') renderOrders($("#main"));
       else if (state.tab === 'home') renderHome($("#main"));
-      
       updateAppBadge();
     })
-    .subscribe((status) => {
-      console.log("📡 Estado de conexión Realtime Supabase:", status);
-    });
+    .subscribe();
 }
 
 function handleAppVisibility() {
   if (document.visibilityState === 'visible') {
-    console.log("App en primer plano. Sincronizando datos...");
     dbLoad().then(() => {
       setupOrderListener();
       if (state.tab === 'orders') renderOrders($("#main"));
@@ -748,9 +662,7 @@ function startPolling() {
   pollingInterval = setInterval(() => {
     if (document.visibilityState === 'visible') {
       dbLoad().then(() => {
-        if (state.tab === 'orders' || state.tab === 'home') {
-          render();
-        }
+        if (state.tab === 'orders' || state.tab === 'home') render();
       });
     }
   }, 30000);
@@ -797,7 +709,7 @@ function renderHome(m) {
   let alertHtml = "";
   if (pendingOrders > 0) {
     alertHtml = `
-      <div class="card" style="margin-bottom:24px; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); background:var(--brand-soft); cursor:pointer; transition:transform 0.2s;" onclick="document.querySelector('.sb-nav button[data-tab=\\'orders\\']').click();" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+      <div class="card" style="margin-bottom:24px; border: 1px solid #FFD6C2; border-left: 4px solid var(--brand); background:var(--brand-soft); cursor:pointer;" onclick="document.querySelector('.sb-nav button[data-tab=\\'orders\\']').click();">
         <div class="card-body" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px;">
           <div>
             <h3 style="margin:0 0 4px; color:var(--brand-d); font-size:16px;">🔔 Tienes ${pendingOrders} pedido(s) pendiente(s)</h3>
@@ -932,13 +844,20 @@ function renderBusiness(m) {
         <div class="field full"><label>Nombre del negocio</label><input type="text" id="bBrand" value="${esc(DB.config.brand)}"></div>
         
         <div class="field full">
-          <label>Logo del Negocio</label>
+          <label>Logo del Negocio (Pega una URL o escribe un Emoji)</label>
           <div style="display:flex; gap:12px; align-items:center;">
-            <div id="logoPreview" style="width:60px; height:60px; border-radius:12px; background:var(--surface-2); display:grid; place-items:center; overflow:hidden; border:1px solid var(--line); flex-shrink: 0;">
-              ${DB.config.logo ? `<img src="${DB.config.logo}" style="width:100%;height:100%;object-fit:cover;">` : '🍔'}
+            <div id="logoPreview" style="width:60px; height:60px; border-radius:12px; background:var(--surface-2); display:grid; place-items:center; overflow:hidden; border:1px solid var(--line); font-size:30px; flex-shrink: 0;">
+              ${DB.config.logo && DB.config.logo.startsWith('http') ? `<img src="${DB.config.logo}" style="width:100%;height:100%;object-fit:cover;">` : (DB.config.logo || '🍔')}
             </div>
-            <input type="file" id="bLogoFile" accept="image/*" style="flex:1; padding:8px; background:var(--surface-2); border-radius:8px; border:1px solid var(--line); font-size:12px;" onchange="uploadLogo(event)">
-            <input type="hidden" id="bLogoUrl" value="${esc(DB.config.logo || '')}">
+            <input type="text" id="bLogoUrl" value="${esc(DB.config.logo || '')}" placeholder="Ej: 🍔 o https://..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--line);" oninput="
+              if(this.value.startsWith('http')) {
+                document.getElementById('logoPreview').innerHTML = '<img src=\''+this.value+'\' style=\'width:100%;height:100%;object-fit:cover;\'>';
+              } else {
+                document.getElementById('logoPreview').innerHTML = this.value || '🍔';
+              }
+            ">
+            <input type="file" id="bLogoFile" accept="image/*" style="display:none;" onchange="uploadLogo(event)">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bLogoFile').click()">Subir Foto</button>
           </div>
         </div>
 
@@ -1021,7 +940,6 @@ async function uploadLogo(e) {
   const fileExt = file.name.split('.').pop();
   const fileName = `logo-${Date.now()}.${fileExt}`;
   
-  // 1. Subir imagen a Supabase Storage
   const { error } = await supabaseClient.storage.from('productos').upload(fileName, file);
   
   if (error) {
@@ -1031,20 +949,16 @@ async function uploadLogo(e) {
   
   const { data } = supabaseClient.storage.from('productos').getPublicUrl(fileName);
   
-  // 2. Actualizar la vista previa en el Admin
   document.getElementById("bLogoUrl").value = data.publicUrl;
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
   document.getElementById("sbLogo").innerHTML = `<img src="${data.publicUrl}">`;
   
-  // 3. GUARDAR AUTOMÁTICAMENTE EN LA BASE DE DATOS (Sin necesidad de presionar Guardar)
   await supabaseClient.from('config').update({ logo: data.publicUrl }).eq('id', 1);
   
-  // 4. ACTUALIZAR LA CACHÉ DEL NAVEGADOR (Para que el index lo tome ya)
   let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
   cached.logo = data.publicUrl;
   localStorage.setItem('ff_config_cache', JSON.stringify(cached));
   
-  // 5. Actualizar el objeto local
   DB.config.logo = data.publicUrl;
 
   toast("✅ Logo actualizado en toda la app");
@@ -1076,10 +990,13 @@ async function saveBusiness() {
   try {
     await dbSaveConfig();
     
-    // Actualizar el Sidebar del Admin inmediatamente
     document.getElementById("sbBrandName").textContent = DB.config.brand;
     if (DB.config.logo) {
-      document.getElementById("sbLogo").innerHTML = `<img src="${esc(DB.config.logo)}">`;
+      if (DB.config.logo.startsWith('http')) {
+        document.getElementById("sbLogo").innerHTML = `<img src="${esc(DB.config.logo)}">`;
+      } else {
+        document.getElementById("sbLogo").textContent = DB.config.logo;
+      }
     } else {
       document.getElementById("sbLogo").innerHTML = "⚙️";
     }
@@ -1087,7 +1004,6 @@ async function saveBusiness() {
     if (DB.config.manualRate > 0) { EXCHANGE_RATE = DB.config.manualRate; }
     else { fetchExchangeRate(); }
 
-    // 👇 LA MAGIA: Forzamos la actualización de la caché para que el index tome el nuevo logo de inmediato
     let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
     cached.brand = DB.config.brand;
     cached.logo = DB.config.logo;
@@ -1095,7 +1011,7 @@ async function saveBusiness() {
     cached.bg_color = DB.config.bg_color;
     localStorage.setItem('ff_config_cache', JSON.stringify(cached));
 
-    toast('✅ Información y Logo actualizados');
+    toast('✅ Información del negocio actualizada');
     render(); 
   } catch (e) {
     console.error(e);
