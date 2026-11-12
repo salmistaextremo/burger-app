@@ -267,7 +267,6 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .btn-retry { background: var(--surface-2); color: var(--brand); border: 1px solid var(--line); padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
 .btn-retry:hover { background: var(--brand-soft); border-color: var(--brand); }
 
-/* Esqueletos de Carga (Skeletons) */
 .skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
 @keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 .skeleton-card { height: 120px; border-radius: 20px; margin-bottom: 16px; }
@@ -549,9 +548,7 @@ var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'd
 function getLoadingHTML(type = 'list', count = 3) {
   let html = '';
   if (type === 'list') {
-    for(let i=0; i<count; i++) {
-      html += `<div class="skeleton skeleton-card"></div>`;
-    }
+    for(let i=0; i<count; i++) { html += `<div class="skeleton skeleton-card"></div>`; }
   } else if (type === 'menu') {
     for(let i=0; i<count; i++) {
       html += `<div class="card" style="pointer-events:none;"><div class="skeleton skeleton-img"></div><div style="padding:20px;"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div></div>`;
@@ -563,23 +560,11 @@ function getLoadingHTML(type = 'list', count = 3) {
 }
 
 function getEmptyHTML(title, desc, icon = '📭', btnHtml = '') {
-  return `
-    <div class="state-container">
-      <div class="state-icon">${icon}</div>
-      <div class="state-title">${title}</div>
-      <div class="state-desc">${desc}</div>
-      ${btnHtml}
-    </div>`;
+  return `<div class="state-container"><div class="state-icon">${icon}</div><div class="state-title">${title}</div><div class="state-desc">${desc}</div>${btnHtml}</div>`;
 }
 
 function getErrorHTML(message, retryFunctionName) {
-  return `
-    <div class="state-container">
-      <div class="state-icon" style="color:var(--danger);">⚠️</div>
-      <div class="state-title">Algo salió mal</div>
-      <div class="state-desc">${message}</div>
-      <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
-    </div>`;
+  return `<div class="state-container"><div class="state-icon" style="color:var(--danger);">⚠️</div><div class="state-title">Algo salió mal</div><div class="state-desc">${message}</div><button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button></div>`;
 }
 
 // =========================================
@@ -1167,7 +1152,7 @@ async function submitOrder() {
 
   var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
   const { error } = await supabaseClient.from('orders').insert([orderData]);
-    const { error } = await supabaseClient.from('orders').insert([orderData]);
+  
   if (error) { 
     console.error("Error de Supabase:", error); 
     alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); 
@@ -1178,7 +1163,7 @@ async function submitOrder() {
   }
 
   saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; state.proofFile = null; saveCart(); updateBadge();
-    localStorage.setItem('ff_current_order_code', code);
+  localStorage.setItem('ff_current_order_code', code);
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); 
   toast("Pedido enviado con éxito"); 
   
@@ -1202,16 +1187,17 @@ async function renderTracking() {
   function updateTrackingUI(order) {
     var stages = CONFIG.stages[order.type]; var currentStageIndex = stages.findIndex(s => s.key === order.status); if (currentStageIndex === -1) currentStageIndex = 0;
     var currentStage = stages[currentStageIndex]; var progress = (currentStageIndex / (stages.length - 1)) * 100;
-        let rateBtnHtml = ""; const isRated = localStorage.getItem('rated_' + order.code);
+    
+    let rateBtnHtml = ""; 
+    const isRated = localStorage.getItem('rated_' + order.code);
     if (order.status === 'entregado') {
       if (!order.client_confirmed) {
-        // El repartidor lo entregó, pero el cliente no ha confirmado
-        rateBtnHtml = `<button class="btn btn-primary" onclick="confirmOrderReceived('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #10B981, #059669); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); color: #fff;">✅ Confirmar Recepción</button>`;
+        rateBtnHtml = `<button class="btn btn-primary" onclick="confirmOrderReceived('${order.code}', this)" style="margin-top:20px; background:linear-gradient(135deg, #10B981, #059669); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); color: #fff;">✅ Confirmar Recepción</button>`;
       } else if (!order.rating && !isRated) {
-        // El cliente ya confirmó, ahora sí puede calificar
         rateBtnHtml = `<button class="btn btn-primary" onclick="openRatingModal('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`;
       }
     }
+
     trackDiv.innerHTML = `<div style="padding:0 20px;"><div style="background:var(--surface); border-radius:24px; padding:24px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden; margin-bottom:24px;"><div style="position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-80px;background:radial-gradient(circle, var(--brand-soft), transparent 70%);"></div><div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--brand);font-weight:800;position:relative;z-index:1;">Pedido</div><div style="font-size:48px;font-weight:900;letter-spacing:-2px;margin:4px 0 12px;position:relative;z-index:1;color:var(--ink);">${esc(order.code)}</div><div style="display:inline-flex;align-items:center;gap:8px;background:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;position:relative;z-index:1;"><span style="width:8px;height:8px;border-radius:50%;background:var(--brand);animation:pulse 1.6s infinite;"></span>${currentStage.label}</div><div style="height:8px;border-radius:99px;background:var(--bg);margin-top:20px;overflow:hidden;position:relative;z-index:1;"><i style="display:block;height:100%;border-radius:99px;background:var(--brand);width:${progress}%;transition:width .8s cubic-bezier(.2,.9,.3,1);"></i></div><div style="margin-top:24px;position:relative;z-index:1;">${stages.map((s, i) => `<div style="display:flex;gap:16px;padding:12px 0;opacity:${i < currentStageIndex ? '1' : i === currentStageIndex ? '1' : '0.4'};transition:.4s;"><div style="width:32px;height:32px;border-radius:50%;background:${i < currentStageIndex ? 'var(--ok)' : i === currentStageIndex ? 'var(--brand)' : 'var(--bg)'};display:grid;place-items:center;font-size:16px;flex:none;color:${i <= currentStageIndex ? '#fff' : 'var(--muted)'};box-shadow:${i === currentStageIndex ? '0 0 0 4px var(--brand-soft)' : 'none'};transition:.3s;">${s.icon}</div><div><h5 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">${s.label}</h5><p style="margin:4px 0 0;font-size:12px;color:var(--muted);">${s.desc}</p></div></div>`).join("")}</div>${rateBtnHtml}</div></div>`;
   }
   
@@ -1229,12 +1215,9 @@ async function renderTracking() {
   window.trackingInterval = setInterval(() => { if (document.visibilityState === 'visible') { fetchOrderAndUpdate(); } }, 5000);
 }
 
-function lookupOrder() { var code = $("#lookupInput").value.trim().toUpperCase(); if (!code) return; localStorage.setItem('ff_current_order_code', code); renderTracking(); }
-
-async function confirmOrderReceived(code) {
+async function confirmOrderReceived(code, btn) {
   if(!confirm("¿Confirmas que ya recibiste tu pedido en perfectas condiciones?")) return;
   
-  const btn = event.target;
   btn.disabled = true;
   btn.innerHTML = "Confirmando...";
 
@@ -1249,13 +1232,14 @@ async function confirmOrderReceived(code) {
 
   toast("¡Gracias por confirmar!");
   
-  // Forzamos la actualización visual inmediata
   if (window.fetchCurrentTracking) window.fetchCurrentTracking();
   
-  // Esperamos 1 segundo (para que el botón cambie) y abrimos la ventana de calificación
+  // Abrimos la ventana de calificación
   setTimeout(() => { openRatingModal(code); }, 1000);
 }
-  
+
+function lookupOrder() { var code = $("#lookupInput").value.trim().toUpperCase(); if (!code) return; localStorage.setItem('ff_current_order_code', code); renderTracking(); }
+
 let currentRating = 0; let currentOrderCodeToRate = null;
 function openRatingModal(orderCode) {
   currentOrderCodeToRate = orderCode; currentRating = 0;
