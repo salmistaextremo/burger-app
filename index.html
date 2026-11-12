@@ -767,6 +767,60 @@ function findProduct(id){ return MENU.find(p => p.id === id); }
 function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'guided') renderGuided(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
 
+function setupCatalogRealtime() {
+  if (window.clientCatalogChannel) { supabaseClient.removeChannel(window.clientCatalogChannel); }
+  
+  window.clientCatalogChannel = supabaseClient.channel('client-catalog')
+    // --- ESCUCHAR PRODUCTOS ---
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+      console.log("🔄 Menú actualizado desde el Admin:", payload);
+      
+      if (payload.eventType === 'INSERT') {
+        const newProd = { ...payload.new, cat: String(payload.new.category_id), desc: payload.new.description, extras: payload.new.extras || [], available: payload.new.available !== false };
+        if(!MENU.find(p => p.id === newProd.id)) MENU.push(newProd);
+        toast("✨ Se agregó un nuevo producto al menú");
+      } 
+      else if (payload.eventType === 'UPDATE') {
+        const index = MENU.findIndex(p => p.id === payload.new.id);
+        if (index !== -1) {
+          MENU[index] = { ...MENU[index], ...payload.new, cat: String(payload.new.category_id), desc: payload.new.description };
+          // Si se marcó como agotado, avisamos
+          if (payload.new.available === false && payload.old.available === true) {
+            toast("⚠️ Un producto se ha marcado como Agotado");
+          }
+        }
+      } 
+      else if (payload.eventType === 'DELETE') {
+        MENU = MENU.filter(p => p.id !== payload.old.id);
+        toast("🗑️ Un producto ha sido eliminado del menú");
+      }
+      
+      // Refrescamos la vista actual sin recargar la página
+      refreshCurrentView();
+      renderMenu(); 
+      if (state.view === 'guided') renderGuided();
+    })
+    // --- ESCUCHAR CATEGORÍAS ---
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
+      if (payload.eventType === 'INSERT') {
+        const newCat = { ...payload.new, id: String(payload.new.id) };
+        if(!CATS.find(c => c.id === newCat.id)) CATS.push(newCat);
+      } 
+      else if (payload.eventType === 'UPDATE') {
+        const index = CATS.findIndex(c => c.id === String(payload.new.id));
+        if (index !== -1) CATS[index] = { ...CATS[index], ...payload.new, id: String(payload.new.id) };
+      } 
+      else if (payload.eventType === 'DELETE') {
+        CATS = CATS.filter(c => c.id !== String(payload.old.id));
+      }
+      
+      renderChips();
+      renderMenu(); 
+      if (state.view === 'guided') renderGuided();
+    })
+    .subscribe();
+}
+  
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
@@ -1383,6 +1437,18 @@ async function init(){
   document.getElementById("guidedContent").innerHTML = getLoadingHTML('list', 3);
 
   const loaded = await loadSharedData();
+
+  if (!loaded) { 
+    document.getElementById("menuList").innerHTML = getErrorHTML("No pudimos cargar el menú. Revisa tu conexión.", "init");
+    document.getElementById("guidedContent").innerHTML = getErrorHTML("Error de conexión.", "init");
+    return; 
+  }
+  
+  // 👇 INICIAMOS LA ESCUCHA EN TIEMPO REAL
+  setupCatalogRealtime(); 
+
+  document.getElementById("app").classList.remove("hidden-app");
+  // ... (el resto de tu código de init)
   
   if (!loaded) { 
     document.getElementById("menuList").innerHTML = getErrorHTML("No pudimos cargar el menú. Revisa tu conexión.", "init");
