@@ -1167,12 +1167,26 @@ async function submitOrder() {
 
   var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
   const { error } = await supabaseClient.from('orders').insert([orderData]);
-  if (error) { console.error("Error de Supabase:", error); alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); }
+    const { error } = await supabaseClient.from('orders').insert([orderData]);
+  if (error) { 
+    console.error("Error de Supabase:", error); 
+    alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); 
+    // Restauramos el botón si falla la base de datos
+    btn.disabled = false;
+    btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+    return; 
+  }
 
   saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; state.proofFile = null; saveCart(); updateBadge();
-  localStorage.setItem('ff_current_order_code', code);
+    localStorage.setItem('ff_current_order_code', code);
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); 
-  toast("Pedido enviado con éxito"); go('tracking');
+  toast("Pedido enviado con éxito"); 
+  
+  // 👇 LA MAGIA: Restauramos el botón para el próximo pedido
+  btn.disabled = false;
+  btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+  
+  go('tracking');
 }
 
 async function renderTracking() {
