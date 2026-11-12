@@ -210,6 +210,27 @@ textarea{resize:vertical;min-height:80px}
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty .big{font-size:52px;opacity:.35;margin-bottom:14px;}
 
+/* =========================================
+   ESTADOS DE CARGA, VACÍO Y ERROR
+   ========================================= */
+.state-container {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; animation: fadeIn 0.3s ease; width: 100%;
+}
+.state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.8; }
+.state-title { font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.state-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; max-width: 300px; line-height: 1.5; }
+.btn-retry { background: var(--surface-2); color: var(--brand); border: 1px solid var(--line); padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-retry:hover { background: var(--brand-soft); border-color: var(--brand); }
+
+/* Esqueletos de Carga (Skeletons) */
+.skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
+@keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+.skeleton-card { height: 120px; border-radius: 20px; margin-bottom: 16px; }
+.skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
+.skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
+.skeleton-text.short { width: 50%; }
+
 @media(max-width:860px){
   .app{flex-direction:column}
   .sidebar{ width:100%; height:auto; position:sticky; top:0; z-index:100; flex-direction:column; padding:0; border-right:none; border-bottom:1px solid var(--line); background:var(--surface); }
@@ -239,28 +260,6 @@ textarea{resize:vertical;min-height:80px}
   .report-filters{flex-direction:column; align-items:stretch;}
   .form-grid{grid-template-columns:1fr;}
 }
-
-/* =========================================
-   ESTADOS DE CARGA, VACÍO Y ERROR
-   ========================================= */
-.state-container {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 20px; text-align: center; animation: fadeIn 0.3s ease; width: 100%;
-}
-.state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.8; }
-.state-title { font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
-.state-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; max-width: 300px; line-height: 1.5; }
-.btn-retry { background: var(--surface-2); color: var(--brand); border: 1px solid var(--line); padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.btn-retry:hover { background: var(--brand-soft); border-color: var(--brand); }
-
-/* Esqueletos de Carga (Skeletons) */
-.skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
-@keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-.skeleton-card { height: 120px; border-radius: 20px; margin-bottom: 16px; }
-.skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
-.skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
-.skeleton-text.short { width: 50%; }
-  
 </style>
 </head>
 <body>
@@ -336,11 +335,38 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('Error al registrar SW:', err));
   });
 }
-// 👇 ESTA ERA LA LÍNEA CON EL ERROR (Faltaba el =>)
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 });
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') { console.log('Instalación aceptada'); }
+      deferredPrompt = null;
+    });
+  } else {
+    alert("Para instalar la app en tu teléfono:\n\n1. Abre el menú de tu navegador (los 3 puntos).\n2. Selecciona 'Añadir a pantalla de inicio' o 'Instalar aplicación'.");
+  }
+}
+
+var DB = { config: null, cats: [], menu: [], orders: [] };
+var DEFAULT_CONFIG = {
+  brand: "Rapid Burger", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
+  mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
+  hours: { open: "11:00", close: "23:00" }, 
+  days: [1, 2, 3, 4, 5, 6, 0],
+  helpHoursText: "11:00 a 23:00", manualRate: 0,
+  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
+  primary_color: "#FF6B2C",
+  bg_color: "#F5F6F8"
+};
+
+var EXCHANGE_RATE = null;
+var state = { tab: "home" };
+var pollingInterval = null; 
 
 // =========================================
 // GENERADORES DE ESTADOS (UI HELPERS)
@@ -349,7 +375,7 @@ function getLoadingHTML(type = 'list', count = 3) {
   let html = '';
   if (type === 'list') {
     for(let i=0; i<count; i++) {
-      html += `<div class="skeleton skeleton-card"></div>`;
+      html += `<div class="skeleton skeleton-card" style="height:100px;"></div>`;
     }
   } else if (type === 'menu') {
     for(let i=0; i<count; i++) {
@@ -380,34 +406,6 @@ function getErrorHTML(message, retryFunctionName) {
       <button class="btn-retry" onclick="${retryFunctionName}()">🔄 Reintentar</button>
     </div>`;
 }
-  
-function installPWA() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') { console.log('Instalación aceptada'); }
-      deferredPrompt = null;
-    });
-  } else {
-    alert("Para instalar la app en tu teléfono:\n\n1. Abre el menú de tu navegador (los 3 puntos).\n2. Selecciona 'Añadir a pantalla de inicio' o 'Instalar aplicación'.");
-  }
-}
-
-var DB = { config: null, cats: [], menu: [], orders: [] };
-var DEFAULT_CONFIG = {
-  brand: "Rapid Burger", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
-  mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
-  hours: { open: "11:00", close: "23:00" }, 
-  days: [1, 2, 3, 4, 5, 6, 0],
-  helpHoursText: "11:00 a 23:00", manualRate: 0,
-  payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
-  primary_color: "#FF6B2C",
-  bg_color: "#F5F6F8"
-};
-
-var EXCHANGE_RATE = null;
-var state = { tab: "home" };
-var pollingInterval = null; 
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
@@ -543,7 +541,10 @@ async function checkAuth() {
         }
       }
       startPolling(); 
-    } catch(error) { console.error("Error cargando datos:", error); }
+    } catch(error) { 
+      console.error("Error cargando datos:", error); 
+      $("#main").innerHTML = getErrorHTML("No se pudo conectar con la base de datos. Verifica tu internet.", "dbLoad");
+    }
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
@@ -613,7 +614,10 @@ async function dbLoad() {
     if (ordersRes.data) DB.orders = ordersRes.data;
     
     updateAppBadge();
-  } catch(e) { console.error(e); }
+  } catch(e) { 
+    console.error(e); 
+    throw e;
+  }
 }
 
 async function dbSaveConfig() { 
@@ -798,10 +802,19 @@ function renderHome(m) {
 }
 
 function renderOrders(m) {
+  if (!DB.orders) {
+    m.innerHTML = `<div class="page-head"><h1 class="page-title">Pedidos</h1></div>` + getLoadingHTML('list', 3);
+    return;
+  }
+  
+  if (DB.orders.length === 0) {
+    m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>` + getEmptyHTML("Sin pedidos aún", "Cuando un cliente haga un pedido, aparecerá aquí en tiempo real.", "🧾");
+    return;
+  }
+
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Pedidos</h1></div></div>
-    ${DB.orders.length === 0 ? `<div class="empty"><div class="big">🧾</div><p>Sin pedidos aún</p></div>` :
-    `<div class="order-list">${DB.orders.map(o => {
+    <div class="order-list">${DB.orders.map(o => {
       const isPending = o.status !== 'entregado';
       const cardClass = isPending ? 'order-card pending' : 'order-card';
       const badgeStyle = o.status === 'entregado' ? 'background:var(--ok-soft); color:var(--ok);' : 'background:var(--brand); color:#fff;';
@@ -859,7 +872,7 @@ function renderOrders(m) {
           </select>
         </div>
       </div>`;
-    }).join("")}</div>`}
+    }).join("")}</div>
   `;
 }
 
@@ -997,7 +1010,7 @@ async function uploadLogo(e) {
   if (file.size > 2 * 1024 * 1024) return toast("La imagen es muy grande (máx 2MB)", "error");
   
   const btn = document.getElementById("bLogoFile");
-  btn.disabled = true; // Deshabilitamos para evitar doble clic
+  btn.disabled = true;
 
   const fileExt = file.name.split('.').pop();
   const fileName = `logo-${Date.now()}.${fileExt}`;
@@ -1016,7 +1029,6 @@ async function uploadLogo(e) {
   document.getElementById("logoPreview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover;">`;
   document.getElementById("sbLogo").innerHTML = `<img src="${data.publicUrl}">`;
   
-  // Guardado automático en la tabla config
   await supabaseClient.from('config').update({ logo: data.publicUrl }).eq('id', 1);
   
   let cached = JSON.parse(localStorage.getItem('ff_config_cache') || '{}');
@@ -1251,6 +1263,12 @@ function selectEmoji(emoji) {
 }
 
 function renderProducts(m) {
+  if (DB.menu.length === 0) {
+    m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button></div>` + 
+                  getEmptyHTML("Menú vacío", "Aún no has agregado productos a tu menú.", "🍔", `<button class="btn btn-primary" style="width:auto; padding:12px 24px;" onclick="openProductEditor(null)">Crear mi primer producto</button>`);
+    return;
+  }
+  
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Productos</h1></div><button class="btn btn-primary" onclick="openProductEditor(null)">＋ Nuevo producto</button></div>
     <div class="p-list">${DB.menu.map(p => {
@@ -1455,6 +1473,12 @@ async function saveProduct() {
 }
 
 function renderCategories(m) {
+  if (DB.cats.length === 0) {
+    m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Categorías</h1></div><button class="btn btn-primary" onclick="openCategoryEditor()">＋ Nueva categoría</button></div>` + 
+                  getEmptyHTML("Sin categorías", "Crea categorías para organizar tu menú.", "📁");
+    return;
+  }
+  
   m.innerHTML = `
     <div class="page-head">
       <div><h1 class="page-title">Categorías</h1></div>
@@ -1534,7 +1558,20 @@ async function deleteCategory(id) {
 }
 
 async function renderDrivers(m) {
+  m.innerHTML = `<div class="page-head"><h1 class="page-title">Repartidores</h1></div>` + getLoadingHTML('list', 2);
+  
   const { data: drivers, error } = await supabaseClient.from('drivers').select('*').order('created_at', { ascending: false });
+  
+  if (error) {
+    m.innerHTML = `<div class="page-head"><h1 class="page-title">Repartidores</h1></div>` + getErrorHTML("No se pudo cargar la lista de repartidores.", "renderDrivers");
+    return;
+  }
+  
+  if (!drivers || drivers.length === 0) {
+    m.innerHTML = `<div class="page-head"><div><h1 class="page-title">Repartidores</h1></div><button class="btn btn-primary" onclick="openDriverEditor()">＋ Nuevo Repartidor</button></div>` + 
+                  getEmptyHTML("Sin repartidores", "Agrega a tu equipo de entregas para que reciban pedidos.", "🛵", `<button class="btn btn-primary" style="width:auto; padding:12px 24px;" onclick="openDriverEditor()">Agregar Repartidor</button>`);
+    return;
+  }
   
   m.innerHTML = `
     <div class="page-head">
@@ -1542,8 +1579,7 @@ async function renderDrivers(m) {
       <button class="btn btn-primary" onclick="openDriverEditor()">＋ Nuevo Repartidor</button>
     </div>
     <div class="p-list">
-      ${(!drivers || drivers.length === 0) ? `<div class="empty"><div class="big">🛵</div><p>No hay repartidores registrados.</p></div>` : 
-        drivers.map(d => `
+      ${drivers.map(d => `
         <div class="p-card ${d.active ? '' : 'unavailable'}" style="align-items: center;">
           <div class="p-thumb" style="background:${d.active ? 'var(--brand-soft)' : 'var(--line)'}; font-size:24px; color:${d.active ? 'var(--brand)' : 'var(--muted)'}">
             ${d.active ? '🛵' : '🚫'}
