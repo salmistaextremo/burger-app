@@ -1051,6 +1051,10 @@ function renderBusiness(m) {
 
   document.getElementById('bPrimaryColor').addEventListener('input', (e) => document.getElementById('hexPrimary').textContent = e.target.value.toUpperCase());
   document.getElementById('bBgColor').addEventListener('input', (e) => document.getElementById('hexBg').textContent = e.target.value.toUpperCase());
+  document.getElementById('bPrimaryColor').addEventListener('input', (e) => {
+    document.getElementById('hexPrimary').textContent = e.target.value.toUpperCase();
+    applyBrandColors(e.target.value); // 👈 Previsualización en vivo
+  });
 }
 
 async function uploadLogo(e) {
