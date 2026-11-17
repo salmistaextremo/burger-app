@@ -649,7 +649,7 @@ async function loadSharedData(){
 
       const pColor = config.primary_color || '#FF5A1F';
       const bColor = config.bg_color || '#F7F8FA';
-      document.documentElement.style.setProperty('--brand', pColor);
+      applyBrandColors(pColor); // 👈 Usamos la nueva función
       document.documentElement.style.setProperty('--bg', bColor);
       
       localStorage.setItem('ff_config_cache', JSON.stringify({
