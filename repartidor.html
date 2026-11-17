@@ -198,17 +198,14 @@ function applyBrandColors(baseColor) {
 
   // CARGAR COLORES Y NOMBRE
   async function cargarColoresMarca() {
-    try {
-      const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
-      if (data) {
-        if (data.brand) document.title = `${data.brand} — Repartidor`;
-        if (data.primary_color) {
-          document.documentElement.style.setProperty('--brand', data.primary_color);
-          document.documentElement.style.setProperty('--brand-soft', data.primary_color + '1A'); 
-        }
-      }
-    } catch(e) { console.log("Error cargando colores de marca"); }
-  }
+  try {
+    const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
+    if (data) {
+      if (data.brand) document.title = `${data.brand} — Repartidor`;
+      if (data.primary_color) applyBrandColors(data.primary_color); // 👈 Usamos la nueva función
+    }
+  } catch(e) { console.log("Error cargando colores de marca"); }
+}
 
   // SONIDO DE CAMPANA
   function playNotificationSound() {
