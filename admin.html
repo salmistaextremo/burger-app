@@ -564,6 +564,7 @@ async function checkAuth() {
     document.getElementById("appContainer").classList.remove("hidden");
     checkNotificationState();
     setupPushNotifications();
+    applyBrandColors(DB.config.primary_color);
     try {
       await dbLoad(); render(); setupNav(); setupOrderListener(); fetchExchangeRate();
       window.currentAdminUser = session.user.email; 
@@ -584,7 +585,8 @@ async function checkAuth() {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
   }
-}
+
+  }
 
 function doLogin() {
   const email = document.getElementById("loginUser").value.trim();
