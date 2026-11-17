@@ -3,8 +3,8 @@
   "short_name": "DLV Food Admin",
   "start_url": "/admin.html",
   "display": "standalone",
-  "background_color": "#68030e",
-  "theme_color": "#FF6B2C",
+  "background_color": "#F6F7DE",
+  "theme_color": "#68030E",
   "icons": [
     {
       "src": "/icon-192.png",
