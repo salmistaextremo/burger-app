@@ -564,10 +564,23 @@ async function checkAuth() {
     document.getElementById("appContainer").classList.remove("hidden");
     checkNotificationState();
     setupPushNotifications();
-    applyBrandColors(DB.config.primary_color);
     try {
-      await dbLoad(); render(); setupNav(); setupOrderListener(); fetchExchangeRate();
+      // 1. Primero cargamos los datos de la base de datos
+      await dbLoad(); 
+      
+      // 2. Ahora que DB.config existe, aplicamos los colores de forma segura
+      if (DB.config && DB.config.primary_color) {
+        applyBrandColors(DB.config.primary_color);
+        document.getElementById("metaThemeColor").setAttribute('content', DB.config.primary_color);
+      }
+      if (DB.config && DB.config.bg_color) {
+        document.documentElement.style.setProperty('--bg', DB.config.bg_color);
+      }
+      
+      // 3. Renderizamos la interfaz
+      render(); setupNav(); setupOrderListener(); fetchExchangeRate();
       window.currentAdminUser = session.user.email; 
+      
       if (DB.config) {
         document.getElementById("sbBrandName").textContent = DB.config.brand;
         if(DB.config.logo && DB.config.logo.startsWith('http')) {
@@ -585,8 +598,7 @@ async function checkAuth() {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("appContainer").classList.add("hidden");
   }
-
-  }
+}
 
 function doLogin() {
   const email = document.getElementById("loginUser").value.trim();
