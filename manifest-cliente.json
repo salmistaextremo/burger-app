@@ -1,6 +1,6 @@
 {
-  "name": "Pedidos - Rapid Burger",
-  "short_name": "Pedidos",
+  "name": "DLV Food",
+  "short_name": "DLV Food",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#F7F8FA",
