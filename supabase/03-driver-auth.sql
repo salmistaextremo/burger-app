@@ -137,9 +137,9 @@ begin
     return;
   end if;
 
-  insert into public.driver_sessions(driver_id, expires_at)
+  insert into public.driver_sessions as ds (driver_id, expires_at)
   values (d.id, now() + interval '7 days')
-  returning token into v_token;
+  returning ds.token into v_token;
 
   return query select d.id, d.name, d.email, d.active, v_token;
 end;
