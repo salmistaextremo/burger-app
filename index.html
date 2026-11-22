@@ -178,10 +178,13 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .field .err{color:var(--danger);font-size:12px;margin-top:6px;font-weight:600;display:none}
 .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--danger);box-shadow:0 0 0 4px var(--danger-soft)}
 .field.invalid .err{display:block}
+.inline-error{color:var(--danger);font-size:12px;margin-top:8px;font-weight:600;display:none;text-align:left;line-height:1.4}
+.bot-input-wrap .inline-error{text-align:center}
 
 .location-card { position: relative; width: 100%; height: 150px; border-radius: 20px; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background-color: #E5E7EB; background-image: linear-gradient(90deg, rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px); background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px; background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px; box-shadow: var(--shadow-sm); transition: 0.3s; }
 .location-card::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); transition: 0.3s; z-index: 1; }
 .location-card:active { transform: scale(0.98); }
+.location-card.invalid { border: 2px solid var(--danger); box-shadow: 0 0 0 4px var(--danger-soft); }
 .location-card-content { position: relative; z-index: 2; text-align: center; color: var(--brand-d); font-weight: 800; font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 20px; }
 .location-card-content .icon { font-size: 32px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }
 .location-card.captured::after { background: rgba(236, 253, 245, 0.9); }
@@ -311,7 +314,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
     <h2 class="bot-title">¡Bienvenido a <span id="botBrand">DLV Food</span>!</h2>
     <p class="bot-sub">Soy tu asistente. Dime tu nombre y te guiaré con botones para armar tu pedido en segundos. 👇</p>
     <div class="bot-input-wrap">
-      <input id="botNameInput" class="bot-input" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name">
+      <input id="botNameInput" class="bot-input" type="text" placeholder="Tu nombre" maxlength="60" autocomplete="given-name" aria-label="Tu nombre">
+      <div id="botNameError" class="inline-error"></div>
       <button id="botStartBtn" class="bot-btn" disabled>Comenzar pedido →</button>
     </div>
   </div>
@@ -331,7 +335,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <button class="icon-btn" id="btnHelp" title="Atención al cliente">💬</button>
     </div>
     <div class="search" id="searchWrap">
-      <input id="searchInput" type="search" placeholder="Buscar hamburguesa, combo, bebida…" autocomplete="off">
+      <input id="searchInput" type="search" placeholder="Buscar hamburguesa, combo, bebida…" autocomplete="off" maxlength="60" aria-label="Buscar en el menú">
     </div>
     <div class="chips" id="chips"></div>
   </header>
@@ -358,8 +362,8 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <h2 style="font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-.5px">Finalizar pedido</h2>
         <p style="font-size:14px;color:var(--muted);margin:0 0 24px;line-height:1.5">Completa tus datos. Al confirmar se abrirá WhatsApp con el resumen.</p>
         
-        <div class="field" id="f-name-w"><label>Nombre y apellido *</label><input id="f-name" type="text" placeholder="Ej: María Rodríguez"><div class="err">Ingresa tu nombre</div></div>
-        <div class="field" id="f-phone-w"><label>Teléfono / WhatsApp *</label><input id="f-phone" type="tel" placeholder="Ej: 0412 123 4567"><div class="err">Ingresa un teléfono válido</div></div>
+        <div class="field" id="f-name-w"><label>Nombre y apellido *</label><input id="f-name" type="text" placeholder="Ej: María Rodríguez" maxlength="60" autocomplete="name" aria-label="Nombre y apellido"><div class="err">Ingresa tu nombre</div></div>
+        <div class="field" id="f-phone-w"><label>Teléfono / WhatsApp *</label><input id="f-phone" type="tel" placeholder="Ej: 0412 123 4567" maxlength="20" inputmode="tel" autocomplete="tel" aria-label="Teléfono o WhatsApp"><div class="err">Ingresa un teléfono válido</div></div>
         
         <div class="field">
           <label>¿Cómo lo quieres? *</label>
@@ -390,7 +394,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
             <label>Costo de envío</label>
             <div id="deliveryZoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
           </div>
-          <div class="field"><label>Punto de referencia (opcional)</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
+          <div class="field" id="f-ref-w"><label>Punto de referencia (opcional)</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería" maxlength="120" aria-label="Punto de referencia"><div class="err">Revisa el punto de referencia</div></div>
         </div>
 
         <div class="field">
@@ -414,6 +418,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
               <button class="proof-remove" onclick="clearProof()">✕</button>
             </div>
           </div>
+          <div id="proofError" class="inline-error"></div>
         </div>
 
         <div id="checkoutSummary"></div>
@@ -430,9 +435,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
           <h4 style="margin:0 0 8px; font-size:18px; font-weight:800;">🔍 Rastrear otro pedido</h4>
           <p style="margin:0 0 16px; font-size:14px; color:var(--muted);">Escribe el número de pedido (ej: A-7K2M9Q).</p>
           <div style="display:flex; gap:10px; width:100%;">
-            <input id="lookupInput" placeholder="A-7K2M9Q" maxlength="8" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
+            <input id="lookupInput" placeholder="A-7K2M9Q" maxlength="8" autocapitalize="characters" autocomplete="off" aria-label="Número de pedido" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
             <button onclick="lookupOrder()" style="padding:0 20px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-weight:800; font-size:14px; cursor:pointer; flex-shrink:0; white-space:nowrap;">Buscar</button>
           </div>
+          <div id="lookupError" class="inline-error"></div>
         </div>
       </div>
     </section>
@@ -902,6 +908,79 @@ function generateOrderCode() {
   }
   return 'A-' + out;
 }
+
+// ---------- Validaciones de formularios ----------
+var NAME_RE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]+$/;
+
+function normalizeText(s) {
+  return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+}
+
+function validateName(value) {
+  var v = normalizeText(value);
+  if (!v) return 'Ingresa tu nombre y apellido';
+  if (v.length < 2) return 'El nombre es demasiado corto';
+  if (v.length > 60) return 'El nombre no puede pasar de 60 caracteres';
+  if (!NAME_RE.test(v)) return 'Solo letras, espacios, apóstrofos, puntos y guiones';
+  return '';
+}
+
+function validatePhone(value) {
+  var raw = String(value == null ? '' : value).trim();
+  if (!raw) return 'Ingresa tu teléfono';
+  if (!/^[0-9+()\s.-]+$/.test(raw)) return 'Solo números y los signos + ( ) -';
+  var digits = raw.replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 12) return 'Teléfono inválido (ej: 0412 123 4567)';
+  if (digits.length === 12 && digits.slice(0, 2) !== '58') return 'Con código de país debe empezar por 58';
+  if (digits.length === 11 && digits.slice(0, 1) !== '0') return 'Teléfono inválido (ej: 0412 123 4567)';
+  return '';
+}
+
+function validateRef(value) {
+  var v = normalizeText(value);
+  if (v.length > 120) return 'El punto de referencia no puede pasar de 120 caracteres';
+  if (/[\u0000-\u001F\u007F]/.test(v)) return 'Caracteres no permitidos';
+  return '';
+}
+
+function validateCode(value) {
+  var v = String(value == null ? '' : value).trim().toUpperCase();
+  if (!v) return 'Ingresa el número de pedido';
+  if (!/^A-[A-Z0-9]{4,8}$/.test(v)) return 'Formato inválido (ej: A-7K2M9Q)';
+  return '';
+}
+
+function setFieldError(inputId, message) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var field = input.closest('.field');
+  if (!field) return;
+  field.classList.toggle('invalid', !!message);
+  var err = field.querySelector('.err');
+  if (err && message) err.textContent = message;
+}
+
+function setInlineError(id, message) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message || '';
+  el.style.display = message ? 'block' : 'none';
+}
+
+function wireCheckoutValidation() {
+  var rules = { 'f-name': validateName, 'f-phone': validatePhone, 'f-ref': validateRef };
+  Object.keys(rules).forEach(function (id) {
+    var input = document.getElementById(id);
+    if (!input) return;
+    var run = function () { setFieldError(id, rules[id](input.value)); };
+    input.addEventListener('blur', run);
+    input.addEventListener('input', function () {
+      var field = input.closest('.field');
+      if (field && field.classList.contains('invalid')) run();
+    });
+  });
+}
+
 function money(n){ 
   if (n === undefined || n === null) n = 0;
   var usd = CONFIG.currency + Number(n).toFixed(2); 
@@ -1066,7 +1145,7 @@ function getLocation() {
       state.userLat = lat; state.userLng = lng;
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       state.deliveryZone = computeDeliveryZone();
-      card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      card.classList.add("captured"); card.classList.remove("invalid"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
       statusEl.style.color = "var(--ok)";
       if (state.deliveryZone) {
         statusEl.innerHTML = `✅ A ${Number(state.deliveryZone.distance).toFixed(1)} km · tarifa ${esc(state.deliveryZone.name)} · <a href="${state.userLocationUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--ok); text-decoration:underline;">Ver mapa</a>`;
@@ -1336,6 +1415,7 @@ function handleProofUpload(e) {
     $("#proofImg").src = state.proofImage;
     $("#proofPickerWrap").style.display = 'none';
     $("#proofPreviewWrap").style.display = 'block';
+    setInlineError('proofError', '');
     toast("Comprobante adjuntado");
   };
   reader.readAsDataURL(file);
@@ -1346,6 +1426,7 @@ function clearProof() {
   if($("#proofFile")) $("#proofFile").value = ""; 
   if($("#proofPickerWrap")) $("#proofPickerWrap").style.display = 'block'; 
   if($("#proofPreviewWrap")) $("#proofPreviewWrap").style.display = 'none'; 
+  setInlineError('proofError', '');
 }
 
 function renderChips(){
@@ -1394,7 +1475,7 @@ function renderModal(){
       <div class="sheet-body">
         <h2>${esc(p.name)}</h2><p class="desc">${esc(p.desc)}</p>
         ${extrasHtml}
-        <div class="field" style="margin-top:20px;"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value" placeholder="Ej: sin cebolla" value="${esc(m.notes)}" style="width:100%;padding:16px;border-radius:16px;border:none;background:var(--bg);font-size:15px;font-family:inherit;outline:none;color:var(--ink);font-weight:500;"></div>
+        <div class="field" style="margin-top:20px;"><label>Instrucciones</label><input type="text" oninput="state.modal.notes=this.value.slice(0,120)" placeholder="Ej: sin cebolla" maxlength="120" value="${esc(m.notes)}" aria-label="Instrucciones del producto" style="width:100%;padding:16px;border-radius:16px;border:none;background:var(--bg);font-size:15px;font-family:inherit;outline:none;color:var(--ink);font-weight:500;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin:24px 0;">
           <div style="display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:16px;padding:6px;">
             <button onclick="updateModalQty(-1)" style="width:44px;height:44px;border:none;background:var(--surface);border-radius:12px;font-size:22px;font-weight:700;cursor:pointer;color:var(--ink);box-shadow:var(--shadow-sm);">−</button>
@@ -1476,31 +1557,52 @@ function renderCheckout(){
   const card = document.getElementById("locationCard"); const content = document.getElementById("locationCardContent"); const statusEl = document.getElementById("locationStatus");
   if (card && content && statusEl) {
     if (state.userLocationUrl) {
-      card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
+      card.classList.add("captured"); card.classList.remove("invalid"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
       statusEl.style.display = "block"; statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
     } else {
-      card.classList.remove("captured"); content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`; statusEl.style.display = "none";
+      card.classList.remove("captured"); card.classList.remove("invalid"); content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`; statusEl.style.display = "none";
     }
   }
   updateOrderType(); applyScrollAnimations();
 }
 
 async function submitOrder() {
-  var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
-  var ref = $("#f-ref").value.trim();
+  var name = normalizeText($("#f-name").value);
+  var phone = $("#f-phone").value.trim();
+  var isDelivery = $("input[name='otype']:checked").value === 'delivery';
+  var ref = normalizeText($("#f-ref").value);
+  $("#f-name").value = name;
+  $("#f-ref").value = ref;
+
   var paySelectEl = $("#paySelect");
   var payId = paySelectEl.value;
   var payMethod = paySelectEl.selectedIndex >= 0 ? paySelectEl.options[paySelectEl.selectedIndex].text : '';
   var selectedPayment = CONFIG.payments.find(p => p.id === payId);
   var isPrepaid = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
   var valid = true;
-  var phoneDigits = phone.replace(/\D/g, '');
-  if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
-  if (!phone || phoneDigits.length < 10) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
+
+  var nameErr = validateName(name);
+  var phoneErr = validatePhone(phone);
+  var refErr = validateRef(ref);
+  setFieldError('f-name', nameErr);
+  setFieldError('f-phone', phoneErr);
+  setFieldError('f-ref', refErr);
+  if (nameErr || phoneErr || refErr) valid = false;
+
+  var locCard = document.getElementById('locationCard');
+  if (locCard) locCard.classList.toggle('invalid', isDelivery && !state.userLocationUrl);
   if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
   if (isDelivery && CONFIG.deliveryConfig && CONFIG.deliveryConfig.storeLat != null && isFinite(CONFIG.deliveryConfig.storeLat) && !state.deliveryZone) { toast("No pudimos calcular la tarifa. Vuelve a enviar tu ubicación."); valid = false; }
   if (isDelivery && !isPrepaid) { toast("Para delivery elige un pago anticipado (Pago Móvil, transferencia o Zelle)."); valid = false; }
-  if (isDelivery && !state.proofFile) { toast("Por favor sube tu comprobante o captura de pago para proceder con el pedido"); valid = false; }
+
+  if (isDelivery && !state.proofFile) {
+    setInlineError('proofError', 'Por favor sube tu comprobante o captura de pago para proceder con el pedido');
+    toast("Por favor sube tu comprobante o captura de pago para proceder con el pedido");
+    valid = false;
+  } else {
+    setInlineError('proofError', '');
+  }
+
   if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
@@ -1647,7 +1749,15 @@ async function confirmOrderReceived(code, btn) {
   setTimeout(() => { openRatingModal(code); }, 1000);
 }
 
-function lookupOrder() { var code = $("#lookupInput").value.trim().toUpperCase(); if (!code) return; localStorage.setItem('ff_current_order_code', code); renderTracking(); }
+function lookupOrder() {
+  var raw = $("#lookupInput").value;
+  var err = validateCode(raw);
+  setInlineError('lookupError', err);
+  if (err) return;
+  var code = raw.trim().toUpperCase();
+  localStorage.setItem('ff_current_order_code', code);
+  renderTracking();
+}
 
 let currentRating = 0; let currentOrderCodeToRate = null;
 function openRatingModal(orderCode) {
@@ -1663,7 +1773,7 @@ function openRatingModal(orderCode) {
       <span class="star" onclick="setRating(4)" onmouseover="hoverRating(4)" style="font-size:42px; color:var(--line); cursor:pointer; transition:0.2s;">★</span>
       <span class="star" onclick="setRating(5)" onmouseover="hoverRating(5)" style="font-size:42px; color:var(--line); cursor:pointer; transition:0.2s;">★</span>
     </div>
-    <textarea id="ratingComment" rows="3" placeholder="Déjanos un comentario (opcional)..." style="width:100%; padding:16px; border-radius:16px; border:none; background:var(--surface-2); font-family:inherit; font-size:15px; color:var(--ink); resize:none; margin-bottom:20px; outline:none;"></textarea>
+    <textarea id="ratingComment" rows="3" maxlength="400" placeholder="Déjanos un comentario (opcional)..." aria-label="Comentario de la calificación" style="width:100%; padding:16px; border-radius:16px; border:none; background:var(--surface-2); font-family:inherit; font-size:15px; color:var(--ink); resize:none; margin-bottom:20px; outline:none;"></textarea>
     <button class="btn-rate-submit" onclick="submitRating()" style="width:100%; padding:18px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-size:16px; font-weight:800; cursor:pointer;">Enviar calificación</button>
     <button class="btn-rate-close" onclick="closeRatingModal()" style="width:100%; padding:16px; margin-top:8px; border-radius:16px; border:none; background:transparent; color:var(--muted); font-size:15px; font-weight:700; cursor:pointer;">Ahora no</button>`;
   updateStarsUI(0); document.getElementById('ratingModal').classList.add('show');
@@ -1710,12 +1820,16 @@ function go(view, subview = null){
 (function wireBotWelcome(){
   var nameInput = document.getElementById("botNameInput"); var startBtn = document.getElementById("botStartBtn");
   if (!nameInput || !startBtn) return;
-  function syncBtn(){ startBtn.disabled = nameInput.value.trim().length === 0; }
-  nameInput.addEventListener("input", syncBtn);
+  function syncBtn(){ startBtn.disabled = !!validateName(nameInput.value); }
+  nameInput.addEventListener("input", function(){ setInlineError("botNameError", ""); syncBtn(); });
+  nameInput.addEventListener("blur", function(){ if (nameInput.value.trim()) setInlineError("botNameError", validateName(nameInput.value)); });
   nameInput.addEventListener("keydown", function(e){ if (e.key === "Enter" && !startBtn.disabled) startBtn.click(); });
   syncBtn();
   startBtn.addEventListener("click", function(){
-    var name = nameInput.value.trim(); if (!name) return;
+    var name = normalizeText(nameInput.value);
+    var err = validateName(name);
+    if (err) { setInlineError("botNameError", err); return; }
+    nameInput.value = name;
     saveName(name); document.getElementById("botWelcome").classList.add("hidden");
     if (localStorage.getItem('ff_current_order_code')) { go('tracking'); } else { startGuidedFlow(); }
   });
@@ -1819,8 +1933,20 @@ async function init(){
   // Tasa de cambio USD -> Bs
   fetchExchangeRate();
 
+  // Validación de campos del checkout
+  wireCheckoutValidation();
+
   // Buscador
-  $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
+  $("#searchInput").addEventListener("input", e => { state.query = e.target.value.slice(0, 60); renderMenu(); });
+
+  // Código de pedido: solo mayúsculas, números y guion
+  var lookupInput = $("#lookupInput");
+  if (lookupInput) {
+    lookupInput.addEventListener("input", function (e) {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
+      setInlineError("lookupError", "");
+    });
+  }
 
   // Botón de ayuda
   $("#btnHelp").onclick = () => go("help");
