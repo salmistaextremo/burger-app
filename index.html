@@ -386,6 +386,10 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
             </div>
             <div id="locationStatus" style="font-size:12px; color:var(--muted); margin-top:10px; display:none; font-weight:600; text-align:center;"></div>
           </div>
+          <div class="field" id="deliveryZoneBlock" style="display:none;">
+            <label>Zona de delivery *</label>
+            <div id="deliveryZoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+          </div>
           <div class="field"><label>Punto de referencia (opcional)</label><input id="f-ref" type="text" placeholder="Ej: frente a la panadería"></div>
         </div>
 
@@ -585,7 +589,7 @@ var CONFIG = {
   brand: "DLV Food", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, hours: { open: "11:00", close: "23:00" }, days: [1, 2, 3, 4, 5, 6, 0],
-  helpHoursText: "11:00 a 23:00", payments: [], manualRate: 0,
+  helpHoursText: "11:00 a 23:00", payments: [], manualRate: 0, deliveryZones: [],
   stages: {
     delivery: [
       { key:"recibido", label:"Pedido recibido", desc:"Esperando confirmación", icon:"🧾" },
@@ -612,7 +616,7 @@ var MENU = [];
 var EXCHANGE_RATE = null;
 var EXCHANGE_RATE_TS = 0;
 
-var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
+var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null, deliveryZone: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
 
 // =========================================
@@ -679,6 +683,11 @@ async function loadSharedData(){
       CONFIG.mapsUrl = config.mapsurl || CONFIG.mapsUrl;
       CONFIG.currency = config.currency || CONFIG.currency;
       CONFIG.deliveryFee = config.deliveryfee || CONFIG.deliveryFee;
+      CONFIG.deliveryZones = (config.delivery_config && Array.isArray(config.delivery_config.zones))
+        ? config.delivery_config.zones
+            .filter(z => z && z.name)
+            .map(z => ({ id: String(z.id || z.name), name: String(z.name), fee: Number(z.fee) || 0 }))
+        : [];
       CONFIG.payments = config.payments || [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }];
       CONFIG.hours = config.hours || CONFIG.hours;
       CONFIG.days = config.days || CONFIG.days;
@@ -1109,9 +1118,46 @@ function fallbackCopy(text) {
   t.remove();
 }
 
+function getDeliveryFee() {
+  if (state.deliveryZone && state.deliveryZone.fee != null && isFinite(Number(state.deliveryZone.fee))) {
+    return Number(state.deliveryZone.fee);
+  }
+  return Number(CONFIG.deliveryFee) || 0;
+}
+
+function renderDeliveryZones() {
+  var block = document.getElementById('deliveryZoneBlock');
+  var wrap = document.getElementById('deliveryZoneOptions');
+  if (!block || !wrap) return;
+  if (!CONFIG.deliveryZones.length) { block.style.display = 'none'; wrap.innerHTML = ''; return; }
+  block.style.display = 'block';
+  wrap.innerHTML = CONFIG.deliveryZones.map(z => `
+    <label class="otype-label" style="flex:1; min-width:140px; margin:0;">
+      <input type="radio" name="dzone" value="${esc(z.id)}" ${state.deliveryZone && state.deliveryZone.id === z.id ? 'checked' : ''} onchange="selectDeliveryZone('${esc(z.id)}')" style="display:none;">
+      <span>${esc(z.name)}<br><small style="font-weight:700;color:var(--brand);">${CONFIG.currency}${Number(z.fee).toFixed(2)}</small></span>
+    </label>`).join('');
+}
+
+function selectDeliveryZone(id) {
+  state.deliveryZone = CONFIG.deliveryZones.find(z => z.id === id) || null;
+  updateOrderType();
+}
+
 function renderPayments(){
   var sel = $("#paySelect"); if (!sel) return;
-  sel.innerHTML = CONFIG.payments.map((p, i) => `<option value="${esc(p.id)}" ${i === 0 ? 'selected' : ''}>${p.icon} ${esc(p.label)}</option>`).join("");
+  var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
+  var current = sel.value;
+  var list = CONFIG.payments.filter(p => !isDelivery || !NO_PROOF_TYPES.includes(p.type));
+  if (!list.length) {
+    sel.innerHTML = '<option value="">Sin métodos anticipados configurados</option>';
+    sel.disabled = true;
+    sel.onchange = null;
+    updatePayDetails(); updateProofField();
+    return;
+  }
+  sel.disabled = false;
+  sel.innerHTML = list.map(p => `<option value="${esc(p.id)}">${p.icon} ${esc(p.label)}</option>`).join("");
+  if (current && list.some(p => p.id === current)) sel.value = current;
   sel.onchange = () => { updatePayDetails(); updateProofField(); };
   updatePayDetails(); updateProofField();
 }
@@ -1125,7 +1171,7 @@ function updatePayDetails(){
   if (!keys.length) { box.classList.remove("show"); box.innerHTML = ""; return; }
   var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0);
-  var del = isDelivery ? CONFIG.deliveryFee : 0;
+  var del = isDelivery ? getDeliveryFee() : 0;
   var totalUsd = sub + del;
   var totalBsText = EXCHANGE_RATE ? `Bs. ${(totalUsd * EXCHANGE_RATE).toFixed(2)}` : '';
   let textoCompleto = `*Datos de Pago (${p.label}):*\n`;
@@ -1144,9 +1190,15 @@ function updatePayDetails(){
 function updateProofField(){
   var field = $("#proofField"); var sel = $("#paySelect");
   if (!field || !sel) return;
+  var isDelivery = $("input[name='otype']:checked") ? $("input[name='otype']:checked").value === 'delivery' : true;
   var p = CONFIG.payments.find(x => x.id === sel.value);
-  if (!p || NO_PROOF_TYPES.includes(p.type)) { field.style.display = 'none'; if (state.proofImage) clearProof(); }
-  else { field.style.display = 'block'; }
+  var needs = isDelivery || (p && !NO_PROOF_TYPES.includes(p.type));
+  if (!needs) { field.style.display = 'none'; if (state.proofImage) clearProof(); }
+  else {
+    field.style.display = 'block';
+    var lbl = field.querySelector('label');
+    if (lbl) lbl.textContent = isDelivery ? 'Comprobante de pago (obligatorio para delivery)' : 'Comprobante de pago';
+  }
 }
 
 function handleProofUpload(e) {
@@ -1266,7 +1318,7 @@ function renderCart(){
       <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
       <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQtyAt(${idx}, -1)">−</button><span>${i.qty}</span><button onclick="changeQtyAt(${idx}, 1)">+</button></div></div>
     </div>`).join("");
-  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = getDeliveryFee();
   totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
   actions.innerHTML = `<button class="btn btn-primary" onclick="go('checkout')">Continuar con el pedido →</button>`;
   applyScrollAnimations();
@@ -1287,13 +1339,14 @@ function changeQtyAt(idx, d) {
 function updateOrderType() {
   var isDelivery = $("input[name='otype']:checked").value === 'delivery';
   if($("#addressBlock")) $("#addressBlock").style.display = isDelivery ? "block" : "none";
-  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0;
+  renderPayments();
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? getDeliveryFee() : 0;
   if($("#checkoutSummary")) $("#checkoutSummary").innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
   if ($("#paySelect").value) { updatePayDetails(); }
 }
 
 function renderCheckout(){
-  renderPayments();
+  renderDeliveryZones();
   if (state.clientName && $("#f-name")) $("#f-name").value = state.clientName;
   const card = document.getElementById("locationCard"); const content = document.getElementById("locationCardContent"); const statusEl = document.getElementById("locationStatus");
   if (card && content && statusEl) {
@@ -1309,20 +1362,27 @@ function renderCheckout(){
 
 async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
-  var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text; var payId = $("#paySelect").value;
+  var ref = $("#f-ref").value.trim();
+  var paySelectEl = $("#paySelect");
+  var payId = paySelectEl.value;
+  var payMethod = paySelectEl.selectedIndex >= 0 ? paySelectEl.options[paySelectEl.selectedIndex].text : '';
+  var selectedPayment = CONFIG.payments.find(p => p.id === payId);
+  var isPrepaid = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
   var valid = true;
   var phoneDigits = phone.replace(/\D/g, '');
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
   if (!phone || phoneDigits.length < 10) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
   if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
+  if (isDelivery && CONFIG.deliveryZones.length && !state.deliveryZone) { toast("Selecciona tu zona de delivery."); valid = false; }
+  if (isDelivery && !isPrepaid) { toast("Para delivery elige un pago anticipado (Pago Móvil, transferencia o Zelle)."); valid = false; }
+  if (isDelivery && !state.proofFile) { toast("Sube la captura del pago para delivery."); valid = false; }
   if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
-  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
+  var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? getDeliveryFee() : 0; var total = sub + del; 
   var code = generateOrderCode();
   let proofUrl = null;
-  const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
 
   if (state.proofFile && needsProof) {
@@ -1336,11 +1396,18 @@ async function submitOrder() {
       proofUrl = fileName;
       btn.innerHTML = "Enviando...";
     } catch(e) {
-      console.warn("No se pudo subir comprobante:", e); toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
+      console.warn("No se pudo subir comprobante:", e);
+      if (isDelivery) {
+        toast("No se pudo subir el comprobante. Intenta de nuevo.");
+        btn.disabled = false;
+        btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+        return;
+      }
+      toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
     }
   }
 
-  var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
+  var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl, zone: isDelivery && state.deliveryZone ? state.deliveryZone.name : null, delivery_fee: isDelivery ? del : 0 }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
 
   // El código es aleatorio: si por casualidad choca con uno existente (unique_violation), reintentamos.
   var insertError = null;
@@ -1363,12 +1430,19 @@ async function submitOrder() {
 
   // El mensaje se arma después del insert para usar el código definitivo.
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
-  if (isDelivery) { msg += `*Tipo:* Delivery\n`; if (ref) msg += `*Ref:* ${ref}\n`; msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; } else { msg += `*Tipo:* Retiro en tienda\n`; }
+  if (isDelivery) {
+    msg += `*Tipo:* Delivery\n`;
+    if (state.deliveryZone) msg += `*Zona:* ${state.deliveryZone.name}\n`;
+    if (ref) msg += `*Ref:* ${ref}\n`;
+    msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
+  } else {
+    msg += `*Tipo:* Retiro en tienda\n`;
+  }
   msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
   state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
   msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
 
-  saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; state.proofFile = null; saveCart(); updateBadge();
+  saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
   var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
   // window.open después de varios await lo bloquean los navegadores móviles; si pasa, navegamos igual.

@@ -403,7 +403,8 @@ var DEFAULT_CONFIG = {
   helpHoursText: "11:00 a 23:00", manualRate: 0,
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
   primary_color: "#FF5A1F",
-  bg_color: "#F5F6F8"
+  bg_color: "#F5F6F8",
+  delivery_config: null
 };
 
 var EXCHANGE_RATE = null;
@@ -704,7 +705,8 @@ async function dbSaveConfig() {
     hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
     manual_rate: DB.config.manualRate,
     primary_color: DB.config.primary_color,
-    bg_color: DB.config.bg_color
+    bg_color: DB.config.bg_color,
+    delivery_config: DB.config.delivery_config || null
   }); 
 }
 
@@ -971,6 +973,7 @@ function renderOrders(m) {
         <div class="order-customer">
             <b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>
             ${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}<br>
+            ${o.type === "delivery" && o.customer.zone ? `<span style="color:var(--muted);">Zona: ${esc(o.customer.zone)} · Envío: ${money(o.customer.delivery_fee || 0)}</span><br>` : ''}
             <span style="font-weight:600; color:var(--brand);">Pago: ${esc(o.payment_method || 'No especificado')}</span>
         </div>
         <div class="order-items">
@@ -1149,7 +1152,7 @@ function renderBusiness(m) {
       <h3 class="card-title" style="margin-bottom:16px;">💰 Precios y Horarios</h3>
       <div class="form-grid">
         <div class="field"><label>Moneda ($)</label><input type="text" id="bCurrency" value="${esc(DB.config.currency)}"></div>
-        <div class="field"><label>Costo Delivery</label><input type="number" step="0.01" id="bDeliveryFee" value="${DB.config.deliveryFee}"></div>
+        <div class="field"><label>Costo Delivery base (si no hay zonas)</label><input type="number" step="0.01" id="bDeliveryFee" value="${DB.config.deliveryFee}"></div>
         
         <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
         <div class="field"><label>Hora Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
@@ -1161,6 +1164,16 @@ function renderBusiness(m) {
         </div>
       </div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar Cambios</button>
+    </div></div>
+
+    <div class="card" style="margin-bottom:24px;"><div class="card-body">
+      <h3 class="card-title" style="margin-bottom:4px;">🛵 Zonas de delivery</h3>
+      <p class="card-desc">Tarifas que verá el cliente al elegir delivery. Si la ubicación no aparece, se usa la última zona (la de mayor tarifa).</p>
+      <div id="zoneRows"></div>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addZoneRow()">＋ Añadir zona</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveDeliveryZones()">Guardar zonas</button>
+      </div>
     </div></div>
 
     <div class="page-head" style="margin-top:32px;">
@@ -1190,6 +1203,62 @@ function renderBusiness(m) {
     document.getElementById('hexBg').textContent = e.target.value.toUpperCase();
     document.documentElement.style.setProperty('--bg', e.target.value);
   });
+
+  renderZoneRows();
+}
+
+function deliveryZonesOrDefault() {
+  const cfg = DB.config && DB.config.delivery_config;
+  if (cfg && Array.isArray(cfg.zones) && cfg.zones.length) return cfg.zones;
+  const base = Number(DB.config.deliveryFee) || 0;
+  return [
+    { id: 'casco', name: 'Casco Central', fee: base },
+    { id: 'urbano', name: 'Urbano', fee: base },
+    { id: 'extra', name: 'Extra Urbano', fee: base }
+  ];
+}
+
+function zoneRowHtml(zone) {
+  return `
+    <div class="zone-row" data-id="${esc(zone.id || '')}" style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+      <input class="z-name" type="text" value="${esc(zone.name || '')}" placeholder="Ej: Casco Central" style="flex:2;">
+      <input class="z-fee" type="number" min="0" step="0.01" value="${Number(zone.fee || 0).toFixed(2)}" style="flex:1; max-width:110px;">
+      <button type="button" onclick="this.parentElement.remove()" style="width:36px;height:36px;border-radius:9px;background:var(--danger-soft);color:var(--danger);flex:none;">✕</button>
+    </div>`;
+}
+
+function renderZoneRows() {
+  const wrap = document.getElementById('zoneRows');
+  if (!wrap) return;
+  wrap.innerHTML = deliveryZonesOrDefault().map(zoneRowHtml).join('');
+}
+
+function addZoneRow() {
+  const wrap = document.getElementById('zoneRows');
+  if (!wrap) return;
+  wrap.insertAdjacentHTML('beforeend', zoneRowHtml({ id: 'z' + Date.now().toString(36), name: '', fee: 0 }));
+}
+
+async function saveDeliveryZones() {
+  const rows = Array.from(document.querySelectorAll('#zoneRows .zone-row'));
+  const zones = [];
+  for (const row of rows) {
+    const name = row.querySelector('.z-name').value.trim();
+    const fee = parseFloat(row.querySelector('.z-fee').value);
+    if (!name) return toast('Cada zona necesita un nombre', 'error');
+    if (!isFinite(fee) || fee < 0) return toast('Tarifa inválida en ' + name, 'error');
+    zones.push({ id: row.dataset.id || ('z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), name: name, fee: fee });
+  }
+  if (!zones.length) return toast('Agrega al menos una zona', 'error');
+
+  DB.config.delivery_config = { zones: zones };
+  try {
+    await dbSaveConfig();
+    toast('✅ Zonas de delivery guardadas');
+  } catch (e) {
+    console.error(e);
+    toast('Error al guardar las zonas', 'error');
+  }
 }
 
 function applyPresetColor(hex) {
