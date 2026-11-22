@@ -674,6 +674,10 @@ async function loadSharedData(){
       supabaseClient.from('products').select('*')
     ]);
 
+    if (configRes.error && configRes.error.code !== 'PGRST116') throw configRes.error;
+    if (catsRes.error) throw catsRes.error;
+    if (productsRes.error) throw productsRes.error;
+
     if (configRes.data) {
       const config = configRes.data;
       CONFIG.brand = config.brand || CONFIG.brand;

@@ -712,6 +712,11 @@ async function dbLoad() {
       supabaseClient.from('orders').select('*').order('created_at', { ascending: false })
     ]);
 
+    const firstError = configRes.error || catsRes.error || productsRes.error || ordersRes.error;
+    if (firstError && firstError.code !== 'PGRST116') {
+      throw new Error('Supabase: ' + (firstError.message || firstError.code));
+    }
+
     if (configRes.data) {
       const config = configRes.data;
       DB.config = { 
@@ -805,7 +810,7 @@ function setupOrderListener() {
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
-      });
+      }).catch(function (e) { console.warn('Sync:', e.message); });
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
@@ -847,7 +852,7 @@ function handleAppVisibility() {
       else if (state.tab === 'home') renderHome($("#main"));
       else render(); 
       toast("🔄 Datos sincronizados");
-    });
+    }).catch(function (e) { console.warn('Sync:', e.message); });
   }
 }
 
@@ -857,7 +862,7 @@ function startPolling() {
     if (document.visibilityState === 'visible') {
       dbLoad().then(() => {
         if (state.tab === 'orders' || state.tab === 'home') render();
-      });
+      }).catch(function (e) { console.warn('Sync:', e.message); });
     }
   }, 30000);
 }
@@ -1912,13 +1917,13 @@ async function saveCategory() {
     closeModal();
     render(); 
     toast("✅ Categoría creada"); 
-  });
+  }).catch(function (e) { toast("Creada, pero no se pudo recargar: " + e.message, "error"); });
 }
 
 async function deleteCategory(id) {
   if (!confirm("¿Eliminar esta categoría?")) return;
   await supabaseClient.from('categories').delete().eq('id', id);
-  dbLoad().then(() => { render(); toast("Categoría eliminada"); });
+  dbLoad().then(() => { render(); toast("Categoría eliminada"); }).catch(function (e) { toast("Eliminada, pero no se pudo recargar: " + e.message, "error"); });
 }
 
 async function renderDrivers(m) {
