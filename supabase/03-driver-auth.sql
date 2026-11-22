@@ -108,10 +108,10 @@ begin
   end if;
 
   select count(*) into v_fails
-  from public.login_attempts
-  where lower(email) = lower(driver_email)
-    and success = false
-    and created_at > now() - interval '15 minutes';
+  from public.login_attempts la
+  where lower(la.email) = lower(driver_email)
+    and la.success = false
+    and la.created_at > now() - interval '15 minutes';
 
   -- Mismo mensaje que credenciales incorrectas: no revelamos el bloqueo.
   if v_fails >= 8 then
@@ -119,8 +119,8 @@ begin
   end if;
 
   select * into d
-  from public.drivers
-  where lower(email) = lower(driver_email)
+  from public.drivers dr
+  where lower(dr.email) = lower(driver_email)
   limit 1;
 
   if found
