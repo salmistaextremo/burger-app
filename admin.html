@@ -513,8 +513,8 @@ function urlBase64ToUint8Array(base64String) {
 
 async function subscribeToPush(registration) {
   var vapid = window.APP_CONFIG && window.APP_CONFIG.vapidPublicKey;
-  if (!vapid) { console.warn('Falta vapidPublicKey en app-config.js'); return false; }
-  if (!('PushManager' in window)) { console.warn('Este navegador no soporta Web Push'); return false; }
+  if (!vapid) return 'Falta la clave VAPID en app-config.js';
+  if (!('PushManager' in window)) return 'Este navegador no soporta Web Push';
 
   try {
     var sub = await registration.pushManager.getSubscription();
@@ -532,31 +532,37 @@ async function subscribeToPush(registration) {
       user_agent: (navigator.userAgent || '').slice(0, 250),
       last_seen_at: new Date().toISOString()
     }, { onConflict: 'endpoint' });
-    if (res.error) { console.warn('No se guardó la suscripción push:', res.error); return false; }
+    if (res.error) {
+      console.warn('No se guardó la suscripción push:', res.error);
+      return 'Supabase: ' + (res.error.message || res.error.code);
+    }
     return true;
   } catch (e) {
     console.warn('No se pudo suscribir a push:', e);
-    return false;
+    return 'Suscripción: ' + (e && e.message ? e.message : e);
   }
 }
 
 async function setupPushNotifications(requestPermission) {
-  if (!('serviceWorker' in navigator) || !('Notification' in window)) return false;
+  if (!('serviceWorker' in navigator)) return 'Sin service worker';
+  if (!('Notification' in window)) return 'Sin API de notificaciones';
+  if (!('PushManager' in window)) return 'Web Push no soportado (en iPhone, instala la app en inicio)';
+
   try {
     var registration = await navigator.serviceWorker.register('/sw.js');
     var permission = Notification.permission;
     if (permission !== 'granted' && requestPermission) {
       permission = await Notification.requestPermission();
     }
-    if (permission !== 'granted') return false;
+    if (permission !== 'granted') return 'Permiso de notificaciones no concedido';
 
     notificationsEnabled = true;
-    var ok = await subscribeToPush(registration);
-    if (ok && requestPermission) toast("✅ Notificaciones push activadas");
-    return ok;
+    var result = await subscribeToPush(registration);
+    if (result === true && requestPermission) toast("✅ Notificaciones push activadas");
+    return result;
   } catch (error) {
     console.error('Error Service Worker/Push:', error);
-    return false;
+    return 'Error: ' + (error && error.message ? error.message : error);
   }
 }
 
@@ -641,13 +647,26 @@ function playNotificationSound() { playServiceBell(); }
 async function unlockNotifications() {
   getAudioCtx();
   playNotificationSound();
-  var ok = await setupPushNotifications(true);
-  if (ok) {
+
+  if (!('Notification' in window)) { toast('Este navegador no soporta notificaciones'); return; }
+  if (Notification.permission === 'denied') {
+    toast('Bloqueaste las notificaciones. Habilítalas en el candado del navegador.');
+    return;
+  }
+
+  var permission = Notification.permission;
+  if (permission !== 'granted') {
+    try { permission = await Notification.requestPermission(); } catch (e) { permission = 'denied'; }
+  }
+  if (permission !== 'granted') { toast('No diste permiso para las notificaciones'); return; }
+
+  var result = await setupPushNotifications(false);
+  if (result === true) {
     document.getElementById("notifBanner").classList.add("hidden");
     localStorage.setItem('admin_notif_unlocked', 'true');
     notificationsEnabled = true;
   } else {
-    toast("No se pudieron activar las notificaciones push", "error");
+    toast('❌ ' + result);
   }
 }
 
@@ -694,7 +713,7 @@ async function checkAuth() {
     document.getElementById("authScreen").classList.add("hidden");
     document.getElementById("appContainer").classList.remove("hidden");
     setupPushNotifications(false).then(function (ok) {
-      if (ok) document.getElementById("notifBanner").classList.add("hidden");
+      if (ok === true) document.getElementById("notifBanner").classList.add("hidden");
       checkNotificationState();
     });
     try {
