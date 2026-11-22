@@ -7,7 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" id="metaThemeColor" content="#FF6B2C">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
+<meta name="theme-color" id="metaThemeColor" content="#FF5A1F">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -17,7 +20,7 @@
   --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#F0F1F4;
   --line:#E5E7EB; --line-2:#D1D5DB;
   --ink:#111827; --ink-2:#374151; --muted:#6B7280; --muted-2:#9CA3AF;
-  --brand:#FF6B2C; --brand-2:#FF8A4C; --brand-d:#E85A1F; --brand-soft:#FFF2EC;
+  --brand:#FF5A1F; --brand-2:#FF7A45; --brand-d:#E0440F; --brand-soft:#FFF0EA;
   --ok:#10B981; --ok-soft:#ECFDF5;
   --danger:#EF4444; --danger-soft:#FEF2F2;
   --star:#F59E0B; --star-bg:#FFFBEB; --star-line:#FEF3C7;
@@ -221,6 +224,7 @@ textarea{resize:vertical;min-height:80px}
 .btn-retry:hover { background: var(--brand-soft); border-color: var(--brand); }
 .skeleton { background: var(--line); border-radius: 8px; animation: pulse-bg 1.5s infinite ease-in-out; }
 @keyframes pulse-bg { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .skeleton-card { height: 100px; border-radius: 20px; margin-bottom: 16px; }
 .skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
 .skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
@@ -286,7 +290,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
       
       <div class="sb-brand-actions">
-        <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20t%C3%A9cnico" target="_blank" class="btn-header-support">🎧 Soporte</a>
+        <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20t%C3%A9cnico" target="_blank" rel="noopener" class="btn-header-support">🎧 Soporte</a>
         <button id="btnInstallAppMobile" class="btn-header-install" onclick="installPWA()">Instalar</button>
         <button class="btn-header-logout" onclick="doLogout()">Salir</button>
       </div>
@@ -300,12 +304,12 @@ textarea{resize:vertical;min-height:80px}
       <button data-tab="drivers"><span class="ico">🛵</span>Repartidores</button>
       <button data-tab="reports"><span class="ico">📈</span>Reportes</button>
       <button data-tab="business"><span class="ico">🏪</span>Negocio</button>
-      <a href="index.html" target="_blank" class="nav-link-btn"><span class="ico">👁️</span>App Cliente</a>
+      <a href="index.html" target="_blank" rel="noopener" class="nav-link-btn"><span class="ico">👁️</span>App Cliente</a>
     </nav>
     
     <div class="sb-footer">
-      <a href="index.html" target="_blank"><span>👁️</span>Ver app cliente</a>
-      <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico" target="_blank" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
+      <a href="index.html" target="_blank" rel="noopener"><span>👁️</span>Ver app cliente</a>
+      <a href="https://wa.me/584121234567?text=Hola,%20necesito%20soporte%20técnico" target="_blank" rel="noopener" style="color:var(--brand)"><span>🎧</span>Soporte Técnico</a>
       <button id="btnInstallApp" onclick="installPWA()" style="color:var(--ok);"><span>📲</span>Instalar App</button>
       <button class="logout-btn" onclick="doLogout()"><span>👤</span>Cerrar sesión</button>
     </div>
@@ -316,11 +320,26 @@ textarea{resize:vertical;min-height:80px}
 <div id="modal" class="modal hidden"></div>
 <div id="toast" class="toast"></div>
 
+<script src="/app-config.js"></script>
+<script>
+  if (!window.APP_CONFIG || !window.APP_CONFIG.supabaseUrl || !window.APP_CONFIG.supabaseAnonKey) {
+    document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>Falta configurar la app</h2><p style='color:#6B7280'>Crea app-config.js a partir de app-config.example.js con tus credenciales de Supabase.</p></div>";
+    throw new Error('Falta app-config.js');
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (function () {
+    var cfg = window.APP_CONFIG || {};
+    window.SUPABASE_URL = cfg.supabaseUrl || '';
+    window.SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
+    window.supabaseClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+      : null;
+    if (!window.supabaseClient) {
+      document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>No se pudo iniciar la app</h2><p style='color:#6B7280'>Revisa <code>app-config.js</code> y que el navegador no bloquee <code>cdn.jsdelivr.net</code>.</p></div>";
+    }
+  })();
 </script>
 
 <script>
@@ -328,7 +347,7 @@ textarea{resize:vertical;min-height:80px}
 // GENERADOR DE PALETA DE COLORES DINÁMICA
 // =========================================
 function applyBrandColors(baseColor) {
-  if (!baseColor || !baseColor.startsWith('#')) baseColor = '#FF6B2C';
+  if (!baseColor || !baseColor.startsWith('#')) baseColor = '#FF5A1F';
   document.documentElement.style.setProperty('--brand', baseColor);
   document.documentElement.style.setProperty('--brand-soft', baseColor + '1A');
   
@@ -375,7 +394,7 @@ function installPWA() {
   }
 }
 
-var DB = { config: null, cats: [], menu: [], orders: [] };
+var DB = { config: null, cats: [], menu: [], orders: [], drivers: [] };
 var DEFAULT_CONFIG = {
   brand: "DLV Food", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "", currency: "$", deliveryFee: 2.00, freeDeliveryFrom: 25.00, 
@@ -383,8 +402,9 @@ var DEFAULT_CONFIG = {
   days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00", manualRate: 0,
   payments: [{ id:"efectivo", type:"efectivo", label:"Efectivo", icon:"💵", details:{} }],
-  primary_color: "#FF6B2C",
-  bg_color: "#F5F6F8"
+  primary_color: "#FF5A1F",
+  bg_color: "#F5F6F8",
+  delivery_config: null
 };
 
 var EXCHANGE_RATE = null;
@@ -419,30 +439,62 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(
 function money(n){ return DB.config.currency + Number(n || 0).toFixed(2); }
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 3000); }
 
+// Un emoji no sirve como URL de icono de notificación.
+function logoIconUrl() {
+  return (DB.config && DB.config.logo && String(DB.config.logo).startsWith('http')) ? DB.config.logo : '/icon-192.png';
+}
+
+function readCachedRate() {
+  try {
+    const raw = localStorage.getItem('ff_exchange_rate');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'number' && parsed > 0) return { rate: parsed, ts: 0 };
+    if (parsed && Number(parsed.rate) > 0) return { rate: Number(parsed.rate), ts: Number(parsed.ts) || 0 };
+  } catch (e) {}
+  return null;
+}
+
+function saveRate(rate) {
+  EXCHANGE_RATE = rate;
+  try { localStorage.setItem('ff_exchange_rate', JSON.stringify({ rate: rate, ts: Date.now() })); } catch (e) {}
+}
+
 async function fetchExchangeRate() {
-  if (DB.config.manualRate && Number(DB.config.manualRate) > 0) {
-    EXCHANGE_RATE = Number(DB.config.manualRate);
-    return;
-  }
+  if (DB.config.manualRate && Number(DB.config.manualRate) > 0) { EXCHANGE_RATE = Number(DB.config.manualRate); return; }
+
+  // Reutiliza la última tasa conocida (la comparte con la app cliente, mismo origen).
+  const cached = readCachedRate();
+  if (cached) EXCHANGE_RATE = cached.rate;
+
+  const fetchJson = async (url) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } finally { clearTimeout(timer); }
+  };
+
+  // pydolarve.org ya no resuelve (NXDOMAIN). DolarAPI es la fuente viva y permite CORS.
   try {
-    let res = await fetch("https://pydolarve.org/api/v1/dollar?page=bcv");
-    if (res.ok) {
-      let data = await res.json();
-      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
-        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
-        return;
-      }
-    }
-  } catch (e) {}
+    const data = await fetchJson("https://ve.dolarapi.com/v1/dolares/oficial");
+    const price = parseFloat(data && data.promedio);
+    if (isFinite(price) && price > 0) { saveRate(price); return; }
+  } catch (e) { console.warn("Tasa oficial no disponible:", e.message); }
+
   try {
-    let res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
-    let data = await res.json();
-    if (data && data.promedio) {
-      EXCHANGE_RATE = parseFloat(data.promedio);
-      return;
+    const list = await fetchJson("https://ve.dolarapi.com/v1/dolares");
+    if (Array.isArray(list)) {
+      const oficial = list.find(x => x && x.fuente === 'oficial' && Number(x.promedio) > 0);
+      const item = oficial || list.find(x => x && Number(x.promedio) > 0);
+      if (item) { saveRate(Number(item.promedio)); return; }
     }
-  } catch (e) {}
-  if (!EXCHANGE_RATE) EXCHANGE_RATE = 36.50;
+  } catch (e) { console.warn("Lista de tasas no disponible:", e.message); }
+
+  // Sin tasa fresca: se mantiene la cacheada o queda en null. No se inventa una tasa.
+  if (!EXCHANGE_RATE) EXCHANGE_RATE = null;
 }
 
 const FOOD_EMOJIS = ['🍔','🍟','🌭','🍕','🥤','🍗','🥩','🥓','🧀','🥗','🌮','🍣','🍦','🍰','☕','🍺','🍳','🥞','🍩','🍪','🥪','🌯','🍝','🍜','🍲','🍱','🍛','🍤','🍚','🍙','🍘','🥟','🍧','🍨','🍮','🍯','🍼','🥛','☕','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧃','🧉','🧊'];
@@ -461,35 +513,83 @@ async function setupPushNotifications() {
   } catch (error) { console.error('Error Service Worker:', error); }
 }
 
-function playNotificationSound() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    osc1.type = 'sine';
-    osc2.type = 'sine';
-    
-    osc1.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-    
-    osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15);
-    osc2.frequency.exponentialRampToValueAtTime(523.25, audioCtx.currentTime + 0.25);
-
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-    
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc1.start(); osc1.stop(audioCtx.currentTime + 0.15);
-    osc2.start(audioCtx.currentTime + 0.15); osc2.stop(audioCtx.currentTime + 0.6);
-  } catch(e) { console.log("Audio error:", e); }
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') { audioCtx.resume().catch(function () {}); }
+  return audioCtx;
 }
+
+// Campanilla de servicio: fundamental + parciales inarmónicos + golpe metálico.
+function playServiceBell() {
+  var ctx = getAudioCtx();
+  if (!ctx) return;
+
+  try {
+    var now = ctx.currentTime + 0.02;
+    var master = ctx.createGain();
+    master.gain.value = 0.9;
+    var comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 20;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.25;
+    master.connect(comp);
+    comp.connect(ctx.destination);
+
+    var partials = [
+      { r: 1.00, a: 1.00, d: 1.9 },
+      { r: 2.00, a: 0.45, d: 1.4 },
+      { r: 2.40, a: 0.30, d: 1.1 },
+      { r: 3.00, a: 0.20, d: 0.8 },
+      { r: 4.50, a: 0.10, d: 0.5 },
+      { r: 5.33, a: 0.07, d: 0.4 }
+    ];
+
+    function strike(t, base, level) {
+      partials.forEach(function (p) {
+        var osc = ctx.createOscillator();
+        var g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(base * p.r, t);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, level * p.a), t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + p.d);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(t);
+        osc.stop(t + p.d + 0.05);
+      });
+
+      var len = Math.floor(ctx.sampleRate * 0.03);
+      var buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+      var src = ctx.createBufferSource();
+      src.buffer = buffer;
+      var hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 2500;
+      var ng = ctx.createGain();
+      ng.gain.value = 0.22 * level;
+      src.connect(hp);
+      hp.connect(ng);
+      ng.connect(master);
+      src.start(t);
+    }
+
+    strike(now, 1046.5, 0.55);
+    strike(now + 0.22, 1046.5, 0.40);
+
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  } catch (e) {
+    console.warn('Audio error:', e);
+  }
+}
+
+function playNotificationSound() { playServiceBell(); }
 
 function unlockNotifications() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -519,7 +619,7 @@ function updateAppBadge() {
     else navigator.clearAppBadge().catch(console.error);
   }
   if (pendingOrders > 0 && document.hidden) document.title = `(${pendingOrders}) Nuevo Pedido - Admin`;
-  else document.title = `Panel Admin — DLV Food`;
+  else document.title = 'Panel Admin — ' + ((DB.config && DB.config.brand) || 'DLV Food');
   
   const orderCountEl = $("#cnt-orders");
   if (orderCountEl) {
@@ -529,6 +629,7 @@ function updateAppBadge() {
 }
 
 async function checkAuth() {
+  if (!supabaseClient) return;
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
     document.getElementById("authScreen").classList.add("hidden");
@@ -575,6 +676,7 @@ async function checkAuth() {
 }
 
 function doLogin() {
+  if (!supabaseClient) { alert('No se pudo cargar la configuración. Recarga la página.'); return; }
   const email = document.getElementById("loginUser").value.trim();
   const password = document.getElementById("loginPass").value;
   const err = document.getElementById("loginError");
@@ -594,7 +696,7 @@ function doLogout() {
     if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     if ("clearAppBadge" in navigator) navigator.clearAppBadge();
     localStorage.removeItem('admin_notif_unlocked');
-    document.title = "Panel Admin — DLV Food";
+    document.title = 'Panel Admin — ' + ((DB.config && DB.config.brand) || 'DLV Food');
     toast("Sesión cerrada");
     document.getElementById("loginUser").value = "";
     document.getElementById("loginPass").value = "";
@@ -610,6 +712,11 @@ async function dbLoad() {
       supabaseClient.from('orders').select('*').order('created_at', { ascending: false })
     ]);
 
+    const firstError = configRes.error || catsRes.error || productsRes.error || ordersRes.error;
+    if (firstError && firstError.code !== 'PGRST116') {
+      throw new Error('Supabase: ' + (firstError.message || firstError.code));
+    }
+
     if (configRes.data) {
       const config = configRes.data;
       DB.config = { 
@@ -621,7 +728,7 @@ async function dbLoad() {
         freeDeliveryFrom: config.freedeliveryfrom, 
         helpHoursText: config.helphourstext, 
         manualRate: config.manual_rate || 0,
-        primary_color: config.primary_color || '#FF6B2C',
+        primary_color: config.primary_color || '#FF5A1F',
         bg_color: config.bg_color || '#F5F6F8'
       };
       if (!DB.config.payments) DB.config.payments = DEFAULT_CONFIG.payments;
@@ -651,7 +758,8 @@ async function dbSaveConfig() {
     hours: DB.config.hours, payments: DB.config.payments, days: DB.config.days,
     manual_rate: DB.config.manualRate,
     primary_color: DB.config.primary_color,
-    bg_color: DB.config.bg_color
+    bg_color: DB.config.bg_color,
+    delivery_config: DB.config.delivery_config || null
   }); 
 }
 
@@ -687,12 +795,12 @@ function setupOrderListener() {
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
-      if (notificationsEnabled) playNotificationSound();
+      playNotificationSound();
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification('🔔 ¡Nuevo Pedido!', {
             body: `Pedido ${newOrder.code} de ${newOrder.customer.name}\nTotal: $${newOrder.total}`,
-            icon: DB.config.logo || "/icon-512.png",
+            icon: logoIconUrl(),
             vibrate: [200, 100, 200, 100, 200, 100, 200],
             requireInteraction: true, tag: 'nuevo-pedido'
           });
@@ -702,7 +810,7 @@ function setupOrderListener() {
       dbLoad().then(() => {
         updateAppBadge();
         if (state.tab === 'orders' || state.tab === 'home') render();
-      });
+      }).catch(function (e) { console.warn('Sync:', e.message); });
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
       const updatedOrder = payload.new;
@@ -714,12 +822,12 @@ function setupOrderListener() {
       }
 
       if (updatedOrder.rating) {
-        if (notificationsEnabled) playNotificationSound();
+        playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('⭐ ¡Cliente ha calificado!', {
               body: `Pedido ${updatedOrder.code}: ${updatedOrder.rating} estrellas.\n"${updatedOrder.review_text || 'Sin comentario'}"`,
-              icon: DB.config.logo || "/icon-512.png",
+              icon: logoIconUrl(),
               vibrate: [200, 100, 200],
               requireInteraction: true, tag: 'nueva-calificacion'
             });
@@ -736,6 +844,7 @@ function setupOrderListener() {
 }
 
 function handleAppVisibility() {
+  if (!supabaseClient) return;
   if (document.visibilityState === 'visible') {
     dbLoad().then(() => {
       setupOrderListener();
@@ -743,7 +852,7 @@ function handleAppVisibility() {
       else if (state.tab === 'home') renderHome($("#main"));
       else render(); 
       toast("🔄 Datos sincronizados");
-    });
+    }).catch(function (e) { console.warn('Sync:', e.message); });
   }
 }
 
@@ -753,7 +862,7 @@ function startPolling() {
     if (document.visibilityState === 'visible') {
       dbLoad().then(() => {
         if (state.tab === 'orders' || state.tab === 'home') render();
-      });
+      }).catch(function (e) { console.warn('Sync:', e.message); });
     }
   }, 30000);
 }
@@ -766,7 +875,7 @@ function setupNav() {
       if (b.dataset.tab) {
         state.tab = b.dataset.tab; 
         $$(".sb-nav button").forEach(x => x.classList.toggle("active", x.dataset.tab === state.tab)); 
-        if (state.tab === 'orders') document.title = "Panel Admin — DLV Food";
+        if (state.tab === 'orders') document.title = 'Panel Admin — ' + ((DB.config && DB.config.brand) || 'DLV Food');
         render(); 
         window.scrollTo(0,0); 
       }
@@ -792,9 +901,46 @@ function updateCounts() {
   updateAppBadge();
 }
 
+function goTab(tab) {
+  const btn = document.querySelector(`.sb-nav button[data-tab="${tab}"]`);
+  if (btn) btn.click();
+}
+
 function renderHome(m) {
   var adminName = window.currentAdminUser || "Admin";
   const pendingOrders = DB.orders.filter(o => o.status === 'recibido' || !o.status).length;
+
+  // Checklist de puesta en marcha (onboarding del restaurante)
+  const setupSteps = [
+    { label: 'WhatsApp real del negocio', hint: 'Reemplaza el número de ejemplo', done: String(DB.config.whatsapp || '') !== '584121234567', tab: 'business' },
+    { label: 'Logo y colores de marca', hint: 'Personaliza la identidad visual', done: ((DB.config.logo || '🍔') !== '🍔') || String(DB.config.primary_color || '#FF5A1F').toUpperCase() !== '#FF5A1F', tab: 'business' },
+    { label: 'Métodos de pago', hint: 'Al menos uno configurado', done: (DB.config.payments || []).length > 0, tab: 'business' },
+    { label: 'Categorías del menú', hint: 'Organiza tus productos', done: DB.cats.length > 0, tab: 'categories' },
+    { label: 'Productos cargados', hint: 'Tu menú visible al cliente', done: DB.menu.length > 0, tab: 'products' }
+  ];
+  const doneSteps = setupSteps.filter(s => s.done).length;
+  let setupHtml = "";
+  if (doneSteps < setupSteps.length) {
+    setupHtml = `
+      <div class="card" style="margin-bottom:24px; border:1px solid #BFDBFE; background:#EFF6FF;">
+        <div class="card-body">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
+            <h3 style="margin:0; font-size:16px; color:#1E3A8A;">🚀 Configura tu restaurante</h3>
+            <span style="font-size:12px; font-weight:800; color:#1D4ED8;">${doneSteps}/${setupSteps.length}</span>
+          </div>
+          <p style="margin:0 0 12px; font-size:13px; color:#3B82F6;">Completa estos pasos para dejar la tienda lista para vender.</p>
+          <div style="height:6px; background:#DBEAFE; border-radius:99px; overflow:hidden; margin-bottom:14px;"><div style="height:100%; width:${(doneSteps / setupSteps.length) * 100}%; background:#2563EB;"></div></div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${setupSteps.map(s => `
+              <button onclick="goTab('${s.tab}')" style="display:flex; align-items:center; gap:10px; text-align:left; padding:8px 10px; border-radius:8px; background:${s.done ? 'transparent' : '#FFFFFF'}; border:1px solid ${s.done ? 'transparent' : '#DBEAFE'}; font-size:13px; color:${s.done ? '#6B7280' : '#1F2937'}; cursor:pointer;">
+                <span style="font-size:15px;">${s.done ? '✅' : '⬜'}</span>
+                <span style="flex:1;"><b style="font-weight:700;">${s.label}</b><br><span style="font-size:11.5px; color:#6B7280;">${s.hint}</span></span>
+                ${s.done ? '' : '<span style="color:#2563EB; font-weight:800;">→</span>'}
+              </button>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }
 
   let alertHtml = "";
   if (pendingOrders > 0) {
@@ -817,6 +963,7 @@ function renderHome(m) {
       <p>Bienvenido al panel de control de ${esc(DB.config.brand)}.</p>
     </div>
     ${alertHtml}
+    ${setupHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon" style="background:var(--brand-soft);color:var(--brand)">🍔</div><div class="stat-info"><p>Productos</p><h3>${DB.menu.length}</h3></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#E0F2FE;color:#0284C7">📁</div><div class="stat-info"><p>Categorías</p><h3>${DB.cats.length}</h3></div></div>
@@ -866,8 +1013,8 @@ function renderOrders(m) {
         `;
       }
 
-      const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '...';
-      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" onclick="openProofModal('${esc(o.proof_url)}')">🧾 Ver Pago</div>` : '';
+      const totalBs = EXCHANGE_RATE ? (o.total * EXCHANGE_RATE).toFixed(2) : '—';
+      const proofBtnHtml = o.proof_url ? `<div class="proof-btn" data-proof-url="${esc(o.proof_url)}" onclick="openProofModal(this.dataset.proofUrl)">🧾 Ver Pago</div>` : '';
 
       return `
       <div class="${cardClass}">
@@ -879,6 +1026,7 @@ function renderOrders(m) {
         <div class="order-customer">
             <b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)}<br>
             ${o.type === "delivery" ? "Delivery: " + esc(o.customer.address) : "Retiro"}<br>
+            ${o.type === "delivery" && o.customer.zone ? `<span style="color:var(--muted);">Zona: ${esc(o.customer.zone)} · Envío: ${money(o.customer.delivery_fee || 0)}</span><br>` : ''}
             <span style="font-weight:600; color:var(--brand);">Pago: ${esc(o.payment_method || 'No especificado')}</span>
         </div>
         <div class="order-items">
@@ -912,18 +1060,41 @@ function renderOrders(m) {
   `;
 }
 
-function openProofModal(url) {
-  document.getElementById("modal").innerHTML = `
+async function openProofModal(ref) {
+  if (!ref) return;
+  const modal = document.getElementById("modal");
+  modal.innerHTML = `
     <div class="modal-box" style="max-width: 500px; background: #000;">
       <div class="modal-head" style="background: #fff; border-bottom: 1px solid #ddd;"><h2>Comprobante de Pago</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div class="modal-body" style="text-align:center; padding: 0;">
-        <img src="${url}" style="max-width: 100%; max-height: 75vh; display: block; margin: 0 auto;">
+      <div class="modal-body" style="text-align:center; padding: 40px; color:#fff;">
+        <div id="proofLoading">Cargando comprobante…</div>
+        <img id="proofImage" alt="Comprobante" style="display:none; max-width: 100%; max-height: 75vh; margin: 0 auto;">
       </div>
-      <div class="modal-foot" style="background: #fff;">
-        <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
-      </div>
+      <div class="modal-foot" style="background: #fff;"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>
     </div>`;
-  document.getElementById("modal").classList.remove("hidden");
+  modal.classList.remove("hidden");
+
+  try {
+    // Nuevos: se guarda la ruta. Antiguos: URL pública; se extrae la ruta y se firma.
+    let path = ref;
+    if (/^https?:\/\//i.test(ref)) {
+      const marker = '/comprobantes/';
+      const i = ref.indexOf(marker);
+      if (i === -1) { window.open(ref, '_blank', 'noopener'); closeModal(); return; }
+      path = decodeURIComponent(ref.slice(i + marker.length).split('?')[0]);
+    }
+    const { data, error } = await supabaseClient.storage.from('comprobantes').createSignedUrl(path, 3600);
+    if (error || !data) throw error || new Error('sin URL firmada');
+    const img = document.getElementById('proofImage');
+    const loading = document.getElementById('proofLoading');
+    if (!img) return;
+    if (loading) loading.style.display = 'none';
+    img.src = data.signedUrl;
+    img.style.display = 'block';
+  } catch (e) {
+    const loading = document.getElementById('proofLoading');
+    if (loading) loading.textContent = 'No se pudo abrir el comprobante.';
+  }
 }
 
 function renderBusiness(m) {
@@ -998,13 +1169,43 @@ function renderBusiness(m) {
           </div>
         </div>
       </div>
+
+      <div class="field full" style="margin-top:4px;">
+        <label>Paletas rápidas</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${[
+            {c:'#FF5A1F', n:'Naranja'}, {c:'#D72323', n:'Rojo'}, {c:'#C1121F', n:'Borgoña'},
+            {c:'#F59E0B', n:'Ámbar'}, {c:'#16A34A', n:'Verde'}, {c:'#0EA5E9', n:'Celeste'},
+            {c:'#2563EB', n:'Azul'}, {c:'#7C3AED', n:'Morado'}, {c:'#DB2777', n:'Rosa'}, {c:'#111827', n:'Carbón'}
+          ].map(p => `<button type="button" onclick="applyPresetColor('${p.c}')" style="display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;"><span style="width:16px;height:16px;border-radius:50%;background:${p.c};display:inline-block;"></span>${p.n}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="field full">
+        <label>Fondos rápidos</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${[
+            {c:'#F7F8FA', n:'Gris claro'}, {c:'#FFFFFF', n:'Blanco'}, {c:'#FFF7ED', n:'Crema'},
+            {c:'#F5F6F8', n:'Admin'}, {c:'#F0FDF4', n:'Menta'}, {c:'#EFF6FF', n:'Azul hielo'}
+          ].map(p => `<button type="button" onclick="applyPresetBg('${p.c}')" style="display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;"><span style="width:16px;height:16px;border-radius:4px;background:${p.c};border:1px solid var(--line);display:inline-block;"></span>${p.n}</button>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-top:4px; padding:16px; border-radius:14px; background:var(--bg); border:1px dashed var(--line);">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:10px;">Vista previa</div>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <span class="btn btn-primary" style="pointer-events:none;">Botón principal</span>
+          <span style="font-size:16px; font-weight:800; color:var(--ink);">$12.50</span>
+          <span style="background:var(--brand-soft); color:var(--brand-d); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700;">Etiqueta</span>
+        </div>
+      </div>
     </div></div>
 
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
       <h3 class="card-title" style="margin-bottom:16px;">💰 Precios y Horarios</h3>
       <div class="form-grid">
         <div class="field"><label>Moneda ($)</label><input type="text" id="bCurrency" value="${esc(DB.config.currency)}"></div>
-        <div class="field"><label>Costo Delivery</label><input type="number" step="0.01" id="bDeliveryFee" value="${DB.config.deliveryFee}"></div>
+        <div class="field"><label>Costo Delivery base (si no hay zonas)</label><input type="number" step="0.01" id="bDeliveryFee" value="${DB.config.deliveryFee}"></div>
         
         <div class="field full"><label>Días de Atención</label><div class="day-picker">${dayPickerHtml}</div></div>
         <div class="field"><label>Hora Apertura</label><input type="time" id="bOpenTime" value="${openTime}"></div>
@@ -1016,6 +1217,22 @@ function renderBusiness(m) {
         </div>
       </div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="saveBusiness()">Guardar Cambios</button>
+    </div></div>
+
+    <div class="card" style="margin-bottom:24px;"><div class="card-body">
+      <h3 class="card-title" style="margin-bottom:4px;">🛵 Delivery por distancia</h3>
+      <p class="card-desc">La tarifa se calcula con el GPS del cliente: hasta la distancia límite se cobra <b>Urbana</b>; más lejos, <b>Extra Urbana</b>.</p>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Ubicación de la tienda (lat, lng o enlace de Google Maps)</label>
+          <input type="text" id="dStoreCoords" placeholder="Ej: 10.4806, -66.9036 o https://maps.google.com/?q=10.4806,-66.9036">
+        </div>
+        <div class="field"><label>Distancia límite (km)</label><input type="number" step="0.1" min="0.1" id="dThreshold" value="4"></div>
+        <div class="field"><label>Tarifa Urbana ($)</label><input type="number" step="0.01" min="0" id="dUrbanFee" value="0"></div>
+        <div class="field"><label>Tarifa Extra Urbana ($)</label><input type="number" step="0.01" min="0" id="dExtraFee" value="0"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="saveDeliveryConfig()">Guardar delivery</button>
+      <div id="deliveryPreview" style="margin-top:12px; font-size:12.5px; color:var(--muted); line-height:1.6;"></div>
     </div></div>
 
     <div class="page-head" style="margin-top:32px;">
@@ -1039,9 +1256,100 @@ function renderBusiness(m) {
 
   document.getElementById('bPrimaryColor').addEventListener('input', (e) => {
     document.getElementById('hexPrimary').textContent = e.target.value.toUpperCase();
-    applyBrandColors(e.target.value); 
+    applyBrandColors(e.target.value);
   });
-  document.getElementById('bBgColor').addEventListener('input', (e) => document.getElementById('hexBg').textContent = e.target.value.toUpperCase());
+  document.getElementById('bBgColor').addEventListener('input', (e) => {
+    document.getElementById('hexBg').textContent = e.target.value.toUpperCase();
+    document.documentElement.style.setProperty('--bg', e.target.value);
+  });
+
+  renderDeliveryConfigEditor();
+}
+
+function parseCoordsInput(value) {
+  const s = String(value || '').trim();
+  if (!s) return null;
+  let m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/(-?\d+(?:\.\d+)?)\s*[,;]\s*(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
+}
+
+function renderDeliveryConfigEditor() {
+  const cfg = DB.config.delivery_config || {};
+  const storeEl = document.getElementById('dStoreCoords');
+  const thEl = document.getElementById('dThreshold');
+  const urEl = document.getElementById('dUrbanFee');
+  const exEl = document.getElementById('dExtraFee');
+  if (!storeEl || !thEl || !urEl || !exEl) return;
+
+  storeEl.value = (cfg.store_lat != null && cfg.store_lng != null) ? `${cfg.store_lat}, ${cfg.store_lng}` : '';
+  thEl.value = cfg.threshold_km != null ? cfg.threshold_km : 4;
+
+  const legacyZones = Array.isArray(cfg.zones) ? cfg.zones : [];
+  const urban = cfg.urban_fee != null ? cfg.urban_fee : (legacyZones[1] ? legacyZones[1].fee : DB.config.deliveryFee);
+  const extra = cfg.extra_fee != null ? cfg.extra_fee : (legacyZones[2] ? legacyZones[2].fee : DB.config.deliveryFee);
+  urEl.value = Number(urban || 0).toFixed(2);
+  exEl.value = Number(extra || 0).toFixed(2);
+
+  const preview = document.getElementById('deliveryPreview');
+  if (preview) {
+    preview.innerHTML = `Hasta <b>${Number(thEl.value) || 4} km</b>: ${money(urban || 0)} · Más lejos: ${money(extra || 0)}<br>` +
+      (storeEl.value ? `Ubicación: ${esc(storeEl.value)}` : '⚠️ Falta la ubicación de la tienda: el cliente verá la tarifa base.');
+  }
+}
+
+async function saveDeliveryConfig() {
+  const coords = parseCoordsInput(document.getElementById('dStoreCoords').value);
+  if (!coords) return toast('Pega una ubicación válida (lat, lng o enlace de Google Maps)', 'error');
+  if (coords.lat < -90 || coords.lat > 90 || coords.lng < -180 || coords.lng > 180) {
+    return toast('Coordenadas fuera de rango', 'error');
+  }
+
+  const threshold = parseFloat(document.getElementById('dThreshold').value);
+  const urban = parseFloat(document.getElementById('dUrbanFee').value);
+  const extra = parseFloat(document.getElementById('dExtraFee').value);
+  if (!isFinite(threshold) || threshold <= 0) return toast('Distancia límite inválida', 'error');
+  if (!isFinite(urban) || urban < 0) return toast('Tarifa Urbana inválida', 'error');
+  if (!isFinite(extra) || extra < 0) return toast('Tarifa Extra Urbana inválida', 'error');
+
+  DB.config.delivery_config = {
+    store_lat: coords.lat,
+    store_lng: coords.lng,
+    threshold_km: threshold,
+    urban_fee: urban,
+    extra_fee: extra
+  };
+
+  try {
+    await dbSaveConfig();
+    toast('✅ Delivery guardado');
+    renderDeliveryConfigEditor();
+  } catch (e) {
+    console.error(e);
+    toast('Error al guardar el delivery', 'error');
+  }
+}
+
+function applyPresetColor(hex) {
+  const input = document.getElementById('bPrimaryColor');
+  if (!input) return;
+  input.value = hex;
+  const label = document.getElementById('hexPrimary');
+  if (label) label.textContent = hex.toUpperCase();
+  applyBrandColors(hex);
+}
+
+function applyPresetBg(hex) {
+  const input = document.getElementById('bBgColor');
+  if (!input) return;
+  input.value = hex;
+  const label = document.getElementById('hexBg');
+  if (label) label.textContent = hex.toUpperCase();
+  document.documentElement.style.setProperty('--bg', hex);
 }
 
 async function uploadLogo(e) {
@@ -1104,7 +1412,11 @@ async function saveBusiness() {
 
   try {
     await dbSaveConfig();
-    
+
+    // Aplicar en vivo en el admin (el cliente y el repartidor lo toman de la BD al cargar)
+    applyBrandColors(DB.config.primary_color);
+    document.documentElement.style.setProperty('--bg', DB.config.bg_color);
+
     document.getElementById("sbBrandName").textContent = DB.config.brand;
     if (DB.config.logo) {
       if (DB.config.logo.startsWith('http')) {
@@ -1541,7 +1853,7 @@ function renderCategories(m) {
       ${DB.cats.map(c=>`
         <div class="cat-row">
           <div class="cat-icon" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
-            ${c.icon && c.icon.startsWith('http') ? `<img src="${c.icon}" style="width:100%; height:100%; object-fit:cover;">` : (c.icon || '📁')}
+            ${c.icon && String(c.icon).startsWith('http') ? `<img src="${esc(c.icon)}" style="width:100%; height:100%; object-fit:cover;">` : esc(c.icon || '📁')}
           </div>
           <div class="cat-info"><h4>${esc(c.name)}</h4></div>
           <div class="cat-actions"><button onclick="deleteCategory('${c.id}')" style="color:var(--danger)">✕</button></div>
@@ -1605,19 +1917,20 @@ async function saveCategory() {
     closeModal();
     render(); 
     toast("✅ Categoría creada"); 
-  });
+  }).catch(function (e) { toast("Creada, pero no se pudo recargar: " + e.message, "error"); });
 }
 
 async function deleteCategory(id) {
   if (!confirm("¿Eliminar esta categoría?")) return;
   await supabaseClient.from('categories').delete().eq('id', id);
-  dbLoad().then(() => { render(); toast("Categoría eliminada"); });
+  dbLoad().then(() => { render(); toast("Categoría eliminada"); }).catch(function (e) { toast("Eliminada, pero no se pudo recargar: " + e.message, "error"); });
 }
 
 async function renderDrivers(m) {
   m.innerHTML = `<div class="page-head"><h1 class="page-title">Repartidores</h1></div>` + getLoadingHTML('list', 2);
   
-  const { data: drivers, error } = await supabaseClient.from('drivers').select('*').order('created_at', { ascending: false });
+  const { data: drivers, error } = await supabaseClient.from('drivers').select('id,name,email,active,created_at').order('created_at', { ascending: false });
+  DB.drivers = drivers || [];
   
   if (error) {
     m.innerHTML = `<div class="page-head"><h1 class="page-title">Repartidores</h1></div>` + getErrorHTML("No se pudo cargar la lista de repartidores.", "renderDrivers");
@@ -1649,13 +1962,19 @@ async function renderDrivers(m) {
             <button class="btn-toggle-avail ${d.active ? 'avail' : 'unavail'}" onclick="toggleDriverStatus('${d.id}', ${d.active})" title="Habilitar/Inhabilitar">
               ${d.active ? '✅' : '🚫'}
             </button>
-            <button onclick="openDriverEditor('${d.id}', '${esc(d.name)}', '${esc(d.email)}')" title="Editar">✎</button>
+            <button onclick="openDriverEditorById('${d.id}')" title="Editar">✎</button>
             <button onclick="deleteDriver('${d.id}')" style="color:var(--danger)" title="Eliminar">✕</button>
           </div>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+function openDriverEditorById(id) {
+  const d = (DB.drivers || []).find(x => x.id === id);
+  if (!d) return toast("Repartidor no encontrado", "error");
+  openDriverEditor(d.id, d.name, d.email);
 }
 
 function openDriverEditor(id = null, name = '', email = '') {
@@ -1666,7 +1985,7 @@ function openDriverEditor(id = null, name = '', email = '') {
       <div class="modal-body">
         <div class="field"><label>Nombre Completo *</label><input type="text" id="d-name" value="${esc(name)}" placeholder="Ej: Carlos Pérez"></div>
         <div class="field"><label>Correo (Para login) *</label><input type="email" id="d-email" value="${esc(email)}" placeholder="ejemplo@correo.com"></div>
-        <div class="field"><label>Contraseña *</label><input type="text" id="d-pass" placeholder="${isEdit ? 'Dejar en blanco para no cambiar' : 'Ej: 123456'}"></div>
+        <div class="field"><label>Contraseña *</label><input type="text" id="d-pass" placeholder="${isEdit ? 'Dejar en blanco para no cambiar' : 'Ej: 123456'}"><div style="font-size:11.5px; color:var(--muted); margin-top:6px; line-height:1.5;">⚠️ Usa una contraseña única para el repartidor (no la del correo) y cámbiala si se filtra.</div></div>
         <input type="hidden" id="d-id" value="${id || ''}">
       </div>
       <div class="modal-foot">
@@ -1727,8 +2046,10 @@ async function deleteDriver(id) {
 
 function renderReports(m) {
   const hoy = new Date();
-  const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
-  const ultimoDia = hoy.toISOString().split('T')[0];
+  // Fechas en hora local: toISOString() usa UTC y en Venezuela (UTC-4) movía el día/mes.
+  const localISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const primerDia = localISO(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+  const ultimoDia = localISO(hoy);
   m.innerHTML = `
     <div class="page-head"><div><h1 class="page-title">Reportes</h1></div></div>
     <div class="card" style="margin-bottom:24px"><div class="card-body">
@@ -1779,6 +2100,8 @@ function exportarCSV() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener('pointerdown', function () { getAudioCtx(); }, { once: true });
+  if (!supabaseClient) return;
   checkAuth();
   document.getElementById("loginPass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
   supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') checkAuth(); });

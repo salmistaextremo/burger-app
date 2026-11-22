@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F8FA">
 <!-- PWA: Hace que la app se pueda instalar en el celular del repartidor -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Panel Repartidor</title>
 
 <link rel="manifest" href="/manifest-repartidor.json">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -23,6 +26,8 @@
 }
 body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
 #app{max-width:520px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:90px;}
+.hidden{display:none !important}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* LOGIN */
 .login-screen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -87,8 +92,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     <div class="login-icon">🛵</div>
     <h2>Panel Repartidor</h2>
     <p>Ingresa tus credenciales para ver tus entregas.</p>
-    <div class="field"><label>Correo / Usuario</label><input type="email" id="dEmail" placeholder="correo@ejemplo.com"></div>
-    <div class="field"><label>Contraseña</label><input type="password" id="dPass" placeholder="••••••••"></div>
+    <div class="field"><label>Correo / Usuario</label><input type="email" id="dEmail" placeholder="correo@ejemplo.com" autocomplete="username"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="dPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') loginDriver()"></div>
     <button class="btn-login" onclick="loginDriver()">Iniciar Sesión</button>
   </div>
 </div>
@@ -113,11 +118,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 
 <div id="toast" class="toast"></div>
 
+<script src="/app-config.js"></script>
+<script>
+  if (!window.APP_CONFIG || !window.APP_CONFIG.supabaseUrl || !window.APP_CONFIG.supabaseAnonKey) {
+    document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>Falta configurar la app</h2><p style='color:#6B7280'>Crea app-config.js a partir de app-config.example.js con tus credenciales de Supabase.</p></div>";
+    throw new Error('Falta app-config.js');
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (function () {
+    var cfg = window.APP_CONFIG || {};
+    window.SUPABASE_URL = cfg.supabaseUrl || '';
+    window.SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
+    window.supabaseClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+      : null;
+    if (!window.supabaseClient) {
+      document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>No se pudo iniciar la app</h2><p style='color:#6B7280'>Revisa <code>app-config.js</code> y que el navegador no bloquee <code>cdn.jsdelivr.net</code>.</p></div>";
+    }
+  })();
 
   let currentDriver = null;
   let refreshInterval = null;
@@ -131,6 +151,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
     var t = document.getElementById("toast"); 
     t.textContent = msg; t.classList.add("show"); 
     setTimeout(() => t.classList.remove("show"), 3000); 
+  }
+
+  // El contenido de un pedido viene del cliente: SIEMPRE escapar antes de pintarlo.
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function safeUrl(u) {
+    var s = String(u || '');
+    return /^https?:\/\//i.test(s) ? s : '';
+  }
+  function telHref(phone) {
+    var p = String(phone || '').replace(/[^\d+]/g, '');
+    return p ? 'tel:' + p : '';
   }
 
   // =========================================
@@ -199,10 +230,11 @@ function applyBrandColors(baseColor) {
   // CARGAR COLORES Y NOMBRE
   async function cargarColoresMarca() {
   try {
-    const { data } = await supabaseClient.from('config').select('brand, primary_color').eq('id', 1).single();
+    const { data } = await supabaseClient.from('config').select('brand, primary_color, bg_color').eq('id', 1).single();
     if (data) {
       if (data.brand) document.title = `${data.brand} — Repartidor`;
       if (data.primary_color) applyBrandColors(data.primary_color); // 👈 Usamos la nueva función
+      if (data.bg_color) document.documentElement.style.setProperty('--bg', data.bg_color);
     }
   } catch(e) { console.log("Error cargando colores de marca"); }
 }
@@ -232,6 +264,7 @@ function applyBrandColors(baseColor) {
 
   // LOGIN
   async function loginDriver() {
+    if (!supabaseClient) { toast("No se pudo cargar la configuración. Recarga la página."); return; }
     const email = document.getElementById("dEmail").value.trim();
     const pass = document.getElementById("dPass").value.trim();
     if (!email || !pass) return toast("Llena todos los campos");
@@ -248,7 +281,7 @@ function applyBrandColors(baseColor) {
 
     if (error) {
       console.error("Error RPC:", error);
-      return toast("❌ Error de conexión. Intenta de nuevo.");
+      return toast("❌ " + (error.message || error.code || "Error de conexión. Intenta de nuevo."));
     }
 
     if (!data || data.length === 0) {
@@ -256,7 +289,8 @@ function applyBrandColors(baseColor) {
     }
 
     const driver = data[0];
-    driver.password = pass;
+    // Servidores nuevos devuelven `token`; los viejos no (compatibilidad durante el despliegue).
+    if (!driver.token) driver.token = pass;
 
     if (!driver.active) {
       return toast("🚫 Tu cuenta está inhabilitada. Contacta al administrador.");
@@ -266,8 +300,14 @@ function applyBrandColors(baseColor) {
     audioCtx.resume();
 
     currentDriver = driver;
-    localStorage.setItem('driver_session', JSON.stringify(currentDriver));
-    
+    // Seguridad: la contraseña NO se guarda de forma persistente en el dispositivo.
+    // sessionStorage se borra al cerrar la pestaña/app y no queda en localStorage.
+    try {
+      sessionStorage.setItem('driver_session', JSON.stringify(currentDriver));
+      localStorage.removeItem('driver_session');
+      localStorage.setItem('driver_email', driver.email || '');
+    } catch (e) {}
+
     knownOrderIds.clear();
     window.hasLoadedOnce = false;
 
@@ -275,7 +315,16 @@ function applyBrandColors(baseColor) {
   }
 
   function logoutDriver() {
-    localStorage.removeItem('driver_session');
+    // Revocar el token en el servidor (si la función existe)
+    try {
+      if (currentDriver && currentDriver.token) {
+        supabaseClient.rpc('driver_logout', { driver_token: currentDriver.token }).then(function () {}, function () {});
+      }
+    } catch (e) {}
+    try {
+      sessionStorage.removeItem('driver_session');
+      localStorage.removeItem('driver_session');
+    } catch (e) {}
     currentDriver = null;
     knownOrderIds.clear();
     window.hasLoadedOnce = false;
@@ -308,7 +357,7 @@ function applyBrandColors(baseColor) {
     try {
       const { data: orders, error } = await supabaseClient.rpc('get_driver_orders', {
         driver_email: currentDriver.email, 
-        driver_password: currentDriver.password 
+        driver_password: currentDriver.token || currentDriver.password
       });
 
       if (error) throw error;
@@ -339,34 +388,39 @@ function applyBrandColors(baseColor) {
 
       // RENDERIZADO DE PEDIDOS
       list.innerHTML = orders.map(o => {
-        const c = o.customer;
+        const c = o.customer || {};
         const isDelivery = o.type === 'delivery';
-        
+
         let mapBtn = '';
-        if (isDelivery && c.locationUrl) {
-          mapBtn = `<a href="${c.locationUrl}" target="_blank" class="btn-map">📍 Ver Mapa</a>`;
+        const loc = safeUrl(c.locationUrl);
+        if (isDelivery && loc) {
+          mapBtn = `<a href="${esc(loc)}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 Ver Mapa</a>`;
         }
+
+        const tel = telHref(c.phone);
+        const phoneText = esc(c.phone || '');
+        const phoneHtml = tel ? `<a href="${esc(tel)}" style="color:var(--brand)">${phoneText}</a>` : phoneText;
 
         return `
           <div class="order-card">
             <div class="order-head">
-              <span class="order-code">${o.code}</span>
+              <span class="order-code">${esc(o.code)}</span>
               <span class="order-status">${isDelivery ? 'En Camino' : 'Para Retirar'}</span>
             </div>
             
             <div class="order-info">
-              <b>Cliente:</b> ${c.name}<br>
-              <b>Tel:</b> <a href="tel:${c.phone}" style="color:var(--brand)">${c.phone}</a><br>
-              ${isDelivery ? `<b>Dirección:</b> ${c.address || 'Sin dirección'}<br><b>Ref:</b> ${c.ref || 'N/A'}` : `<b>Tipo:</b> Retiro en Tienda`}
+              <b>Cliente:</b> ${esc(c.name)}<br>
+              <b>Tel:</b> ${phoneHtml}<br>
+              ${isDelivery ? `<b>Dirección:</b> ${esc(c.address || 'Sin dirección')}<br><b>Ref:</b> ${esc(c.ref || 'N/A')}` : `<b>Tipo:</b> Retiro en Tienda`}
             </div>
 
             <div class="order-items">
-              ${o.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+              ${(o.items || []).map(i => `<div>${Number(i.qty) || 0}x ${esc(i.name)}</div>`).join('')}
             </div>
 
             <div class="btn-actions">
               ${mapBtn}
-              <button class="btn-delivered" onclick="markDelivered('${o.id}')">✅ Entregado</button>
+              <button class="btn-delivered" data-order-id="${esc(o.id)}" onclick="markDelivered(this.dataset.orderId)">✅ Entregado</button>
             </div>
           </div>
         `;
@@ -385,7 +439,7 @@ function applyBrandColors(baseColor) {
     
     const { data: success, error } = await supabaseClient.rpc('mark_order_delivered', {
       driver_email: currentDriver.email, 
-      driver_password: currentDriver.password, 
+      driver_password: currentDriver.token || currentDriver.password, 
       order_uuid: orderId
     });
     
@@ -425,14 +479,24 @@ function applyBrandColors(baseColor) {
 
   // INICIALIZACIÓN
   window.addEventListener('DOMContentLoaded', () => {
+    if (!supabaseClient) {
+      const p = document.querySelector('.login-box p');
+      if (p) p.textContent = 'No se pudo cargar la configuración. Recarga la página.';
+      return;
+    }
     cargarColoresMarca();
-    
-    const saved = localStorage.getItem('driver_session');
+
+    // Limpiar sesiones antiguas que guardaban la contraseña en localStorage.
+    try { localStorage.removeItem('driver_session'); } catch (e) {}
+    const savedEmail = localStorage.getItem('driver_email');
+    if (savedEmail) document.getElementById('dEmail').value = savedEmail;
+
+    const saved = sessionStorage.getItem('driver_session');
     if (saved) {
       try {
         currentDriver = JSON.parse(saved);
         startPanel();
-      } catch(e) { localStorage.removeItem('driver_session'); }
+      } catch(e) { sessionStorage.removeItem('driver_session'); }
     }
   });
 
@@ -442,6 +506,13 @@ function applyBrandColors(baseColor) {
       loadOrders();
     }
   });
+
+  // PWA: registrar el service worker (requisito para instalar la app)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW no registrado:', err));
+    });
+  }
 </script>
 </body>
 </html>
