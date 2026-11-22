@@ -281,7 +281,7 @@ function applyBrandColors(baseColor) {
 
     if (error) {
       console.error("Error RPC:", error);
-      return toast("❌ Error de conexión. Intenta de nuevo.");
+      return toast("❌ " + (error.message || error.code || "Error de conexión. Intenta de nuevo."));
     }
 
     if (!data || data.length === 0) {
