@@ -47,6 +47,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 .header-info p{font-size:12px;color:var(--muted);margin:2px 0 0;}
 .btn-logout{background:transparent;border:none;color:var(--danger);font-weight:700;font-size:13px;cursor:pointer;}
 .btn-install-driver{display:none; background:var(--brand); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;}
+.driver-notif-banner{background:linear-gradient(135deg,var(--brand),#FF7A45);color:#fff;padding:12px 16px;font-size:13px;font-weight:700;text-align:center;cursor:pointer;box-shadow:var(--shadow);}
 
 /* PEDIDOS */
 .content{padding:20px;}
@@ -110,7 +111,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
       <button class="btn-logout" onclick="logoutDriver()">Salir</button>
     </div>
   </header>
-  
+
+  <div id="driverNotifBanner" class="driver-notif-banner hidden" onclick="enableDriverPush()">
+    🔔 Activa los avisos para recibir pedidos con el teléfono bloqueado
+  </div>
+
   <div class="content" id="ordersList">
     <!-- Aquí se cargan los pedidos -->
   </div>
@@ -262,9 +267,84 @@ function applyBrandColors(baseColor) {
     } catch(e) { console.log("Audio error:", e); }
   }
 
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var output = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+    return output;
+  }
+
+  async function checkDriverPushState() {
+    var banner = document.getElementById('driverNotifBanner');
+    if (!banner) return;
+    if (!('Notification' in window) || !('PushManager' in window)) { banner.classList.add('hidden'); return; }
+    if (Notification.permission !== 'granted') { banner.classList.remove('hidden'); return; }
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      banner.classList.toggle('hidden', !!sub);
+    } catch (e) {
+      banner.classList.remove('hidden');
+    }
+  }
+
+  async function enableDriverPush() {
+    if (!('Notification' in window) || !('PushManager' in window)) {
+      toast('Este dispositivo no soporta notificaciones push');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      toast('Bloqueaste las notificaciones. Habilítalas en el candado del navegador.');
+      return;
+    }
+
+    var permission = Notification.permission;
+    if (permission !== 'granted') {
+      try { permission = await Notification.requestPermission(); } catch (e) { permission = 'denied'; }
+    }
+    if (permission !== 'granted') { toast('No diste permiso para las notificaciones'); return; }
+    if (!currentDriver || !currentDriver.token) { toast('Vuelve a iniciar sesión'); return; }
+
+    try {
+      var vapid = window.APP_CONFIG && window.APP_CONFIG.vapidPublicKey;
+      if (!vapid) { toast('Falta la clave VAPID en la configuración'); return; }
+
+      var reg = await navigator.serviceWorker.register('/sw.js');
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapid)
+        });
+      }
+
+      var json = sub.toJSON();
+      var res = await supabaseClient.rpc('register_driver_push', {
+        driver_token: currentDriver.token,
+        sub_endpoint: json.endpoint,
+        sub_p256dh: json.keys.p256dh,
+        sub_auth: json.keys.auth,
+        sub_user_agent: (navigator.userAgent || '').slice(0, 250)
+      });
+
+      if (res.error) { toast('Error: ' + res.error.message); return; }
+      if (res.data !== true) { toast('La sesión expiró. Vuelve a entrar.'); return; }
+
+      currentDriver.pushEndpoint = json.endpoint;
+      try { sessionStorage.setItem('driver_session', JSON.stringify(currentDriver)); } catch (e) {}
+
+      var banner = document.getElementById('driverNotifBanner');
+      if (banner) banner.classList.add('hidden');
+      toast('✅ Avisos activados');
+    } catch (e) {
+      toast('No se pudieron activar: ' + (e && e.message ? e.message : e));
+    }
+  }
+
   // LOGIN
-  async function loginDriver() {
-    if (!supabaseClient) { toast("No se pudo cargar la configuración. Recarga la página."); return; }
+  async function loginDriver() {    if (!supabaseClient) { toast("No se pudo cargar la configuración. Recarga la página."); return; }
     const email = document.getElementById("dEmail").value.trim();
     const pass = document.getElementById("dPass").value.trim();
     if (!email || !pass) return toast("Llena todos los campos");
@@ -314,9 +394,15 @@ function applyBrandColors(baseColor) {
     startPanel();
   }
 
-  function logoutDriver() {
-    // Revocar el token en el servidor (si la función existe)
+  async function logoutDriver() {
+    // Quitar la suscripción push y revocar el token
     try {
+      if (currentDriver && currentDriver.token && currentDriver.pushEndpoint) {
+        await supabaseClient.rpc('unregister_driver_push', {
+          driver_token: currentDriver.token,
+          sub_endpoint: currentDriver.pushEndpoint
+        });
+      }
       if (currentDriver && currentDriver.token) {
         supabaseClient.rpc('driver_logout', { driver_token: currentDriver.token }).then(function () {}, function () {});
       }
@@ -338,6 +424,7 @@ function applyBrandColors(baseColor) {
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("dName").textContent = currentDriver.name;
     loadOrders();
+    checkDriverPushState();
     
     if (refreshInterval) clearInterval(refreshInterval);
     refreshInterval = setInterval(() => {

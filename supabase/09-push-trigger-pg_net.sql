@@ -32,10 +32,11 @@ begin
     perform net.http_post(
       url := v_url,
       body := jsonb_build_object(
-        'type',   'INSERT',
+        'type',   tg_op,
         'table',  'orders',
         'schema', 'public',
-        'record', to_jsonb(new)
+        'record', to_jsonb(new),
+        'old_record', case when tg_op = 'UPDATE' then to_jsonb(old) else null end
       ),
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
@@ -53,7 +54,7 @@ $$;
 
 drop trigger if exists trg_notify_new_order on public.orders;
 create trigger trg_notify_new_order
-after insert on public.orders
+after insert or update on public.orders
 for each row execute function private.notify_new_order();
 
 commit;

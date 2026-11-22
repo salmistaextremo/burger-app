@@ -32,10 +32,7 @@ module.exports = async (req, res) => {
     }
 
     if (!webpush) {
-      return reply(res, 500, {
-        error: 'web-push no disponible',
-        detail: webpushLoadError && webpushLoadError.message
-      });
+      return reply(res, 500, { error: 'web-push no disponible', detail: webpushLoadError && webpushLoadError.message });
     }
 
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -53,9 +50,42 @@ module.exports = async (req, res) => {
       try { body = JSON.parse(body); } catch (e) { body = null; }
     }
 
-    const order = body && (body.record || body);
+    const envelope = body || {};
+    const order = envelope.record || envelope;
     if (!order || !order.code) {
       return reply(res, 400, { error: 'Payload sin pedido' });
+    }
+
+    const event = String(envelope.type || envelope.event || 'INSERT').toUpperCase();
+    const oldRecord = envelope.old_record || envelope.oldRecord || {};
+    const customer = order.customer || {};
+    const total = Number(order.total || 0).toFixed(2);
+    const typeLabel = order.type === 'delivery' ? 'Delivery' : 'Retiro';
+
+    let audience = 'admin';
+    let title;
+    let text;
+    let url;
+    let tag;
+
+    if (event === 'UPDATE') {
+      const status = String(order.status || '');
+      if (status !== 'camino' && status !== 'listo') {
+        return reply(res, 200, { skipped: 'status', status });
+      }
+      if (oldRecord && oldRecord.status === status) {
+        return reply(res, 200, { skipped: 'same-status', status });
+      }
+      audience = 'repartidor';
+      title = '🛵 Pedido ' + order.code + (status === 'camino' ? ' en camino' : ' listo');
+      text = (customer.name || 'Cliente') + ' · ' + typeLabel + ' · $' + total;
+      url = '/repartidor.html';
+      tag = 'pedido-' + order.code + '-' + status;
+    } else {
+      title = '🔔 Nuevo pedido ' + order.code;
+      text = (customer.name || 'Cliente') + ' · ' + typeLabel + ' · $' + total;
+      url = '/admin.html';
+      tag = 'pedido-' + order.code;
     }
 
     const base = SUPABASE_URL.replace(/\/$/, '');
@@ -67,14 +97,14 @@ module.exports = async (req, res) => {
 
     let subs = [];
     try {
-      const r = await fetch(base + '/rest/v1/push_subscriptions?select=endpoint,p256dh,auth', { headers });
+      let r = await fetch(base + '/rest/v1/push_subscriptions?select=endpoint,p256dh,auth&role=eq.' + encodeURIComponent(audience), { headers });
+      // Compatibilidad mientras no se ejecute la migración 10 (columna role)
+      if (!r.ok && audience === 'admin') {
+        r = await fetch(base + '/rest/v1/push_subscriptions?select=endpoint,p256dh,auth', { headers });
+      }
       if (!r.ok) {
-        const text = await r.text();
-        return reply(res, 502, {
-          error: 'No se pudieron leer las suscripciones',
-          status: r.status,
-          detail: text.slice(0, 300)
-        });
+        const detail = await r.text();
+        return reply(res, 502, { error: 'No se pudieron leer las suscripciones', status: r.status, detail: detail.slice(0, 300) });
       }
       subs = await r.json();
     } catch (e) {
@@ -82,18 +112,15 @@ module.exports = async (req, res) => {
     }
 
     if (!Array.isArray(subs) || subs.length === 0) {
-      return reply(res, 200, { sent: 0, total: 0 });
+      return reply(res, 200, { sent: 0, total: 0, audience });
     }
 
-    const customer = order.customer || {};
-    const total = Number(order.total || 0).toFixed(2);
-    const type = order.type === 'delivery' ? 'Delivery' : 'Retiro';
     const payload = JSON.stringify({
-      title: '🔔 Nuevo pedido ' + order.code,
-      body: (customer.name || 'Cliente') + ' · ' + type + ' · $' + total,
-      url: '/admin.html',
+      title,
+      body: text,
+      url,
       icon: '/icon-192.png',
-      tag: 'pedido-' + order.code
+      tag
     });
 
     let sent = 0;
@@ -122,7 +149,7 @@ module.exports = async (req, res) => {
       }
     }));
 
-    return reply(res, 200, { sent, total: subs.length, removed });
+    return reply(res, 200, { sent, total: subs.length, removed, audience });
   } catch (err) {
     return reply(res, 500, { error: 'Error interno', detail: err && err.message });
   }
