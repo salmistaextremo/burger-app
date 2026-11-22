@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" id="metaThemeColor" content="#F7F8FA">
-<title>Rapid Burger — Pide y rastrea en tiempo real</title>
+<title>DLV Food — Pide y rastrea en tiempo real</title>
 <link rel="manifest" href="/manifest-cliente.json">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -59,7 +61,6 @@
 html,body{margin:0;padding:0;background:var(--bg)}
 body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;font-weight:400}
 #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:110px;box-shadow:0 0 80px rgba(0,0,0,0.05);overflow-x:hidden;}
-.hidden-app { display: none !important; }
 .hidden{display:none !important}
 
 .hdr{position:sticky;top:0;z-index:30;background:var(--bg);opacity:0.98;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:16px 20px 12px;}
@@ -274,11 +275,25 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 .skeleton-img { height: 160px; border-radius: 20px 20px 0 0; margin-bottom: 12px; }
 .skeleton-text { height: 16px; margin-bottom: 8px; width: 80%; }
 .skeleton-text.short { width: 50%; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes bounceIn { 0% { transform: scale(.3); opacity: 0; } 50% { transform: scale(1.05); } 70% { transform: scale(.9); } 100% { transform: scale(1); opacity: 1; } }
+
+/* Pantalla de arranque fallido: siempre visible, nunca dentro de #app */
+.boot-error {
+  position: fixed; inset: 0; z-index: 400; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px; text-align: center;
+}
+.boot-error .boot-icon { font-size: 56px; margin-bottom: 16px; }
+.boot-error h2 { font-size: 22px; font-weight: 900; margin: 0 0 10px; color: var(--ink); }
+.boot-error p { font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0 0 24px; max-width: 320px; }
+.boot-error .btn { max-width: 280px; }
 </style>
 </head>
 <body>
 
-<div id="app" class="hidden-app">
+<div id="app">
 
   <!-- PANTALLA DE TIENDA CERRADA -->
   <div id="closedOverlay" class="closed-overlay hidden" style="position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">
@@ -292,7 +307,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
   <!-- PANTALLA DE BIENVENIDA -->
   <div id="botWelcome" class="bot-overlay hidden">
     <div class="bot-avatar" id="botAvatar">🍔</div>
-    <h2 class="bot-title">¡Bienvenido a <span id="botBrand">Rapid Burger</span>!</h2>
+    <h2 class="bot-title">¡Bienvenido a <span id="botBrand">DLV Food</span>!</h2>
     <p class="bot-sub">Soy tu asistente. Dime tu nombre y te guiaré con botones para armar tu pedido en segundos. 👇</p>
     <div class="bot-input-wrap">
       <input id="botNameInput" class="bot-input" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name">
@@ -305,7 +320,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <div class="brand">
         <div class="logo" id="brandLogo">🍔</div>
         <div style="min-width:0">
-          <h1 id="brandName">Rapid Burger</h1>
+          <h1 id="brandName">DLV Food</h1>
           <div style="display:flex; align-items:center; gap:8px;">
              <span class="status" id="storeStatus">Verificando...</span>
              <span class="rate-badge" id="rateBadge">💱 Cargando...</span>
@@ -408,9 +423,9 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
       <div style="padding: 0 20px;">
         <div style="background:var(--surface); border-radius:24px; padding:24px; box-shadow:var(--shadow-sm); margin-top:24px;">
           <h4 style="margin:0 0 8px; font-size:18px; font-weight:800;">🔍 Rastrear otro pedido</h4>
-          <p style="margin:0 0 16px; font-size:14px; color:var(--muted);">Escribe el número de pedido (ej: A-4821).</p>
+          <p style="margin:0 0 16px; font-size:14px; color:var(--muted);">Escribe el número de pedido (ej: A-7K2M9Q).</p>
           <div style="display:flex; gap:10px; width:100%;">
-            <input id="lookupInput" placeholder="A-0000" maxlength="8" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
+            <input id="lookupInput" placeholder="A-7K2M9Q" maxlength="8" style="flex:1; min-width:0; padding:16px; border-radius:16px; border:none; background:var(--bg); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:1px; outline:none;">
             <button onclick="lookupOrder()" style="padding:0 20px; border-radius:16px; border:none; background:var(--brand); color:#fff; font-weight:800; font-size:14px; cursor:pointer; flex-shrink:0; white-space:nowrap;">Buscar</button>
           </div>
         </div>
@@ -431,7 +446,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
         <button class="btn btn-wa" onclick="openWhatsApp()"><span style="font-size:20px">💬</span> Chatear con un asesor</button>
         <div style="display:flex; gap:12px; margin-top:12px;">
           <button class="btn btn-ghost" onclick="window.location.href='tel:'+CONFIG.phoneCall">📞 Llamar</button>
-          <button class="btn btn-ghost" onclick="window.open(CONFIG.mapsUrl, '_blank')">📍 Ubicación</button>
+          <button class="btn btn-ghost" onclick="window.open(CONFIG.mapsUrl, '_blank', 'noopener')">📍 Ubicación</button>
         </div>
         <h3 style="font-size:14px;font-weight:800;margin:32px 0 16px;color:var(--ink);text-transform:uppercase;letter-spacing:1px;">Preguntas frecuentes</h3>
         <details style="background:var(--surface);border-radius:16px;padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm);cursor:pointer;">
@@ -497,15 +512,30 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
 </div>
 
+<!-- Error de arranque: vive fuera de #app para que SIEMPRE sea visible -->
+<div id="bootError" class="boot-error hidden">
+  <div class="boot-icon">📡</div>
+  <h2>No pudimos conectar</h2>
+  <p>Revisa tu conexión a internet e inténtalo de nuevo.</p>
+  <button class="btn btn-primary" onclick="location.reload()">Reintentar</button>
+</div>
+
 <style>
 .otype-label { flex:1; background:var(--surface); padding:16px; border-radius:16px; text-align:center; font-weight:700; box-shadow:var(--shadow-sm); cursor:pointer; color:var(--muted); transition:0.2s; border:2px solid transparent; margin:0; }
 .otype-label:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
 </style>
 
+<script src="/app-config.js"></script>
+<script>
+  if (!window.APP_CONFIG || !window.APP_CONFIG.supabaseUrl || !window.APP_CONFIG.supabaseAnonKey) {
+    document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>Falta configurar la app</h2><p style='color:#6B7280'>Crea app-config.js a partir de app-config.example.js con tus credenciales de Supabase.</p></div>";
+    throw new Error('Falta app-config.js');
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://ydueyhlvkmxrsprfgyal.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkdWV5aGx2a214cnNwcmZneWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzMxMDEsImV4cCI6MjEwODYwOTEwMX0.Ha_3BJngwg4motQb0NgeoslDCJsfR-nbkxWnfbFj6rM';
+  const SUPABASE_URL = window.APP_CONFIG.supabaseUrl; 
+  const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // =========================================
@@ -543,7 +573,7 @@ function applyBrandColors(baseColor) {
 
 <script>
 var CONFIG = {
-  brand: "Rapid Burger", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
+  brand: "DLV Food", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
   freeDeliveryFrom: 25.00, hours: { open: "11:00", close: "23:00" }, days: [1, 2, 3, 4, 5, 6, 0],
   helpHoursText: "11:00 a 23:00", payments: [], manualRate: 0,
@@ -571,6 +601,7 @@ var NO_PROOF_TYPES = ["efectivo", "tarjeta", "otro"];
 var CATS = [ { id:"todos", name:"Todo", icon:"✨" } ];
 var MENU = [];
 var EXCHANGE_RATE = null;
+var EXCHANGE_RATE_TS = 0;
 
 var state = { view: "guided", category: "todos", query: "", cart: [], clientName: "", proofImage: null, proofFile: null, userLocationUrl: null };
 var guidedState = { step: 'food', viewingCategory: null, stepsOrder: ['food', 'drinks', 'desserts'] };
@@ -749,46 +780,103 @@ function exitApp() {
   }, 100);
 }
 
+function showBootError() {
+  var el = document.getElementById("bootError");
+  if (el) el.classList.remove("hidden");
+  var bw = document.getElementById("botWelcome");
+  if (bw) bw.classList.add("hidden");
+}
+
 async function fetchExchangeRate() {
-  if (CONFIG.manualRate && Number(CONFIG.manualRate) > 0) {
-    EXCHANGE_RATE = Number(CONFIG.manualRate);
-    updateRateBadge(); refreshCurrentView(); return;
+  if (CONFIG.manualRate && Number(CONFIG.manualRate) > 0) { applyRate(CONFIG.manualRate, Date.now(), false); return; }
+
+  const cached = readCachedRate();
+  if (cached) {
+    const age = Date.now() - cached.ts;
+    applyRate(cached.rate, cached.ts, cached.ts ? age > 24 * 60 * 60 * 1000 : true);
   }
-  if (EXCHANGE_RATE) { updateRateBadge(); refreshCurrentView(); }
-  const fetchWithTimeout = (url, timeout = 4000) => {
-    return Promise.race([fetch(url), new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))]);
+
+  const fetchJson = async (url) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } finally { clearTimeout(timer); }
   };
+
+  // pydolarve.org ya no resuelve (NXDOMAIN). DolarAPI es la fuente viva y permite CORS.
   try {
-    let res = await fetchWithTimeout("https://pydolarve.org/api/v1/dollar?page=bcv");
-    if (res.ok) {
-      let data = await res.json();
-      if (data && data.monitors && data.monitors.bcv && data.monitors.bcv.price) {
-        EXCHANGE_RATE = parseFloat(data.monitors.bcv.price);
-        localStorage.setItem('ff_exchange_rate', EXCHANGE_RATE);
-        updateRateBadge(); refreshCurrentView(); return;
-      }
-    }
-  } catch (e) { console.log("Fallo API 1 (PyDolar):", e.message); }
+    const data = await fetchJson("https://ve.dolarapi.com/v1/dolares/oficial");
+    const price = parseFloat(data && data.promedio);
+    if (isFinite(price) && price > 0) { saveRate(price); return; }
+  } catch (e) { console.warn("Tasa oficial no disponible:", e.message); }
+
   try {
-    let res = await fetchWithTimeout("https://ve.dolarapi.com/v1/dolares/oficial");
-    let data = await res.json();
-    if (data && data.promedio) {
-      EXCHANGE_RATE = parseFloat(data.promedio);
-      localStorage.setItem('ff_exchange_rate', EXCHANGE_RATE);
-      updateRateBadge(); refreshCurrentView(); return;
+    const list = await fetchJson("https://ve.dolarapi.com/v1/dolares");
+    if (Array.isArray(list)) {
+      const oficial = list.find(x => x && x.fuente === 'oficial' && Number(x.promedio) > 0);
+      const item = oficial || list.find(x => x && Number(x.promedio) > 0);
+      if (item) { saveRate(Number(item.promedio)); return; }
     }
-  } catch (e) { console.log("Fallo API 2 (DolarAPI):", e.message); }
-  if (!EXCHANGE_RATE) { EXCHANGE_RATE = 36.50; updateRateBadge(); refreshCurrentView(); }
+  } catch (e) { console.warn("Lista de tasas no disponible:", e.message); }
+
+  // Sin datos frescos: conservamos la última tasa guardada (marcada como referencial).
+  // Nunca inventamos una tasa fija: es peor un precio en Bs equivocado que ningún precio.
+  if (!EXCHANGE_RATE) { EXCHANGE_RATE = null; updateRateBadge(); refreshCurrentView(); }
+}
+
+function readCachedRate() {
+  try {
+    const raw = localStorage.getItem('ff_exchange_rate');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'number' && parsed > 0) return { rate: parsed, ts: 0 };
+    if (parsed && Number(parsed.rate) > 0) return { rate: Number(parsed.rate), ts: Number(parsed.ts) || 0 };
+  } catch (e) {}
+  return null;
+}
+
+function applyRate(rate, ts, stale) {
+  EXCHANGE_RATE = Number(rate);
+  EXCHANGE_RATE_TS = Number(ts) || Date.now();
+  window.EXCHANGE_RATE_STALE = !!stale;
+  updateRateBadge();
+  refreshCurrentView();
+}
+
+function saveRate(rate) {
+  try { localStorage.setItem('ff_exchange_rate', JSON.stringify({ rate: rate, ts: Date.now() })); } catch (e) {}
+  applyRate(rate, Date.now(), false);
 }
 
 function updateRateBadge(){ 
   var badge = document.getElementById("rateBadge"); 
-  if (badge && EXCHANGE_RATE) { badge.innerHTML = '💱 1$ = Bs. ' + Number(EXCHANGE_RATE).toFixed(2); } 
+  if (!badge) return;
+  if (!EXCHANGE_RATE) { badge.textContent = '💱 Tasa no disponible'; badge.title = 'No se pudo obtener la tasa del día'; return; }
+  var stale = window.EXCHANGE_RATE_STALE;
+  badge.innerHTML = '💱 1$ = Bs. ' + Number(EXCHANGE_RATE).toFixed(2) + (stale ? ' <span style="font-weight:500;">(ref.)</span>' : '');
+  badge.title = stale ? 'Tasa de referencia guardada: no se pudo actualizar' : 'Tasa del día';
 }
 
 function $(s, r){ r = r || document; return r.querySelector(s); }
 function $$(s, r){ r = r || document; return Array.prototype.slice.call(r.querySelectorAll(s)); }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Códigos de pedido aleatorios (no enumerables). Alfabeto sin caracteres ambiguos.
+function generateOrderCode() {
+  var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var out = '';
+  try {
+    var bytes = new Uint32Array(6);
+    crypto.getRandomValues(bytes);
+    for (var i = 0; i < 6; i++) out += alphabet[bytes[i] % alphabet.length];
+  } catch (e) {
+    for (var j = 0; j < 6; j++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return 'A-' + out;
+}
 function money(n){ 
   if (n === undefined || n === null) n = 0;
   var usd = CONFIG.currency + Number(n).toFixed(2); 
@@ -857,11 +945,11 @@ function setupCatalogRealtime() {
 function loadLocal() {
   try { state.cart = JSON.parse(localStorage.getItem('ff_cart_client')) || []; } catch(e){}
   try { state.clientName = localStorage.getItem('ff_client_name') || ""; } catch(e){}
-  try { const cachedRate = localStorage.getItem('ff_exchange_rate'); if (cachedRate) EXCHANGE_RATE = parseFloat(cachedRate); } catch(e){}
+  try { const cachedRate = readCachedRate(); if (cachedRate) { EXCHANGE_RATE = cachedRate.rate; EXCHANGE_RATE_TS = cachedRate.ts; } } catch(e){}
 }
 function saveCart() { localStorage.setItem('ff_cart_client', JSON.stringify(state.cart)); }
 function saveName(n) { state.clientName = n; localStorage.setItem('ff_client_name', n); }
-function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank'); }
+function openWhatsApp() { window.open(`https://wa.me/${CONFIG.whatsapp}?text=Hola,%20necesito%20ayuda%20con%20mi%20pedido`, '_blank', 'noopener'); }
 
 function getLocation() {
   const card = document.getElementById("locationCard");
@@ -876,7 +964,7 @@ function getLocation() {
       const lat = position.coords.latitude; const lng = position.coords.longitude;
       state.userLocationUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
-      statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+      statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
       toast("Ubicación capturada");
     },
     (error) => {
@@ -1110,9 +1198,9 @@ function closeModal(){ $("#modal").classList.add("hidden"); state.modal = null; 
 
 function renderModal(){
   var m = state.modal; var p = m.product;
-  var extrasHtml = p.extras.map(e => {
+  var extrasHtml = p.extras.map((e, idx) => {
     const isChecked = m.extras.includes(e.name);
-    return `<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;background:var(--surface);border-radius:16px;margin-bottom:10px;cursor:pointer;font-size:15px;font-weight:600;box-shadow:var(--shadow-sm);border:2px solid ${isChecked ? 'var(--brand)' : 'transparent'};"><span>${esc(e.name)} <span style="color:var(--muted);font-weight:400;font-size:14px;">+${money(e.price)}</span></span><span style="display:flex;gap:10px"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExtra('${esc(e.name)}', this.checked)" style="display:none;"><span style="width:24px;height:24px;border-radius:8px;border:2px solid ${isChecked ? 'var(--brand)' : 'var(--line)'};display:grid;place-items:center;flex:none;font-size:14px;color:${isChecked ? '#fff' : 'transparent'};background:${isChecked ? 'var(--brand)' : 'transparent'};transition:.2s;">✓</span></span></label>`;
+    return `<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;background:var(--surface);border-radius:16px;margin-bottom:10px;cursor:pointer;font-size:15px;font-weight:600;box-shadow:var(--shadow-sm);border:2px solid ${isChecked ? 'var(--brand)' : 'transparent'};"><span>${esc(e.name)} <span style="color:var(--muted);font-weight:400;font-size:14px;">+${money(e.price)}</span></span><span style="display:flex;gap:10px"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExtraAt(${idx}, this.checked)" style="display:none;"><span style="width:24px;height:24px;border-radius:8px;border:2px solid ${isChecked ? 'var(--brand)' : 'var(--line)'};display:grid;place-items:center;flex:none;font-size:14px;color:${isChecked ? '#fff' : 'transparent'};background:${isChecked ? 'var(--brand)' : 'transparent'};transition:.2s;">✓</span></span></label>`;
   }).join("");
   $("#modal").innerHTML = `
     <div class="sheet">
@@ -1137,6 +1225,11 @@ function renderModal(){
 function updateModalQty(delta) { var m = state.modal; if (!m) return; m.qty = Math.max(1, m.qty + delta); document.getElementById('mQtyDisplay').textContent = m.qty; updateModalPrice(); }
 function updateModalPrice() { var m = state.modal; if (!m) return; var p = m.product; var price = (p.price + p.extras.filter(e=>m.extras.includes(e.name)).reduce((a,e)=>a+e.price,0)) * m.qty; document.getElementById('mUnit').innerHTML = money(price); }
 function toggleExtra(name, on){ if(on) { if(!state.modal.extras.includes(name)) state.modal.extras.push(name); } else { state.modal.extras = state.modal.extras.filter(x=>x!==name); } updateModalPrice(); renderModal(); }
+function toggleExtraAt(idx, on) {
+  var p = state.modal && state.modal.product;
+  if (!p || !p.extras[idx]) return;
+  toggleExtra(p.extras[idx].name, on);
+}
 
 function addToCart(){
   var m = state.modal; var p = m.product;
@@ -1158,11 +1251,11 @@ function renderCart(){
     list.innerHTML = getEmptyHTML("Tu carrito está vacío", "Agrega productos del menú para comenzar tu pedido.", "🛒", `<button class="btn btn-primary" style="margin-top:20px; width:auto; padding:12px 24px;" onclick="showAllCategories()">Ver Categorías</button>`);
     totals.innerHTML = ""; actions.innerHTML = ""; return; 
   }
-  list.innerHTML = state.cart.map(i => `
+  list.innerHTML = state.cart.map((i, idx) => `
     <div class="cart-item">
       <div class="ci-emoji">${i.img ? `<img src="${esc(i.img)}" alt="${esc(i.name)}" style="object-fit:cover;">` : `<span style="font-size:28px;">${i.emoji || '🍔'}</span>`}</div>
       <div class="ci-info"><h4>${esc(i.name)}</h4>${i.extras.length ? `<p class="extras">+ ${i.extras.map(e=>esc(e.name)).join(", ")}</p>` : ''}</div>
-      <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQty('${i.key}',-1)">−</button><span>${i.qty}</span><button onclick="changeQty('${i.key}',1)">+</button></div></div>
+      <div class="ci-right"><span class="ci-price">${money(i.unit * i.qty)}</span><div class="qty"><button onclick="changeQtyAt(${idx}, -1)">−</button><span>${i.qty}</span><button onclick="changeQtyAt(${idx}, 1)">+</button></div></div>
     </div>`).join("");
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = CONFIG.deliveryFee;
   totals.innerHTML = `<div class="totals"><div class="trow"><span>Subtotal</span><b>${money(sub)}</b></div><div class="trow"><span>Delivery</span><b>${money(del)}</b></div><div class="trow total"><span>Total</span><span>${money(sub + del)}</span></div></div>`;
@@ -1174,6 +1267,12 @@ function changeQty(key, d){
   var it = state.cart.find(i => i.key === key); if(!it) return;
   it.qty += d; if(it.qty <= 0) state.cart = state.cart.filter(i=>i.key!==key);
   saveCart(); updateBadge(); renderCart();
+}
+
+function changeQtyAt(idx, d) {
+  var it = state.cart[idx];
+  if (!it) return;
+  changeQty(it.key, d);
 }
 
 function updateOrderType() {
@@ -1191,7 +1290,7 @@ function renderCheckout(){
   if (card && content && statusEl) {
     if (state.userLocationUrl) {
       card.classList.add("captured"); content.innerHTML = `<span class="icon">✅</span><span>Ubicación enviada</span>`;
-      statusEl.style.display = "block"; statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
+      statusEl.style.display = "block"; statusEl.style.color = "var(--ok)"; statusEl.innerHTML = `✅ <a href="${state.userLocationUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--ok); text-decoration:underline;">Ver en Google Maps</a>`;
     } else {
       card.classList.remove("captured"); content.innerHTML = `<span class="icon">📍</span><span>Enviar mi ubicación en tiempo real</span>`; statusEl.style.display = "none";
     }
@@ -1203,15 +1302,16 @@ async function submitOrder() {
   var name = $("#f-name").value.trim(); var phone = $("#f-phone").value.trim(); var isDelivery = $("input[name='otype']:checked").value === 'delivery';
   var ref = $("#f-ref").value.trim(); var payMethod = $("#paySelect").options[$("#paySelect").selectedIndex].text; var payId = $("#paySelect").value;
   var valid = true;
+  var phoneDigits = phone.replace(/\D/g, '');
   if (!name) { $("#f-name-w").classList.add("invalid"); valid = false; } else { $("#f-name-w").classList.remove("invalid"); }
-  if (!phone) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
+  if (!phone || phoneDigits.length < 10) { $("#f-phone-w").classList.add("invalid"); valid = false; } else { $("#f-phone-w").classList.remove("invalid"); }
   if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
   if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
   var btn = document.getElementById("btnConfirm"); btn.disabled = true; btn.innerHTML = "Enviando...";
   var sub = state.cart.reduce((a,i)=>a+i.unit*i.qty,0); var del = isDelivery ? CONFIG.deliveryFee : 0; var total = sub + del; 
-  var code = 'A-' + String(Date.now()).slice(-4);
+  var code = generateOrderCode();
   let proofUrl = null;
   const selectedPayment = CONFIG.payments.find(p => p.id === payId);
   const needsProof = selectedPayment && !NO_PROOF_TYPES.includes(selectedPayment.type);
@@ -1223,35 +1323,49 @@ async function submitOrder() {
       const fileName = `${code}-${Date.now()}.${fileExt}`;
       const { error: upErr } = await supabaseClient.storage.from('comprobantes').upload(fileName, state.proofFile, { contentType: state.proofFile.type, upsert: false });
       if (upErr) throw upErr;
-      const { data: urlData } = supabaseClient.storage.from('comprobantes').getPublicUrl(fileName);
-      proofUrl = urlData.publicUrl;
+      // Guardamos la ruta, no una URL pública: el bucket es privado y el admin firma al abrir.
+      proofUrl = fileName;
       btn.innerHTML = "Enviando...";
     } catch(e) {
       console.warn("No se pudo subir comprobante:", e); toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
     }
   }
 
+  var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
+
+  // El código es aleatorio: si por casualidad choca con uno existente (unique_violation), reintentamos.
+  var insertError = null;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    orderData.code = code;
+    const { error } = await supabaseClient.from('orders').insert([orderData]);
+    if (!error) { insertError = null; break; }
+    insertError = error;
+    if (error.code === '23505') { code = generateOrderCode(); continue; }
+    break;
+  }
+
+  if (insertError) {
+    console.error("Error de Supabase:", insertError);
+    alert("No pudimos guardar el pedido. Revisa tu conexión e inténtalo de nuevo.");
+    btn.disabled = false;
+    btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+    return;
+  }
+
+  // El mensaje se arma después del insert para usar el código definitivo.
   var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
   if (isDelivery) { msg += `*Tipo:* Delivery\n`; if (ref) msg += `*Ref:* ${ref}\n`; msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`; } else { msg += `*Tipo:* Retiro en tienda\n`; }
   msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
   state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
   msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
 
-  var orderData = { code: code, status: 'recibido', customer: { name, phone, address: ref, ref: ref, locationUrl: state.userLocationUrl }, items: state.cart, total: total, type: isDelivery ? 'delivery' : 'pickup', payment_method: payMethod, notes: null, proof_url: proofUrl };
-  const { error } = await supabaseClient.from('orders').insert([orderData]);
-  
-  if (error) { 
-    console.error("Error de Supabase:", error); 
-    alert("Atención: El pedido se envió por WhatsApp, pero no se guardó en el sistema."); 
-    // Restauramos el botón si falla la base de datos
-    btn.disabled = false;
-    btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
-    return; 
-  }
-
   saveName(name); state.cart = []; state.userLocationUrl = null; state.proofImage = null; state.proofFile = null; saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
-  window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank'); 
+  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
+  // window.open después de varios await lo bloquean los navegadores móviles; si pasa, navegamos igual.
+  var waWin = window.open(waUrl, '_blank');
+  if (waWin) { try { waWin.opener = null; } catch (e) {} }
+  if (!waWin) { window.location.href = waUrl; }
   toast("Pedido enviado con éxito"); 
   
   // 👇 LA MAGIA: Restauramos el botón para el próximo pedido
@@ -1279,9 +1393,9 @@ async function renderTracking() {
     const isRated = localStorage.getItem('rated_' + order.code);
     if (order.status === 'entregado') {
       if (!order.client_confirmed) {
-        rateBtnHtml = `<button class="btn btn-primary" onclick="confirmOrderReceived('${order.code}', this)" style="margin-top:20px; background:linear-gradient(135deg, #10B981, #059669); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); color: #fff;">✅ Confirmar Recepción</button>`;
+        rateBtnHtml = `<button class="btn btn-primary" data-code="${esc(order.code)}" onclick="confirmOrderReceived(this.dataset.code, this)" style="margin-top:20px; background:linear-gradient(135deg, #10B981, #059669); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); color: #fff;">✅ Confirmar Recepción</button>`;
       } else if (!order.rating && !isRated) {
-        rateBtnHtml = `<button class="btn btn-primary" onclick="openRatingModal('${order.code}')" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`;
+        rateBtnHtml = `<button class="btn btn-primary" data-code="${esc(order.code)}" onclick="openRatingModal(this.dataset.code)" style="margin-top:20px; background:linear-gradient(135deg, #FFC107, #FF9800); box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4); color: #fff;">⭐ Calificar mi pedido</button>`;
       }
     }
 
@@ -1472,31 +1586,45 @@ async function init(){
   const loaded = await loadSharedData();
 
   if (!loaded) { 
-    document.getElementById("menuList").innerHTML = getErrorHTML("No pudimos cargar el menú. Revisa tu conexión.", "init");
-    document.getElementById("guidedContent").innerHTML = getErrorHTML("Error de conexión.", "init");
+    showBootError();
     return; 
   }
   
-  // 👇 INICIAMOS LA ESCUCHA EN TIEMPO REAL
+  // Escucha de cambios del catálogo en tiempo real
   setupCatalogRealtime(); 
 
-  document.getElementById("app").classList.remove("hidden-app");
-  // ... (el resto de tu código de init)
-  
-  if (!loaded) { 
-    document.getElementById("menuList").innerHTML = getErrorHTML("No pudimos cargar el menú. Revisa tu conexión.", "init");
-    document.getElementById("guidedContent").innerHTML = getErrorHTML("Error de conexión.", "init");
-    return; 
-  }
-  
-  document.getElementById("app").classList.remove("hidden-app");
+  // Mostrar la app y la pantalla de bienvenida
   document.getElementById("botWelcome").classList.remove("hidden");
-  checkStoreStatus(); setInterval(checkStoreStatus, 60000);
-  renderChips(); renderMenu(); renderCart(); renderCheckout(); updateBadge(); 
+
+  // Estado de la tienda (abierto/cerrado) y refresco periódico
+  checkStoreStatus();
+  setInterval(checkStoreStatus, 60000);
+
+  // Render inicial de todas las vistas
+  renderChips();
+  renderMenu();
+  renderCart();
+  renderCheckout();
+  updateBadge();
+
+  // Tasa de cambio USD -> Bs
   fetchExchangeRate();
+
+  // Buscador
   $("#searchInput").addEventListener("input", e => { state.query = e.target.value; renderMenu(); });
+
+  // Botón de ayuda
   $("#btnHelp").onclick = () => go("help");
+
+  // Aviso de cookies
   checkCookies();
+}
+
+// PWA: registrar el service worker (requisito para instalar y para el modo offline)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function (err) { console.warn('No se pudo registrar el service worker:', err); });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
