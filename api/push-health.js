@@ -5,6 +5,8 @@ module.exports = (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({
     ok: true,
+    vercelEnv: process.env.VERCEL_ENV || null,
+    branch: process.env.VERCEL_GIT_COMMIT_REF || null,
     pushSecret: !!secret,
     pushSecretLength: secret.length,
     serviceRole: !!service,
