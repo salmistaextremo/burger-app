@@ -10,6 +10,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 <meta name="theme-color" id="metaThemeColor" content="#FF5A1F">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -328,9 +329,17 @@ textarea{resize:vertical;min-height:80px}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = window.APP_CONFIG.supabaseUrl; 
-  const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (function () {
+    var cfg = window.APP_CONFIG || {};
+    window.SUPABASE_URL = cfg.supabaseUrl || '';
+    window.SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
+    window.supabaseClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+      : null;
+    if (!window.supabaseClient) {
+      document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>No se pudo iniciar la app</h2><p style='color:#6B7280'>Revisa <code>app-config.js</code> y que el navegador no bloquee <code>cdn.jsdelivr.net</code>.</p></div>";
+    }
+  })();
 </script>
 
 <script>
@@ -571,6 +580,7 @@ function updateAppBadge() {
 }
 
 async function checkAuth() {
+  if (!supabaseClient) return;
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
     document.getElementById("authScreen").classList.add("hidden");
@@ -617,6 +627,7 @@ async function checkAuth() {
 }
 
 function doLogin() {
+  if (!supabaseClient) { alert('No se pudo cargar la configuración. Recarga la página.'); return; }
   const email = document.getElementById("loginUser").value.trim();
   const password = document.getElementById("loginPass").value;
   const err = document.getElementById("loginError");
@@ -778,6 +789,7 @@ function setupOrderListener() {
 }
 
 function handleAppVisibility() {
+  if (!supabaseClient) return;
   if (document.visibilityState === 'visible') {
     dbLoad().then(() => {
       setupOrderListener();
@@ -1946,6 +1958,7 @@ function exportarCSV() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  if (!supabaseClient) return;
   checkAuth();
   document.getElementById("loginPass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
   supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') checkAuth(); });

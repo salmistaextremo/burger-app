@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" id="metaThemeColor" content="#F7F8FA">
 <title>DLV Food — Pide y rastrea en tiempo real</title>
 <link rel="manifest" href="/manifest-cliente.json">
@@ -534,9 +535,17 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = window.APP_CONFIG.supabaseUrl; 
-  const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (function () {
+    var cfg = window.APP_CONFIG || {};
+    window.SUPABASE_URL = cfg.supabaseUrl || '';
+    window.SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
+    window.supabaseClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+      : null;
+    if (!window.supabaseClient) {
+      document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>No se pudo iniciar la app</h2><p style='color:#6B7280'>Revisa <code>app-config.js</code> y que el navegador no bloquee <code>cdn.jsdelivr.net</code>.</p></div>";
+    }
+  })();
 
   // =========================================
 // GENERADOR DE PALETA DE COLORES DINÁMICA
@@ -1563,6 +1572,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 async function init(){
+  if (!supabaseClient) { showBootError(); return; }
   loadLocal();
   if (state.clientName) {
     document.getElementById("botNameInput").value = state.clientName;

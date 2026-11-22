@@ -1,8 +1,9 @@
 // sw.js — Service Worker de la PWA
-// Estrategia: shell precacheado + network-first en navegación + stale-while-revalidate en estáticos.
-// Los datos de Supabase (API y realtime) NUNCA se cachean.
+// Estrategia: shell precacheado + network-first en navegación y scripts + cache-first en imágenes.
+// Los datos de Supabase y los recursos de terceros NUNCA se interceptan: los maneja el navegador.
+// (Interceptar el CDN desde el worker hacía que la CSP del propio sw.js bloqueara el fetch.)
 
-const VERSION = 'dlv-v3';
+const VERSION = 'dlv-v4';
 const SHELL_CACHE = 'shell-' + VERSION;
 const RUNTIME_CACHE = 'runtime-' + VERSION;
 const OFFLINE_URL = '/index.html';
@@ -22,8 +23,6 @@ const SHELL = [
   '/icon-180.png',
   '/favicon.ico'
 ];
-
-const RUNTIME_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -47,10 +46,6 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-function isRuntimeHost(url) {
-  return RUNTIME_HOSTS.indexOf(url.hostname) !== -1;
-}
-
 function shellFor(pathname) {
   if (pathname.indexOf('/admin') === 0) return '/admin.html';
   if (pathname.indexOf('/repartidor') === 0) return '/repartidor.html';
@@ -67,52 +62,85 @@ function offlineResponse() {
   );
 }
 
+function networkErrorResponse() {
+  return new Response('', { status: 504, statusText: 'Sin conexión' });
+}
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // Datos en vivo: siempre a la red.
-  if (url.hostname.endsWith('.supabase.co')) return;
+  // Solo same-origin. CDNs (jsDelivr, Google Fonts) y Supabase los resuelve el navegador.
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/supabase/')) return;
 
-  // Navegación: red primero, luego copia cacheada, luego aviso de sin conexión.
+  // Navegación: red primero, copia cacheada después, aviso de sin conexión al final.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response && response.ok) {
           const copy = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request, { ignoreSearch: true });
-          if (cached) return cached;
-          const shell = await caches.match(shellFor(url.pathname));
-          if (shell) return shell;
-          return offlineResponse();
-        })
-    );
+        }
+        return response;
+      } catch (e) {
+        const cached = await caches.match(request, { ignoreSearch: true });
+        if (cached) return cached;
+        const shell = await caches.match(shellFor(url.pathname));
+        if (shell) return shell;
+        return offlineResponse();
+      }
+    })());
     return;
   }
 
-  // Estáticos propios y CDNs permitidos: sirve de caché y revalida en segundo plano.
-  if (url.origin === self.location.origin || isRuntimeHost(url)) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const network = fetch(request)
-          .then((response) => {
-            if (response && (response.ok || response.type === 'opaque')) {
-              const copy = response.clone();
-              caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
-            }
-            return response;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
-    );
+  // Scripts y estilos: red primero para que un deploy nuevo se vea al instante.
+  const isCode = request.destination === 'script' || request.destination === 'style' || request.destination === 'worker';
+  if (isCode) {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+        }
+        return response;
+      } catch (e) {
+        const cached = await caches.match(request);
+        return cached || networkErrorResponse();
+      }
+    })());
+    return;
   }
+
+  // Imágenes, iconos y fuentes locales: caché primero, revalidando en segundo plano.
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    if (cached) {
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+        })
+        .catch(() => {});
+      return cached;
+    }
+    try {
+      const response = await fetch(request);
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+      }
+      return response;
+    } catch (e) {
+      return networkErrorResponse();
+    }
+  })());
 });
 
 self.addEventListener('push', function (event) {

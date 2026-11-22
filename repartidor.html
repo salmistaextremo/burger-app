@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F8FA">
 <!-- PWA: Hace que la app se pueda instalar en el celular del repartidor -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Panel Repartidor</title>
@@ -126,9 +127,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:10
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = window.APP_CONFIG.supabaseUrl;
-  const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (function () {
+    var cfg = window.APP_CONFIG || {};
+    window.SUPABASE_URL = cfg.supabaseUrl || '';
+    window.SUPABASE_ANON_KEY = cfg.supabaseAnonKey || '';
+    window.supabaseClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+      ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+      : null;
+    if (!window.supabaseClient) {
+      document.body.innerHTML = "<div style='font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#111827'><h2>No se pudo iniciar la app</h2><p style='color:#6B7280'>Revisa <code>app-config.js</code> y que el navegador no bloquee <code>cdn.jsdelivr.net</code>.</p></div>";
+    }
+  })();
 
   let currentDriver = null;
   let refreshInterval = null;
@@ -255,6 +264,7 @@ function applyBrandColors(baseColor) {
 
   // LOGIN
   async function loginDriver() {
+    if (!supabaseClient) { toast("No se pudo cargar la configuración. Recarga la página."); return; }
     const email = document.getElementById("dEmail").value.trim();
     const pass = document.getElementById("dPass").value.trim();
     if (!email || !pass) return toast("Llena todos los campos");
@@ -469,6 +479,11 @@ function applyBrandColors(baseColor) {
 
   // INICIALIZACIÓN
   window.addEventListener('DOMContentLoaded', () => {
+    if (!supabaseClient) {
+      const p = document.querySelector('.login-box p');
+      if (p) p.textContent = 'No se pudo cargar la configuración. Recarga la página.';
+      return;
+    }
     cargarColoresMarca();
 
     // Limpiar sesiones antiguas que guardaban la contraseña en localStorage.
