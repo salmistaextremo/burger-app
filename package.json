@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "name": "burger-app",
+  "version": "1.0.0",
+  "description": "DLV Food - PWA de pedidos",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

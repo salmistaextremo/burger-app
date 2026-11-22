@@ -159,6 +159,8 @@ self.addEventListener('push', function (event) {
     vibrate: [200, 100, 200, 100, 200],
     requireInteraction: true,
     renotify: true,
+    silent: false,
+    timestamp: Date.now(),
     tag: payload.tag || 'pedido',
     data: { url: payload.url || '/' }
   };

@@ -7,5 +7,7 @@
 window.APP_CONFIG = {
   supabaseUrl: 'https://TU-PROYECTO.supabase.co',
   supabaseAnonKey: 'TU_ANON_KEY',
-  rateApiUrl: 'https://ve.dolarapi.com/v1/dolares/oficial'
+  rateApiUrl: 'https://ve.dolarapi.com/v1/dolares/oficial',
+  // Clave pública VAPID (la privada va en las variables de entorno de Vercel)
+  vapidPublicKey: 'TU_VAPID_PUBLIC_KEY'
 };
