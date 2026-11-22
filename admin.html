@@ -513,35 +513,83 @@ async function setupPushNotifications() {
   } catch (error) { console.error('Error Service Worker:', error); }
 }
 
-function playNotificationSound() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    osc1.type = 'sine';
-    osc2.type = 'sine';
-    
-    osc1.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-    
-    osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.15);
-    osc2.frequency.exponentialRampToValueAtTime(523.25, audioCtx.currentTime + 0.25);
-
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-    
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc1.start(); osc1.stop(audioCtx.currentTime + 0.15);
-    osc2.start(audioCtx.currentTime + 0.15); osc2.stop(audioCtx.currentTime + 0.6);
-  } catch(e) { console.log("Audio error:", e); }
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') { audioCtx.resume().catch(function () {}); }
+  return audioCtx;
 }
+
+// Campanilla de servicio: fundamental + parciales inarmónicos + golpe metálico.
+function playServiceBell() {
+  var ctx = getAudioCtx();
+  if (!ctx) return;
+
+  try {
+    var now = ctx.currentTime + 0.02;
+    var master = ctx.createGain();
+    master.gain.value = 0.9;
+    var comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 20;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.25;
+    master.connect(comp);
+    comp.connect(ctx.destination);
+
+    var partials = [
+      { r: 1.00, a: 1.00, d: 1.9 },
+      { r: 2.00, a: 0.45, d: 1.4 },
+      { r: 2.40, a: 0.30, d: 1.1 },
+      { r: 3.00, a: 0.20, d: 0.8 },
+      { r: 4.50, a: 0.10, d: 0.5 },
+      { r: 5.33, a: 0.07, d: 0.4 }
+    ];
+
+    function strike(t, base, level) {
+      partials.forEach(function (p) {
+        var osc = ctx.createOscillator();
+        var g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(base * p.r, t);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, level * p.a), t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + p.d);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(t);
+        osc.stop(t + p.d + 0.05);
+      });
+
+      var len = Math.floor(ctx.sampleRate * 0.03);
+      var buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+      var src = ctx.createBufferSource();
+      src.buffer = buffer;
+      var hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 2500;
+      var ng = ctx.createGain();
+      ng.gain.value = 0.22 * level;
+      src.connect(hp);
+      hp.connect(ng);
+      ng.connect(master);
+      src.start(t);
+    }
+
+    strike(now, 1046.5, 0.55);
+    strike(now + 0.22, 1046.5, 0.40);
+
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  } catch (e) {
+    console.warn('Audio error:', e);
+  }
+}
+
+function playNotificationSound() { playServiceBell(); }
 
 function unlockNotifications() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -742,7 +790,7 @@ function setupOrderListener() {
   window.adminOrderChannel = supabaseClient.channel('admin-orders')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
       const newOrder = payload.new;
-      if (notificationsEnabled) playNotificationSound();
+      playNotificationSound();
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification('🔔 ¡Nuevo Pedido!', {
@@ -769,7 +817,7 @@ function setupOrderListener() {
       }
 
       if (updatedOrder.rating) {
-        if (notificationsEnabled) playNotificationSound();
+        playNotificationSound();
         if ('serviceWorker' in navigator && Notification.permission === 'granted') {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('⭐ ¡Cliente ha calificado!', {
@@ -2047,6 +2095,7 @@ function exportarCSV() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener('pointerdown', function () { getAudioCtx(); }, { once: true });
   if (!supabaseClient) return;
   checkAuth();
   document.getElementById("loginPass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });

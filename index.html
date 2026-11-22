@@ -907,6 +907,82 @@ function money(n){
 function findProduct(id){ return MENU.find(p => p.id === id); }
 
 function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+
+// Campanilla de servicio para avisar cambios de estado del pedido.
+var clientAudioCtx = null;
+function getClientAudioCtx() {
+  if (!clientAudioCtx) {
+    try { clientAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  }
+  if (clientAudioCtx.state === 'suspended') { clientAudioCtx.resume().catch(function () {}); }
+  return clientAudioCtx;
+}
+
+function playStatusBell() {
+  var ctx = getClientAudioCtx();
+  if (!ctx) return;
+
+  try {
+    var now = ctx.currentTime + 0.02;
+    var master = ctx.createGain();
+    master.gain.value = 0.95;
+    var comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 20;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.25;
+    master.connect(comp);
+    comp.connect(ctx.destination);
+
+    var partials = [
+      { r: 1.00, a: 1.00, d: 1.8 },
+      { r: 2.00, a: 0.45, d: 1.3 },
+      { r: 2.40, a: 0.30, d: 1.0 },
+      { r: 3.00, a: 0.20, d: 0.8 },
+      { r: 4.50, a: 0.10, d: 0.5 },
+      { r: 5.33, a: 0.07, d: 0.4 }
+    ];
+
+    partials.forEach(function (p) {
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1046.5 * p.r, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.55 * p.a), now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + p.d);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(now);
+      osc.stop(now + p.d + 0.05);
+    });
+
+    var len = Math.floor(ctx.sampleRate * 0.03);
+    var buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    var data = buffer.getChannelData(0);
+    for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+    var src = ctx.createBufferSource();
+    src.buffer = buffer;
+    var hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 2500;
+    var ng = ctx.createGain();
+    ng.gain.value = 0.22;
+    src.connect(hp);
+    hp.connect(ng);
+    ng.connect(master);
+    src.start(now);
+
+    if (navigator.vibrate) navigator.vibrate([160, 70, 160]);
+  } catch (e) {
+    console.warn('Audio error:', e);
+  }
+}
+
+// Desbloquear el audio con la primera interacción (política de autoplay).
+document.addEventListener('pointerdown', function () { getClientAudioCtx(); }, { once: true });
+document.addEventListener('keydown', function () { getClientAudioCtx(); }, { once: true });
 function refreshCurrentView() { if (state.view === 'menu') renderMenu(); if (state.view === 'guided') renderGuided(); if (state.view === 'cart') renderCart(); if (state.view === 'checkout') renderCheckout(); }
 
 function setupCatalogRealtime() {
@@ -1534,7 +1610,7 @@ async function renderTracking() {
     const { data: orderArr, error } = await supabaseClient.rpc('get_order_by_code', { order_code: code });
     const order = orderArr && orderArr[0];
     if (error || !order) { trackDiv.innerHTML = getErrorHTML("No pudimos encontrar tu pedido. Verifica el código.", "renderTracking"); return false; }
-    if (lastStatus !== order.status) { updateTrackingUI(order); if (lastStatus !== null) toast("🔄 El estado de tu pedido ha cambiado"); lastStatus = order.status; }
+    if (lastStatus !== order.status) { updateTrackingUI(order); if (lastStatus !== null) { toast("🔄 El estado de tu pedido ha cambiado"); playStatusBell(); } lastStatus = order.status; }
     return true;
   }
   const ok = await fetchOrderAndUpdate(); if (!ok) return;
