@@ -1420,7 +1420,7 @@ async function submitOrder() {
   if (isDelivery && !state.userLocationUrl) { toast("Por favor, envía tu ubicación para el delivery."); valid = false; }
   if (isDelivery && CONFIG.deliveryConfig && CONFIG.deliveryConfig.storeLat != null && isFinite(CONFIG.deliveryConfig.storeLat) && !state.deliveryZone) { toast("No pudimos calcular la tarifa. Vuelve a enviar tu ubicación."); valid = false; }
   if (isDelivery && !isPrepaid) { toast("Para delivery elige un pago anticipado (Pago Móvil, transferencia o Zelle)."); valid = false; }
-  if (isDelivery && !state.proofFile) { toast("Sube la captura del pago para delivery."); valid = false; }
+  if (isDelivery && !state.proofFile) { toast("Por favor sube tu comprobante o captura de pago para proceder con el pedido"); valid = false; }
   if (!valid) { return; }
   if (state.cart.length === 0) { toast("El carrito está vacío"); return; }
 
