@@ -1167,13 +1167,19 @@ function renderBusiness(m) {
     </div></div>
 
     <div class="card" style="margin-bottom:24px;"><div class="card-body">
-      <h3 class="card-title" style="margin-bottom:4px;">🛵 Zonas de delivery</h3>
-      <p class="card-desc">Tarifas que verá el cliente al elegir delivery. Si la ubicación no aparece, se usa la última zona (la de mayor tarifa).</p>
-      <div id="zoneRows"></div>
-      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addZoneRow()">＋ Añadir zona</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="saveDeliveryZones()">Guardar zonas</button>
+      <h3 class="card-title" style="margin-bottom:4px;">🛵 Delivery por distancia</h3>
+      <p class="card-desc">La tarifa se calcula con el GPS del cliente: hasta la distancia límite se cobra <b>Urbana</b>; más lejos, <b>Extra Urbana</b>.</p>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Ubicación de la tienda (lat, lng o enlace de Google Maps)</label>
+          <input type="text" id="dStoreCoords" placeholder="Ej: 10.4806, -66.9036 o https://maps.google.com/?q=10.4806,-66.9036">
+        </div>
+        <div class="field"><label>Distancia límite (km)</label><input type="number" step="0.1" min="0.1" id="dThreshold" value="4"></div>
+        <div class="field"><label>Tarifa Urbana ($)</label><input type="number" step="0.01" min="0" id="dUrbanFee" value="0"></div>
+        <div class="field"><label>Tarifa Extra Urbana ($)</label><input type="number" step="0.01" min="0" id="dExtraFee" value="0"></div>
       </div>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="saveDeliveryConfig()">Guardar delivery</button>
+      <div id="deliveryPreview" style="margin-top:12px; font-size:12.5px; color:var(--muted); line-height:1.6;"></div>
     </div></div>
 
     <div class="page-head" style="margin-top:32px;">
@@ -1204,60 +1210,74 @@ function renderBusiness(m) {
     document.documentElement.style.setProperty('--bg', e.target.value);
   });
 
-  renderZoneRows();
+  renderDeliveryConfigEditor();
 }
 
-function deliveryZonesOrDefault() {
-  const cfg = DB.config && DB.config.delivery_config;
-  if (cfg && Array.isArray(cfg.zones) && cfg.zones.length) return cfg.zones;
-  const base = Number(DB.config.deliveryFee) || 0;
-  return [
-    { id: 'casco', name: 'Casco Central', fee: base },
-    { id: 'urbano', name: 'Urbano', fee: base },
-    { id: 'extra', name: 'Extra Urbano', fee: base }
-  ];
+function parseCoordsInput(value) {
+  const s = String(value || '').trim();
+  if (!s) return null;
+  let m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/(-?\d+(?:\.\d+)?)\s*[,;]\s*(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
 }
 
-function zoneRowHtml(zone) {
-  return `
-    <div class="zone-row" data-id="${esc(zone.id || '')}" style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-      <input class="z-name" type="text" value="${esc(zone.name || '')}" placeholder="Ej: Casco Central" style="flex:2;">
-      <input class="z-fee" type="number" min="0" step="0.01" value="${Number(zone.fee || 0).toFixed(2)}" style="flex:1; max-width:110px;">
-      <button type="button" onclick="this.parentElement.remove()" style="width:36px;height:36px;border-radius:9px;background:var(--danger-soft);color:var(--danger);flex:none;">✕</button>
-    </div>`;
-}
+function renderDeliveryConfigEditor() {
+  const cfg = DB.config.delivery_config || {};
+  const storeEl = document.getElementById('dStoreCoords');
+  const thEl = document.getElementById('dThreshold');
+  const urEl = document.getElementById('dUrbanFee');
+  const exEl = document.getElementById('dExtraFee');
+  if (!storeEl || !thEl || !urEl || !exEl) return;
 
-function renderZoneRows() {
-  const wrap = document.getElementById('zoneRows');
-  if (!wrap) return;
-  wrap.innerHTML = deliveryZonesOrDefault().map(zoneRowHtml).join('');
-}
+  storeEl.value = (cfg.store_lat != null && cfg.store_lng != null) ? `${cfg.store_lat}, ${cfg.store_lng}` : '';
+  thEl.value = cfg.threshold_km != null ? cfg.threshold_km : 4;
 
-function addZoneRow() {
-  const wrap = document.getElementById('zoneRows');
-  if (!wrap) return;
-  wrap.insertAdjacentHTML('beforeend', zoneRowHtml({ id: 'z' + Date.now().toString(36), name: '', fee: 0 }));
-}
+  const legacyZones = Array.isArray(cfg.zones) ? cfg.zones : [];
+  const urban = cfg.urban_fee != null ? cfg.urban_fee : (legacyZones[1] ? legacyZones[1].fee : DB.config.deliveryFee);
+  const extra = cfg.extra_fee != null ? cfg.extra_fee : (legacyZones[2] ? legacyZones[2].fee : DB.config.deliveryFee);
+  urEl.value = Number(urban || 0).toFixed(2);
+  exEl.value = Number(extra || 0).toFixed(2);
 
-async function saveDeliveryZones() {
-  const rows = Array.from(document.querySelectorAll('#zoneRows .zone-row'));
-  const zones = [];
-  for (const row of rows) {
-    const name = row.querySelector('.z-name').value.trim();
-    const fee = parseFloat(row.querySelector('.z-fee').value);
-    if (!name) return toast('Cada zona necesita un nombre', 'error');
-    if (!isFinite(fee) || fee < 0) return toast('Tarifa inválida en ' + name, 'error');
-    zones.push({ id: row.dataset.id || ('z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), name: name, fee: fee });
+  const preview = document.getElementById('deliveryPreview');
+  if (preview) {
+    preview.innerHTML = `Hasta <b>${Number(thEl.value) || 4} km</b>: ${money(urban || 0)} · Más lejos: ${money(extra || 0)}<br>` +
+      (storeEl.value ? `Ubicación: ${esc(storeEl.value)}` : '⚠️ Falta la ubicación de la tienda: el cliente verá la tarifa base.');
   }
-  if (!zones.length) return toast('Agrega al menos una zona', 'error');
+}
 
-  DB.config.delivery_config = { zones: zones };
+async function saveDeliveryConfig() {
+  const coords = parseCoordsInput(document.getElementById('dStoreCoords').value);
+  if (!coords) return toast('Pega una ubicación válida (lat, lng o enlace de Google Maps)', 'error');
+  if (coords.lat < -90 || coords.lat > 90 || coords.lng < -180 || coords.lng > 180) {
+    return toast('Coordenadas fuera de rango', 'error');
+  }
+
+  const threshold = parseFloat(document.getElementById('dThreshold').value);
+  const urban = parseFloat(document.getElementById('dUrbanFee').value);
+  const extra = parseFloat(document.getElementById('dExtraFee').value);
+  if (!isFinite(threshold) || threshold <= 0) return toast('Distancia límite inválida', 'error');
+  if (!isFinite(urban) || urban < 0) return toast('Tarifa Urbana inválida', 'error');
+  if (!isFinite(extra) || extra < 0) return toast('Tarifa Extra Urbana inválida', 'error');
+
+  DB.config.delivery_config = {
+    store_lat: coords.lat,
+    store_lng: coords.lng,
+    threshold_km: threshold,
+    urban_fee: urban,
+    extra_fee: extra
+  };
+
   try {
     await dbSaveConfig();
-    toast('✅ Zonas de delivery guardadas');
+    toast('✅ Delivery guardado');
+    renderDeliveryConfigEditor();
   } catch (e) {
     console.error(e);
-    toast('Error al guardar las zonas', 'error');
+    toast('Error al guardar el delivery', 'error');
   }
 }
 

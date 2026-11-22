@@ -26,7 +26,7 @@ Es una PWA instalable, sin build ni framework: HTML + CSS + JS y Supabase.
 - Días y horarios de atención, tasa de cambio manual.
 - Métodos de pago y sus datos (Pago Móvil, transferencia, Zelle, efectivo, tarjeta).
 - Categorías, productos, extras, disponibilidad y repartidores.
-- **Zonas de delivery** (Casco Central, Urbano, Extra Urbano) con su tarifa.
+- **Delivery por distancia**: tarifa Urbana hasta 4 km y Extra Urbana más lejos, calculada con el GPS del cliente. La ubicación de la tienda se configura en el admin.
 - Reglas de pago: retiro acepta todos los métodos; delivery solo métodos anticipados (no efectivo/tarjeta) y exige comprobante.
 
 ## Qué sí requiere editar archivos
