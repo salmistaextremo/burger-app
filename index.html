@@ -1822,6 +1822,28 @@ function closeTicketModal() {
   go('tracking');
 }
 
+function fileToBase64(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result).split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadTicketImage(file, code) {
+  var base64 = await fileToBase64(file);
+  var res = await fetch('/api/ticket', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code, image: base64 })
+  });
+  if (!res.ok) throw new Error('No se pudo subir el ticket');
+  var data = await res.json();
+  if (!data || !data.url) throw new Error('Sin link del ticket');
+  return data.url;
+}
+
 async function submitOrder() {
   var name = normalizeText($("#f-name").value);
   var phone = $("#f-phone").value.trim();
@@ -1955,31 +1977,27 @@ async function submitOrder() {
   saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
 
+  var ticketUrl = null;
+  if (ticketFile) {
+    try {
+      ticketUrl = await uploadTicketImage(ticketFile, code);
+    } catch (e) {
+      console.warn('No se pudo subir el ticket para el link:', e);
+    }
+  }
+
+  var waText = ticketUrl
+    ? `*Pedido ${code}*\nTicket: ${ticketUrl}\n` + (isDelivery ? gpsText : 'Retiro en tienda')
+    : fallbackMsg;
+
   // Restauramos el botón para el próximo pedido
   btn.disabled = false;
   btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
-  toast("Pedido enviado con éxito");
+  toast(ticketUrl ? 'Pedido enviado. Abriendo WhatsApp...' : 'Pedido enviado con éxito');
 
-  if (ticketFile) {
-    var shareResult = await shareTicketDirect(ticketFile, gpsText, code);
-    if (shareResult === 'shared') {
-      go('tracking');
-    } else if (shareResult === 'unsupported') {
-      downloadTicketFile(ticketFile, code);
-      openWhatsAppText(gpsText);
-      toast('Imagen descargada. Adjúntala en WhatsApp.');
-      go('tracking');
-    } else {
-      // Si el navegador bloqueó el menú o el usuario canceló, ofrecemos reintentar.
-      showTicketShareModal(ticketFile, gpsText, code);
-    }
-  } else {
-    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(fallbackMsg)}`;
-    var waWin = window.open(waUrl, '_blank');
-    if (waWin) { try { waWin.opener = null; } catch (e) {} }
-    if (!waWin) { window.location.href = waUrl; }
-    go('tracking');
-  }
+  go('tracking');
+  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(waText)}`;
+  window.location.href = waUrl;
 }
 
 async function renderTracking() {
