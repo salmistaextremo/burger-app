@@ -1566,6 +1566,251 @@ function renderCheckout(){
   updateOrderType(); applyScrollAnimations();
 }
 
+var ticketState = { file: null, url: null, text: '', code: '' };
+
+function ticketMoney(n) {
+  return CONFIG.currency + Number(n || 0).toFixed(2);
+}
+
+function wrapCanvasLines(ctx, text, maxWidth) {
+  var words = String(text || '').split(/\s+/);
+  var lines = [];
+  var line = '';
+  words.forEach(function (word) {
+    var test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function buildOrderTicketImage(data) {
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+
+  var W = 720;
+  var pad = 44;
+  var scale = 2;
+  var brand = (getComputedStyle(document.documentElement).getPropertyValue('--brand') || '').trim() || '#FF5A1F';
+  var brandDark = (getComputedStyle(document.documentElement).getPropertyValue('--brand-d') || '').trim() || '#E0440F';
+
+  var measure = document.createElement('canvas').getContext('2d');
+  measure.font = '600 20px Outfit, sans-serif';
+  var addressLines = wrapCanvasLines(measure, data.address || '—', W - pad * 2).slice(0, 3);
+
+  var itemBlock = data.items.reduce(function (sum, item) {
+    var extras = (item.extras || []).map(function (e) { return e.name; }).join(', ');
+    return sum + 36 + (extras ? 20 : 0) + 10;
+  }, 0);
+
+  var fieldCount = data.isDelivery ? 7 : 5;
+  var H = 150 + 46 + fieldCount * 62 + addressLines.length * 22 + 26 + itemBlock + 170;
+  H = Math.max(H + 100, 950);
+
+  var canvas = document.createElement('canvas');
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = brand;
+  ctx.fillRect(0, 0, W, 150);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'left';
+  ctx.font = '800 40px Outfit, sans-serif';
+  ctx.fillText(String(CONFIG.brand || 'DLV Food').slice(0, 26), pad, 68);
+  ctx.font = '600 18px Outfit, sans-serif';
+  ctx.fillText('TICKET DE PEDIDO', pad, 102);
+
+  ctx.textAlign = 'right';
+  ctx.font = '800 34px Outfit, sans-serif';
+  ctx.fillText(data.code, W - pad, 68);
+  ctx.font = '500 15px Outfit, sans-serif';
+  ctx.fillText(data.date, W - pad, 100);
+
+  ctx.textAlign = 'left';
+  var y = 190;
+
+  function field(label, value) {
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '700 12px Outfit, sans-serif';
+    ctx.fillText(label.toUpperCase(), pad, y);
+    ctx.fillStyle = '#111827';
+    ctx.font = '600 21px Outfit, sans-serif';
+    ctx.fillText(String(value || '—'), pad, y + 26);
+    y += 62;
+  }
+
+  field('Cliente', data.name);
+  field('Teléfono', data.phone);
+  field('Tipo', data.isDelivery ? 'Delivery' : 'Retiro en tienda');
+
+  if (data.isDelivery) {
+    field('Zona', data.zone || 'Base');
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '700 12px Outfit, sans-serif';
+    ctx.fillText('DIRECCIÓN / REFERENCIA', pad, y);
+    ctx.fillStyle = '#111827';
+    ctx.font = '600 20px Outfit, sans-serif';
+    addressLines.forEach(function (line, i) {
+      ctx.fillText(line, pad, y + 26 + i * 22);
+    });
+    y += 26 + addressLines.length * 22 + 18;
+  }
+
+  field('Pago', data.payment);
+  field('Comprobante', data.proof);
+
+  y += 6;
+  ctx.strokeStyle = '#E5E7EB';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+  ctx.setLineDash([]);
+  y += 34;
+
+  ctx.fillStyle = '#111827';
+  ctx.font = '800 15px Outfit, sans-serif';
+  ctx.fillText('PRODUCTOS', pad, y);
+  y += 28;
+
+  data.items.forEach(function (item) {
+    var extras = (item.extras || []).map(function (e) { return e.name; }).join(', ');
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#111827';
+    ctx.font = '600 18px Outfit, sans-serif';
+    ctx.fillText(String(item.qty) + 'x ' + String(item.name).slice(0, 38), pad, y);
+    ctx.textAlign = 'right';
+    ctx.fillText(ticketMoney(item.unit * item.qty), W - pad, y);
+    y += 24;
+    if (extras) {
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#6B7280';
+      ctx.font = '400 14px Outfit, sans-serif';
+      ctx.fillText('+ ' + extras.slice(0, 60), pad, y);
+      y += 20;
+    }
+    y += 12;
+  });
+
+  y += 4;
+  ctx.strokeStyle = '#E5E7EB';
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+  ctx.setLineDash([]);
+  y += 34;
+
+  function totalRow(label, value, bold) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = bold ? '#111827' : '#6B7280';
+    ctx.font = (bold ? '800 24px' : '600 18px') + ' Outfit, sans-serif';
+    ctx.fillText(label, W - pad - 190, y);
+    ctx.fillStyle = bold ? brandDark : '#111827';
+    ctx.font = (bold ? '800 24px' : '700 18px') + ' Outfit, sans-serif';
+    ctx.fillText(value, W - pad, y);
+    y += bold ? 42 : 30;
+  }
+
+  totalRow('Subtotal', ticketMoney(data.sub), false);
+  totalRow('Delivery', ticketMoney(data.del), false);
+  totalRow('TOTAL', ticketMoney(data.total), true);
+
+  if (EXCHANGE_RATE) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '600 15px Outfit, sans-serif';
+    ctx.fillText('Total en Bs. ' + (Number(data.total) * EXCHANGE_RATE).toFixed(2), W - pad, y);
+    y += 26;
+  }
+
+  y += 24;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6B7280';
+  ctx.font = '500 14px Outfit, sans-serif';
+  ctx.fillText('Gracias por tu compra · ' + (CONFIG.brand || 'DLV Food'), W / 2, y);
+  y += 24;
+  ctx.font = '500 13px Outfit, sans-serif';
+  ctx.fillText('La ubicación GPS se envía en el mensaje de WhatsApp', W / 2, y);
+
+  return new Promise(function (resolve, reject) {
+    canvas.toBlob(function (blob) {
+      if (!blob) return reject(new Error('No se pudo generar el ticket'));
+      resolve(new File([blob], 'pedido-' + data.code + '.png', { type: 'image/png' }));
+    }, 'image/png');
+  });
+}
+
+function showTicketModal(file, text, code) {
+  if (ticketState.url) URL.revokeObjectURL(ticketState.url);
+  ticketState = { file: file, url: URL.createObjectURL(file), text: text, code: code };
+
+  var modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:520px; max-height:92vh; display:flex; flex-direction:column;">
+      <div class="modal-head"><h2>Pedido ${esc(code)}</h2><button class="modal-close" onclick="closeTicketModal()">✕</button></div>
+      <div class="modal-body" style="overflow:auto; text-align:center; padding:16px; background:var(--surface-2);">
+        <img src="${ticketState.url}" alt="Ticket del pedido" style="max-width:100%; border-radius:12px; box-shadow:var(--shadow);">
+        <p style="font-size:13px;color:var(--muted);margin:12px 0 0;line-height:1.5;">Comparte la imagen por WhatsApp. La ubicación GPS se envía como texto.</p>
+      </div>
+      <div class="modal-foot" style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-wa" onclick="shareTicketFile()">📲 Compartir por WhatsApp</button>
+        <button class="btn btn-ghost" onclick="downloadTicketFile()">Descargar imagen</button>
+        <button class="btn btn-ghost" onclick="closeTicketModal()">Continuar</button>
+      </div>
+    </div>`;
+  modal.classList.remove('hidden');
+}
+
+async function shareTicketFile() {
+  if (!ticketState.file) return;
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [ticketState.file] })) {
+      await navigator.share({
+        files: [ticketState.file],
+        text: ticketState.text,
+        title: 'Pedido ' + ticketState.code
+      });
+      toast('Ticket compartido');
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    console.warn('No se pudo compartir el ticket:', e);
+  }
+
+  downloadTicketFile();
+  if (ticketState.text) {
+    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(ticketState.text)}`;
+    var w = window.open(waUrl, '_blank');
+    if (w) { try { w.opener = null; } catch (e) {} } else { window.location.href = waUrl; }
+  }
+  toast('Imagen descargada. Adjúntala en WhatsApp.');
+}
+
+function downloadTicketFile() {
+  if (!ticketState.url) return;
+  var a = document.createElement('a');
+  a.href = ticketState.url;
+  a.download = 'pedido-' + ticketState.code + '.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function closeTicketModal() {
+  if (ticketState.url) URL.revokeObjectURL(ticketState.url);
+  ticketState = { file: null, url: null, text: '', code: '' };
+  closeModal();
+  go('tracking');
+}
+
 async function submitOrder() {
   var name = normalizeText($("#f-name").value);
   var phone = $("#f-phone").value.trim();
@@ -1655,34 +1900,64 @@ async function submitOrder() {
     return;
   }
 
-  // El mensaje se arma después del insert para usar el código definitivo.
-  var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
+  // Ticket PNG + texto solo con ubicación GPS
+  var gpsText = isDelivery
+    ? (state.userLocationUrl ? 'Ubicación: ' + state.userLocationUrl : '')
+    : ('Pedido ' + code + ' · Retiro en tienda');
+
+  var fallbackMsg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
   if (isDelivery) {
-    msg += `*Tipo:* Delivery\n`;
-    if (state.deliveryZone) msg += `*Zona:* ${state.deliveryZone.name} (${Number(state.deliveryZone.distance).toFixed(1)} km)\n`;
-    if (ref) msg += `*Ref:* ${ref}\n`;
-    msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
+    fallbackMsg += `*Tipo:* Delivery\n`;
+    if (state.deliveryZone) fallbackMsg += `*Zona:* ${state.deliveryZone.name}\n`;
+    if (ref) fallbackMsg += `*Ref:* ${ref}\n`;
+    fallbackMsg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
   } else {
-    msg += `*Tipo:* Retiro en tienda\n`;
+    fallbackMsg += `*Tipo:* Retiro en tienda\n`;
   }
-  msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
-  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
-  msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
+  fallbackMsg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
+  state.cart.forEach(i => { fallbackMsg += `- ${i.qty}x ${i.name} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
+  fallbackMsg += `\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
+
+  var ticketFile = null;
+  try {
+    ticketFile = await buildOrderTicketImage({
+      code: code,
+      date: new Date().toLocaleString('es-VE'),
+      name: name,
+      phone: phone,
+      isDelivery: isDelivery,
+      zone: state.deliveryZone ? state.deliveryZone.name : 'Base',
+      address: ref || '—',
+      payment: payMethod,
+      proof: isDelivery ? 'Sí, adjunto' : 'No aplica',
+      items: state.cart.map(function (i) {
+        return { name: i.name, qty: i.qty, unit: i.unit, extras: i.extras };
+      }),
+      sub: sub,
+      del: del,
+      total: total
+    });
+  } catch (e) {
+    console.warn('No se pudo generar el ticket:', e);
+  }
 
   saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
-  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
-  // window.open después de varios await lo bloquean los navegadores móviles; si pasa, navegamos igual.
-  var waWin = window.open(waUrl, '_blank');
-  if (waWin) { try { waWin.opener = null; } catch (e) {} }
-  if (!waWin) { window.location.href = waUrl; }
-  toast("Pedido enviado con éxito"); 
-  
-  // 👇 LA MAGIA: Restauramos el botón para el próximo pedido
+
+  // Restauramos el botón para el próximo pedido
   btn.disabled = false;
   btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
-  
-  go('tracking');
+  toast("Pedido enviado con éxito");
+
+  if (ticketFile) {
+    showTicketModal(ticketFile, gpsText, code);
+  } else {
+    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(fallbackMsg)}`;
+    var waWin = window.open(waUrl, '_blank');
+    if (waWin) { try { waWin.opener = null; } catch (e) {} }
+    if (!waWin) { window.location.href = waUrl; }
+    go('tracking');
+  }
 }
 
 async function renderTracking() {
