@@ -423,7 +423,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
         <div id="checkoutSummary"></div>
         
-        <button class="btn btn-wa" id="btnConfirm" style="margin-top:24px" onclick="submitOrder()"><span style="font-size:20px">📲</span> Confirmar por WhatsApp</button>
+        <button class="btn btn-wa" id="btnConfirm" style="margin-top:24px" onclick="submitOrder()"><span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido</button>
         <button class="btn btn-ghost" style="margin-top:12px; background:transparent; box-shadow:none;" onclick="go('cart')">← Volver al carrito</button>
       </div>
     </section>
@@ -1905,7 +1905,7 @@ async function submitOrder() {
       if (isDelivery) {
         toast("No se pudo subir el comprobante. Intenta de nuevo.");
         btn.disabled = false;
-        btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+        btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
         return;
       }
       toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
@@ -1929,7 +1929,7 @@ async function submitOrder() {
     console.error("Error de Supabase:", insertError);
     alert("No pudimos guardar el pedido. Revisa tu conexión e inténtalo de nuevo.");
     btn.disabled = false;
-    btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+    btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
     return;
   }
 
@@ -1977,27 +1977,30 @@ async function submitOrder() {
   saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
 
-  var ticketUrl = null;
-  if (ticketFile) {
-    try {
-      ticketUrl = await uploadTicketImage(ticketFile, code);
-    } catch (e) {
-      console.warn('No se pudo subir el ticket para el link:', e);
-    }
-  }
-
-  var waText = ticketUrl
-    ? `*Pedido ${code}*\nTicket: ${ticketUrl}\n` + (isDelivery ? gpsText : 'Retiro en tienda')
-    : fallbackMsg;
-
   // Restauramos el botón para el próximo pedido
   btn.disabled = false;
-  btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
-  toast(ticketUrl ? 'Pedido enviado. Abriendo WhatsApp...' : 'Pedido enviado con éxito');
+  btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
+  toast("Pedido enviado con éxito");
 
-  go('tracking');
-  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(waText)}`;
-  window.location.href = waUrl;
+  if (ticketFile) {
+    var shareResult = await shareTicketDirect(ticketFile, gpsText, code);
+    if (shareResult === 'shared') {
+      go('tracking');
+    } else if (shareResult === 'unsupported') {
+      downloadTicketFile(ticketFile, code);
+      openWhatsAppText(gpsText);
+      toast('Imagen descargada. Adjúntala en WhatsApp.');
+      go('tracking');
+    } else {
+      showTicketShareModal(ticketFile, gpsText, code);
+    }
+  } else {
+    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(fallbackMsg)}`;
+    var waWin = window.open(waUrl, '_blank');
+    if (waWin) { try { waWin.opener = null; } catch (e) {} }
+    if (!waWin) { window.location.href = waUrl; }
+    go('tracking');
+  }
 }
 
 async function renderTracking() {
