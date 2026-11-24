@@ -423,7 +423,7 @@ body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased
 
         <div id="checkoutSummary"></div>
         
-        <button class="btn btn-wa" id="btnConfirm" style="margin-top:24px" onclick="submitOrder()"><span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido</button>
+        <button class="btn btn-wa" id="btnConfirm" style="margin-top:24px" onclick="submitOrder()"><span style="font-size:20px">📲</span> Confirmar por WhatsApp</button>
         <button class="btn btn-ghost" style="margin-top:12px; background:transparent; box-shadow:none;" onclick="go('cart')">← Volver al carrito</button>
       </div>
     </section>
@@ -1905,7 +1905,7 @@ async function submitOrder() {
       if (isDelivery) {
         toast("No se pudo subir el comprobante. Intenta de nuevo.");
         btn.disabled = false;
-        btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
+        btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
         return;
       }
       toast("⚠️ No se pudo subir el comprobante, pero el pedido se enviará.");
@@ -1929,78 +1929,36 @@ async function submitOrder() {
     console.error("Error de Supabase:", insertError);
     alert("No pudimos guardar el pedido. Revisa tu conexión e inténtalo de nuevo.");
     btn.disabled = false;
-    btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
+    btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
     return;
   }
 
-  // Ticket PNG + texto solo con ubicación GPS
-  var gpsText = isDelivery
-    ? (state.userLocationUrl ? 'Ubicación: ' + state.userLocationUrl : '')
-    : ('Pedido ' + code + ' · Retiro en tienda');
-
-  var fallbackMsg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
+  // El mensaje se arma después del insert para usar el código definitivo.
+  var msg = `*NUEVO PEDIDO ${code}*\n\n*Cliente:* ${name}\n*Teléfono:* ${phone}\n`;
   if (isDelivery) {
-    fallbackMsg += `*Tipo:* Delivery\n`;
-    if (state.deliveryZone) fallbackMsg += `*Zona:* ${state.deliveryZone.name}\n`;
-    if (ref) fallbackMsg += `*Ref:* ${ref}\n`;
-    fallbackMsg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
+    msg += `*Tipo:* Delivery\n`;
+    if (state.deliveryZone) msg += `*Zona:* ${state.deliveryZone.name} (${Number(state.deliveryZone.distance).toFixed(1)} km)\n`;
+    if (ref) msg += `*Ref:* ${ref}\n`;
+    msg += `*Ubicación GPS:* ${state.userLocationUrl}\n`;
   } else {
-    fallbackMsg += `*Tipo:* Retiro en tienda\n`;
+    msg += `*Tipo:* Retiro en tienda\n`;
   }
-  fallbackMsg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
-  state.cart.forEach(i => { fallbackMsg += `- ${i.qty}x ${i.name} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
-  fallbackMsg += `\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
-
-  var ticketFile = null;
-  try {
-    ticketFile = await buildOrderTicketImage({
-      code: code,
-      date: new Date().toLocaleString('es-VE'),
-      name: name,
-      phone: phone,
-      isDelivery: isDelivery,
-      zone: state.deliveryZone ? state.deliveryZone.name : 'Base',
-      address: ref || '—',
-      payment: payMethod,
-      proof: isDelivery ? 'Sí, adjunto' : 'No aplica',
-      items: state.cart.map(function (i) {
-        return { name: i.name, qty: i.qty, unit: i.unit, extras: i.extras };
-      }),
-      sub: sub,
-      del: del,
-      total: total
-    });
-  } catch (e) {
-    console.warn('No se pudo generar el ticket:', e);
-  }
+  msg += `*Pago:* ${payMethod}\n\n*Productos:*\n`;
+  state.cart.forEach(i => { msg += `- ${i.qty}x ${i.emoji ? i.emoji + ' ' : ''}${i.name} ${i.extras.length ? '('+i.extras.map(e=>e.name).join(', ')+')' : ''} -> ${CONFIG.currency}${(i.unit*i.qty).toFixed(2)}\n`; });
+  msg += `\n*Subtotal:* ${CONFIG.currency}${sub.toFixed(2)}\n*Delivery:* ${CONFIG.currency}${del.toFixed(2)}\n*TOTAL:* ${CONFIG.currency}${total.toFixed(2)}\n`;
 
   saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
-
-  // Restauramos el botón para el próximo pedido
-  btn.disabled = false;
-  btn.innerHTML = '<span style="font-size:20px">🖨️</span> Imprimir Ticket de pedido';
+  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
+  // window.open después de varios await lo bloquean los navegadores móviles; si pasa, navegamos igual.
+  var waWin = window.open(waUrl, '_blank');
+  if (waWin) { try { waWin.opener = null; } catch (e) {} }
+  if (!waWin) { window.location.href = waUrl; }
   toast("Pedido enviado con éxito");
 
-  if (ticketFile) {
-    var shareResult = await shareTicketDirect(ticketFile, gpsText, code);
-    if (shareResult === 'shared') {
-      go('tracking');
-    } else if (shareResult === 'unsupported') {
-      downloadTicketFile(ticketFile, code);
-      openWhatsAppText(gpsText);
-      toast('Imagen descargada. Adjúntala en WhatsApp.');
-      go('tracking');
-    } else {
-      showTicketShareModal(ticketFile, gpsText, code);
-    }
-  } else {
-    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(fallbackMsg)}`;
-    var waWin = window.open(waUrl, '_blank');
-    if (waWin) { try { waWin.opener = null; } catch (e) {} }
-    if (!waWin) { window.location.href = waUrl; }
-    go('tracking');
-  }
+  btn.disabled = false;
+  btn.innerHTML = '<span style="font-size:20px">📲</span> Confirmar por WhatsApp';
+  go('tracking');
 }
 
 async function renderTracking() {
