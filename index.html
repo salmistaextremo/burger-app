@@ -1747,7 +1747,44 @@ async function buildOrderTicketImage(data) {
   });
 }
 
-function showTicketModal(file, text, code) {
+function openWhatsAppText(text) {
+  if (!text) return;
+  var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(text)}`;
+  var w = window.open(waUrl, '_blank');
+  if (w) { try { w.opener = null; } catch (e) {} } else { window.location.href = waUrl; }
+}
+
+function downloadTicketFile(file, code) {
+  var url = URL.createObjectURL(file);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'pedido-' + code + '.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+}
+
+async function shareTicketDirect(file, text, code) {
+  var canShareFiles = false;
+  try {
+    canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  } catch (e) {
+    canShareFiles = false;
+  }
+  if (!canShareFiles) return 'unsupported';
+
+  try {
+    await navigator.share({ files: [file], text: text, title: 'Pedido ' + code });
+    return 'shared';
+  } catch (e) {
+    if (e && e.name === 'AbortError') return 'cancelled';
+    console.warn('No se pudo compartir el ticket:', e);
+    return 'blocked';
+  }
+}
+
+function showTicketShareModal(file, text, code) {
   if (ticketState.url) URL.revokeObjectURL(ticketState.url);
   ticketState = { file: file, url: URL.createObjectURL(file), text: text, code: code };
 
@@ -1757,51 +1794,25 @@ function showTicketModal(file, text, code) {
       <div class="modal-head"><h2>Pedido ${esc(code)}</h2><button class="modal-close" onclick="closeTicketModal()">✕</button></div>
       <div class="modal-body" style="overflow:auto; text-align:center; padding:16px; background:var(--surface-2);">
         <img src="${ticketState.url}" alt="Ticket del pedido" style="max-width:100%; border-radius:12px; box-shadow:var(--shadow);">
-        <p style="font-size:13px;color:var(--muted);margin:12px 0 0;line-height:1.5;">Comparte la imagen por WhatsApp. La ubicación GPS se envía como texto.</p>
+        <p style="font-size:13px;color:var(--muted);margin:12px 0 0;line-height:1.5;">El ticket se enviará como imagen y la ubicación GPS como texto.</p>
       </div>
-      <div class="modal-foot" style="display:flex; flex-direction:column; gap:8px;">
-        <button class="btn btn-wa" onclick="shareTicketFile()">📲 Compartir por WhatsApp</button>
-        <button class="btn btn-ghost" onclick="downloadTicketFile()">Descargar imagen</button>
-        <button class="btn btn-ghost" onclick="closeTicketModal()">Continuar</button>
+      <div class="modal-foot">
+        <button class="btn btn-wa" style="width:100%" onclick="shareTicketFromModal()">📲 Compartir por WhatsApp</button>
       </div>
     </div>`;
   modal.classList.remove('hidden');
 }
 
-async function shareTicketFile() {
+async function shareTicketFromModal() {
   if (!ticketState.file) return;
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [ticketState.file] })) {
-      await navigator.share({
-        files: [ticketState.file],
-        text: ticketState.text,
-        title: 'Pedido ' + ticketState.code
-      });
-      toast('Ticket compartido');
-      return;
-    }
-  } catch (e) {
-    if (e && e.name === 'AbortError') return;
-    console.warn('No se pudo compartir el ticket:', e);
+  var result = await shareTicketDirect(ticketState.file, ticketState.text, ticketState.code);
+  if (result === 'shared') {
+    closeTicketModal();
+  } else if (result === 'unsupported') {
+    downloadTicketFile(ticketState.file, ticketState.code);
+    openWhatsAppText(ticketState.text);
+    closeTicketModal();
   }
-
-  downloadTicketFile();
-  if (ticketState.text) {
-    var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(ticketState.text)}`;
-    var w = window.open(waUrl, '_blank');
-    if (w) { try { w.opener = null; } catch (e) {} } else { window.location.href = waUrl; }
-  }
-  toast('Imagen descargada. Adjúntala en WhatsApp.');
-}
-
-function downloadTicketFile() {
-  if (!ticketState.url) return;
-  var a = document.createElement('a');
-  a.href = ticketState.url;
-  a.download = 'pedido-' + ticketState.code + '.png';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 function closeTicketModal() {
@@ -1950,7 +1961,18 @@ async function submitOrder() {
   toast("Pedido enviado con éxito");
 
   if (ticketFile) {
-    showTicketModal(ticketFile, gpsText, code);
+    var shareResult = await shareTicketDirect(ticketFile, gpsText, code);
+    if (shareResult === 'shared') {
+      go('tracking');
+    } else if (shareResult === 'unsupported') {
+      downloadTicketFile(ticketFile, code);
+      openWhatsAppText(gpsText);
+      toast('Imagen descargada. Adjúntala en WhatsApp.');
+      go('tracking');
+    } else {
+      // Si el navegador bloqueó el menú o el usuario canceló, ofrecemos reintentar.
+      showTicketShareModal(ticketFile, gpsText, code);
+    }
   } else {
     var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(fallbackMsg)}`;
     var waWin = window.open(waUrl, '_blank');
