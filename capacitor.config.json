@@ -1,0 +1,8 @@
+{
+  "appId": "com.dlvfood.app",
+  "appName": "DLV Food",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

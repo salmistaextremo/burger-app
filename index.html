@@ -591,6 +591,32 @@ function applyBrandColors(baseColor) {
 </script>
 
 <script>
+  // En el APK (Capacitor) usamos el plugin nativo de geolocalización.
+  (function () {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+      navigator.geolocation.getCurrentPosition = function (success, error, options) {
+        window.Capacitor.Plugins.Geolocation.getCurrentPosition(options || {}).then(function (pos) {
+          success({
+            coords: {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+              altitude: pos.coords.altitude,
+              altitudeAccuracy: pos.coords.altitudeAccuracy,
+              heading: pos.coords.heading,
+              speed: pos.coords.speed
+            },
+            timestamp: pos.timestamp
+          });
+        }).catch(function (err) {
+          if (error) error({ code: 2, message: (err && err.message) || 'No se pudo obtener la ubicación' });
+        });
+      };
+    }
+  })();
+</script>
+
+<script>
 var CONFIG = {
   brand: "DLV Food", logo: "🍔", whatsapp: "584121234567", phoneCall: "+584121234567",
   mapsUrl: "https://maps.google.com/?q=Av.+Principal+123", currency: "$", deliveryFee: 2.00,
@@ -1844,6 +1870,18 @@ async function uploadTicketImage(file, code) {
   return data.url;
 }
 
+function openExternalUrl(url) {
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+      window.Capacitor.Plugins.Browser.open({ url: url });
+      return;
+    }
+  } catch (e) {}
+  var w = window.open(url, '_blank');
+  if (w) { try { w.opener = null; } catch (e) {} }
+  else { window.location.href = url; }
+}
+
 async function submitOrder() {
   var name = normalizeText($("#f-name").value);
   var phone = $("#f-phone").value.trim();
@@ -1950,10 +1988,7 @@ async function submitOrder() {
   saveName(name); state.cart = []; state.userLocationUrl = null; state.deliveryZone = null; clearProof(); saveCart(); updateBadge();
   localStorage.setItem('ff_current_order_code', code);
   var waUrl = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
-  // window.open después de varios await lo bloquean los navegadores móviles; si pasa, navegamos igual.
-  var waWin = window.open(waUrl, '_blank');
-  if (waWin) { try { waWin.opener = null; } catch (e) {} }
-  if (!waWin) { window.location.href = waUrl; }
+  openExternalUrl(waUrl);
   toast("Pedido enviado con éxito");
 
   btn.disabled = false;
